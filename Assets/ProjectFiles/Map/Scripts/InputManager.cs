@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Main.Map
@@ -10,6 +11,9 @@ namespace Main.Map
 
         // Runtime
         private Vector3 lastPosition;
+
+        public event Action OnClicked;
+        public event Action OnExit;
 
         public Vector3 GetSelectedMapPosition()
         {
@@ -27,6 +31,15 @@ namespace Main.Map
                 lastPosition = hit.point;
             }
             return lastPosition;
+        }
+
+        private void Update()
+        {
+            if (Input.GetMouseButtonDown(0))
+                OnClicked?.Invoke();
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+                OnExit?.Invoke();
         }
     }
 }
