@@ -1,10 +1,14 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Main.Map
 {
     public class InputManager : MonoBehaviour
     {
+        [Header("Raycast Settings")]
+        [SerializeField] private float _maxDistance = 1000f;
+        
         [Header("Settings")]
         [SerializeField] private Camera _camera;
         [SerializeField] private LayerMask _placeLayerMask;
@@ -26,7 +30,7 @@ namespace Main.Map
             RaycastHit hit; 
 
             // Limit distance --> good performance
-            if (Physics.Raycast(ray, out hit, maxDistance: 1000, _placeLayerMask))
+            if (Physics.Raycast(ray, out hit, maxDistance: _maxDistance, _placeLayerMask))
             {
                 lastPosition = hit.point;
             }
@@ -41,5 +45,8 @@ namespace Main.Map
             if (Input.GetKeyDown(KeyCode.Escape))
                 OnExit?.Invoke();
         }
+        
+        // Check Touch/Pointer ==> Interact UI.
+        public bool IsPointerOverUI() => EventSystem.current.IsPointerOverGameObject();
     }
 }

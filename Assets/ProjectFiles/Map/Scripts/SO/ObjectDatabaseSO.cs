@@ -5,7 +5,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Objects", menuName = "Data/Map/Objects")]
 public class ObjectDatabaseSO : ScriptableObject
 {
-    public List<ObjectData> objects;
+    public List<ObjectData> Objects;
 }
 
 [Serializable]

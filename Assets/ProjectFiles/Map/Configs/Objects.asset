@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28cbfe0507c8c8745a9a3ac2500dce00, type: 3}
   m_Name: Objects
   m_EditorClassIdentifier: Map::ObjectDatabaseSO
-  objects:
-  - name: bench
+  Objects:
+  - name: Bench
     ID: 0
     Size: {x: 1, y: 1}
-    Prefab: {fileID: 1264237421639267841, guid: 68ed321d6ac402b499b4243c7b5c93af, type: 3}
+    Prefab: {fileID: 3585108375470458167, guid: dd00099fd1c1f2c4aa3ca0d60fcbddb0, type: 3}
