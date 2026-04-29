@@ -798,7 +798,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 554995254}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1248229540}
+        m_TargetAssemblyTypeName: Main.Map.PlacementSystem, Map
+        m_MethodName: StartPlacement
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 1
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &658099385
 GameObject:
   m_ObjectHideFlags: 0
@@ -1550,6 +1562,7 @@ MonoBehaviour:
   grid: {fileID: 1428064398}
   _objData: {fileID: 11400000, guid: 624a09aeb2823524291970cd28f5d4b1, type: 2}
   gridVisualization: {fileID: 1428064396}
+  previewRenderer: {fileID: 2046379357}
 --- !u!1 &1261491904
 GameObject:
   m_ObjectHideFlags: 0
@@ -1904,7 +1917,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1877521396}
   m_Layer: 5
-  m_Name: Footer
+  m_Name: Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2036,6 +2049,11 @@ Transform:
 --- !u!1 &1946227937 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3743267841513466184, guid: 6ba244c46964a2a4a817fbbac22cd3b1, type: 3}
+  m_PrefabInstance: {fileID: 1946227935}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &2046379357 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2499108115766419434, guid: 6ba244c46964a2a4a817fbbac22cd3b1, type: 3}
   m_PrefabInstance: {fileID: 1946227935}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &2085916294

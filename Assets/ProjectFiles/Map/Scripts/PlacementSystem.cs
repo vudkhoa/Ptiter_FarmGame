@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Main.Map
@@ -16,6 +16,12 @@ namespace Main.Map
         [SerializeField] private GameObject gridVisualization;
         private int currentObjectIndex = 0;
         
+        [Header("Ui Settings")]
+        [SerializeField]private Renderer previewRenderer;
+
+        private GridData floorData, furnitureData;
+        private List<GameObject> placementObjects;
+        
         #region Unity - LifeCycle;
         private void Update()
         {
@@ -27,6 +33,16 @@ namespace Main.Map
             Vector3Int gridPosition = grid.WorldToCell(mousePostion);
             _mouseIndicator.transform.position = mousePostion;
 
+            // Check Valid
+            bool checkValidate = CheckPlacementValidate(gridPosition, currentObjectIndex);
+            
+            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+            previewRenderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor("_Color", Color.white);
+            if (!checkValidate)
+                propertyBlock.SetColor("_Color", Color.red);
+            previewRenderer.SetPropertyBlock(propertyBlock);
+            
             // Convert Cell[x,y] --> World Position.
             _cellIndicator.transform.position = grid.CellToWorld(gridPosition);
         }
@@ -34,11 +50,13 @@ namespace Main.Map
         private void Start()
         {
             StopPlacement();
+            floorData = new GridData();
+            furnitureData = new GridData();
+            placementObjects = new List<GameObject>();
         }
         #endregion
 
         #region Placement - LifeCycle
-
         public void StartPlacement(int index)
         {
             StopPlacement();
@@ -76,10 +94,24 @@ namespace Main.Map
             }
             Vector3 mousePostion = _inputManager.GetSelectedMapPosition();
             Vector3Int gridPosition = grid.WorldToCell(mousePostion);
+            
+            bool checkValidate = CheckPlacementValidate(gridPosition, currentObjectIndex);
+            if (!checkValidate) return;
+            
             GameObject newObjectPlace = Instantiate(_objData.Objects[currentObjectIndex].Prefab);
             Vector3 newPosition = grid.CellToWorld(gridPosition);
             newPosition.y = 0;
             newObjectPlace.transform.position = newPosition;
+
+            placementObjects.Add(newObjectPlace);
+            furnitureData.AddObjectAt(gridPosition, _objData.Objects[currentObjectIndex].Size,
+                _objData.Objects[currentObjectIndex].ID,
+                placementObjects.Count - 1);
+        }
+
+        private bool CheckPlacementValidate(Vector3Int gridPosition, int selectedObjectIndex)
+        {
+            return furnitureData.CanPlaceObjectAt(gridPosition, _objData.Objects[selectedObjectIndex].Size);
         }
         #endregion
     }

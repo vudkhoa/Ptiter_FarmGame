@@ -13,6 +13,6 @@ public struct ObjectData
 {
     public string name;
     public int ID;
-    public Vector2 Size;
+    public Vector2Int Size;
     public GameObject Prefab;
 }

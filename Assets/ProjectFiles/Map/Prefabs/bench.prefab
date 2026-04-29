@@ -72,6 +72,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8541879096435807247}
     m_Modifications:
+    - target: {fileID: 759847526462379988, guid: 68ed321d6ac402b499b4243c7b5c93af, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: ea1a04b6c3394764b8b12a543ed14d61, type: 2}
     - target: {fileID: 1264237421639267841, guid: 68ed321d6ac402b499b4243c7b5c93af, type: 3}
       propertyPath: m_Name
       value: bench
