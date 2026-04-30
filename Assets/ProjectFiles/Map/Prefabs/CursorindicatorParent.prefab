@@ -9,8 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5627637755362532373}
+  - component: {fileID: 3626772202538359756}
   m_Layer: 0
-  m_Name: CoursorindicatorParent
+  m_Name: CursorindicatorParent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,6 +33,20 @@ Transform:
   - {fileID: 8177222173871848304}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3626772202538359756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3743267841513466184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6ff905c1644f4e4aa02ce24fdc7977d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Map::CoursorIndicatorBehavior
+  _renderer: {fileID: 2499108115766419434}
+  _gameObject: {fileID: 3743267841513466184}
 --- !u!1 &8156234624674231466
 GameObject:
   m_ObjectHideFlags: 0
@@ -44,7 +59,7 @@ GameObject:
   - component: {fileID: 8883725200433464372}
   - component: {fileID: 2499108115766419434}
   m_Layer: 0
-  m_Name: CoursorIndicator
+  m_Name: CursorIndicator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

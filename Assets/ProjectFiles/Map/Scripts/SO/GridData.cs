@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GridData : MonoBehaviour
+public class GridData
 {
     private Dictionary<Vector3Int, PlacementData> placementObjects = new();
 

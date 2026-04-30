@@ -7,21 +7,22 @@ namespace Main.Map
     {
         [Header("Settings")]
         [SerializeField] private GameObject _mouseIndicator;
-        [SerializeField] private GameObject _cellIndicator;
         [SerializeField] private InputManager _inputManager;
         [SerializeField] private Grid grid;
         
         [Header("Object Settings")]
         [SerializeField] private ObjectDatabaseSO _objData;
         [SerializeField] private GameObject gridVisualization;
-        private int currentObjectIndex = 0;
-        
-        [Header("Ui Settings")]
-        [SerializeField]private Renderer previewRenderer;
 
-        private GridData floorData, furnitureData;
+        [Header("PreviewSystem")]
+        [SerializeField] PreviewSystem _previewSystem;
+
+        // Runtime
+        private int currentObjectIndex = 0;
+        private GridData furnitureData;
         private List<GameObject> placementObjects;
-        
+        private Vector3Int lastDetectedPosition = Vector3Int.zero;
+
         #region Unity - LifeCycle;
         private void Update()
         {
@@ -35,24 +36,18 @@ namespace Main.Map
 
             // Check Valid
             bool checkValidate = CheckPlacementValidate(gridPosition, currentObjectIndex);
-            
-            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
-            previewRenderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetColor("_Color", Color.white);
-            if (!checkValidate)
-                propertyBlock.SetColor("_Color", Color.red);
-            previewRenderer.SetPropertyBlock(propertyBlock);
-            
-            // Convert Cell[x,y] --> World Position.
-            _cellIndicator.transform.position = grid.CellToWorld(gridPosition);
+
+            _previewSystem.UpdatePosition(
+                grid.CellToWorld(gridPosition),
+                checkValidate);
         }
 
         private void Start()
         {
             StopPlacement();
-            floorData = new GridData();
             furnitureData = new GridData();
             placementObjects = new List<GameObject>();
+            lastDetectedPosition = Vector3Int.zero;
         }
         #endregion
 
@@ -70,7 +65,11 @@ namespace Main.Map
             
             // Regis Handle
             gridVisualization.gameObject.SetActive(true);
-            _cellIndicator.gameObject.SetActive(true);
+
+            _previewSystem.StartShowingPlacementPreview(
+                _objData.Objects[currentObjectIndex].Prefab,
+                _objData.Objects[currentObjectIndex].Size);
+
             _inputManager.OnClicked += PlaceStructure;
             _inputManager.OnExit += StopPlacement;
         }
@@ -79,13 +78,17 @@ namespace Main.Map
         {
             currentObjectIndex = -1;
             gridVisualization.gameObject.SetActive(false);
-            _cellIndicator.gameObject.SetActive(false);
+
+            _previewSystem.StopShowingPreview();
+
             _inputManager.OnClicked -= PlaceStructure;
             _inputManager.OnExit -= StopPlacement;
+
+            lastDetectedPosition = Vector3Int.zero;
         }
         #endregion
         
-        #region Logic
+        #region Placement - Logic
         public void PlaceStructure()
         {
             if (_inputManager.IsPointerOverUI())
@@ -95,18 +98,27 @@ namespace Main.Map
             Vector3 mousePostion = _inputManager.GetSelectedMapPosition();
             Vector3Int gridPosition = grid.WorldToCell(mousePostion);
             
-            bool checkValidate = CheckPlacementValidate(gridPosition, currentObjectIndex);
-            if (!checkValidate) return;
-            
-            GameObject newObjectPlace = Instantiate(_objData.Objects[currentObjectIndex].Prefab);
-            Vector3 newPosition = grid.CellToWorld(gridPosition);
-            newPosition.y = 0;
-            newObjectPlace.transform.position = newPosition;
+            if (gridPosition != lastDetectedPosition)
+            {
+                bool checkValidate = CheckPlacementValidate(gridPosition, currentObjectIndex);
+                if (!checkValidate) return;
 
-            placementObjects.Add(newObjectPlace);
-            furnitureData.AddObjectAt(gridPosition, _objData.Objects[currentObjectIndex].Size,
-                _objData.Objects[currentObjectIndex].ID,
-                placementObjects.Count - 1);
+                GameObject newObjectPlace = Instantiate(_objData.Objects[currentObjectIndex].Prefab);
+                Vector3 newPosition = grid.CellToWorld(gridPosition);
+                newPosition.y = 0;
+                newObjectPlace.transform.position = newPosition;
+
+                placementObjects.Add(newObjectPlace);
+                furnitureData.AddObjectAt(gridPosition, _objData.Objects[currentObjectIndex].Size,
+                    _objData.Objects[currentObjectIndex].ID,
+                    placementObjects.Count - 1);
+
+                _previewSystem.UpdatePosition(
+                    grid.CellToWorld(gridPosition),
+                    checkValidate);
+
+                lastDetectedPosition = gridPosition;
+            }
         }
 
         private bool CheckPlacementValidate(Vector3Int gridPosition, int selectedObjectIndex)

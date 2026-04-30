@@ -617,9 +617,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -674,6 +674,7 @@ Transform:
   - {fileID: 1052030863}
   - {fileID: 1248229539}
   - {fileID: 1486551004}
+  - {fileID: 1580808899}
   - {fileID: 756840002}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1225,9 +1226,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1557,12 +1558,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Map::Main.Map.PlacementSystem
   _mouseIndicator: {fileID: 1486551003}
-  _cellIndicator: {fileID: 1946227937}
   _inputManager: {fileID: 1052030864}
   grid: {fileID: 1428064398}
   _objData: {fileID: 11400000, guid: 624a09aeb2823524291970cd28f5d4b1, type: 2}
   gridVisualization: {fileID: 1428064396}
-  previewRenderer: {fileID: 2046379357}
+  _previewSystem: {fileID: 1580808900}
 --- !u!1 &1261491904
 GameObject:
   m_ObjectHideFlags: 0
@@ -1832,6 +1832,53 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1486551003}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1580808898
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1580808899}
+  - component: {fileID: 1580808900}
+  m_Layer: 0
+  m_Name: PreviewSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1580808899
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1580808898}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 480779548}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1580808900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1580808898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5f1f56bdcf86c544a3e078098d6dc61, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Map::PreviewSystem
+  _previewOffset: 0.06
+  _cursorIndicator: {fileID: 1946227937}
+  _previewMaterialPrefab: {fileID: 2100000, guid: fb7391c3e6362034d9b00face058e337, type: 2}
 --- !u!1 &1770385616
 GameObject:
   m_ObjectHideFlags: 0
@@ -2046,16 +2093,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5627637755362532373, guid: 6ba244c46964a2a4a817fbbac22cd3b1, type: 3}
   m_PrefabInstance: {fileID: 1946227935}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1946227937 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3743267841513466184, guid: 6ba244c46964a2a4a817fbbac22cd3b1, type: 3}
+--- !u!114 &1946227937 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3626772202538359756, guid: 6ba244c46964a2a4a817fbbac22cd3b1, type: 3}
   m_PrefabInstance: {fileID: 1946227935}
   m_PrefabAsset: {fileID: 0}
---- !u!23 &2046379357 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 2499108115766419434, guid: 6ba244c46964a2a4a817fbbac22cd3b1, type: 3}
-  m_PrefabInstance: {fileID: 1946227935}
-  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6ff905c1644f4e4aa02ce24fdc7977d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Map::CoursorIndicatorBehavior
 --- !u!1 &2085916294
 GameObject:
   m_ObjectHideFlags: 0
