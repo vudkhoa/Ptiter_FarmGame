@@ -163,7 +163,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fcf8c1d4597d3744bef4df145d721d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MyOwn.ServiceHarness.PreloadingFlow
-  _gameSceneName: Game
+  _gameSceneName: MapScene
   _delaySeconds: 0.5
 --- !u!1 &531325927
 GameObject:
