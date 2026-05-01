@@ -5,16 +5,9 @@ using VContainer.Unity;
 namespace MyOwn.ServiceHarness
 {
     /// <summary>
-    /// Per-scene container cho gameplay (scene "Game"). Parent = RootLifetimeScope (auto-find).
-    /// Đặt component này trên GameObject "[Game Bootstrap]" trong scene Game.
+    /// Per-scene container. Auto-find RootLifetimeScope làm parent → inherit registrations.
+    /// Pitfall: chạy thẳng scene Game → warning, Singletons từ Root không resolve được.
     /// </summary>
-    /// <remarks>
-    /// Auto-find parent:
-    /// - Awake() set parentReference.Object = FindAnyObjectByType<RootLifetimeScope>() TRƯỚC base.Awake().
-    /// - Nhờ vậy Inspector field "Parent" để trống vẫn hoạt động khi vào từ Preloading.
-    /// - Pitfall: vào thẳng Game scene → log warning, container vẫn build nhưng KHÔNG resolve được PlayerDataHolder/ClockService (Singleton từ Root).
-    /// Configure: hiện để trống — thêm gameplay services Lifetime.Scoped sau (EnemySpawner, WaveManager, ...).
-    /// </remarks>
     public sealed class GameLifetimeScope : LifetimeScope
     {
         protected override void Awake()
@@ -24,11 +17,7 @@ namespace MyOwn.ServiceHarness
                 parentReference.Object = FindAnyObjectByType<RootLifetimeScope>();
                 if (parentReference.Object == null)
                 {
-                    Debug.LogWarning(
-                        "[GameLifetimeScope] RootLifetimeScope không tìm thấy. " +
-                        "Bạn đang chạy thẳng scene Game? Hãy start từ scene Preloading. " +
-                        "Singletons từ Root (PlayerDataHolder, ClockService) sẽ không resolve được."
-                    );
+                    Debug.LogWarning("[GameLifetimeScope] RootLifetimeScope không tìm thấy. Hãy start từ scene Preloading.");
                 }
             }
 
@@ -37,9 +26,7 @@ namespace MyOwn.ServiceHarness
 
         protected override void Configure(IContainerBuilder builder)
         {
-            // TODO: register gameplay-only services với Lifetime.Scoped tại đây.
-            // Ví dụ:
-            //   builder.Register<EnemySpawner>(Lifetime.Scoped).AsImplementedInterfaces().AsSelf();
+            // TODO: register gameplay-only services với Lifetime.Scoped (EnemySpawner, WaveManager, ...).
         }
     }
 }

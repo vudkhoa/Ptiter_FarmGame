@@ -7,15 +7,9 @@ using VContainer;
 namespace MyOwn.ServiceHarness
 {
     /// <summary>
-    /// EXAMPLE UI subscriber: hiển thị tick count nhận từ ClockService.
-    /// Demo:
-    /// - Method Injection ([Inject] vào method Construct) cho MonoBehaviour — MonoBehaviour không có constructor.
-    /// - Subscribe ISubscriber + AddTo(this) để auto-dispose khi GameObject destroyed.
+    /// UI subscriber: render ClockTickPayload lên TMP. Method Injection vì MonoBehaviour không có constructor.
+    /// Cần LifetimeScope's "Auto Inject GameObjects" = true (default) để VContainer scan + inject.
     /// </summary>
-    /// <remarks>
-    /// VContainer cần "Auto Inject GameObjects" enabled trên LifetimeScope (default true)
-    /// HOẶC scope.Container.InjectGameObject(this.gameObject) thủ công.
-    /// </remarks>
     [DisallowMultipleComponent]
     public sealed class ClockDisplay : MonoBehaviour
     {
@@ -23,10 +17,6 @@ namespace MyOwn.ServiceHarness
 
         private IDisposable _subscription;
 
-        /// <summary>
-        /// Method Injection — VContainer call method này khi GameObject inject.
-        /// Tên method bất kỳ, chỉ cần có [Inject] attribute.
-        /// </summary>
         [Inject]
         public void Construct(ISubscriber<ClockTickPayload> tickSubscriber)
         {

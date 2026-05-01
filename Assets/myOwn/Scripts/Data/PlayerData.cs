@@ -3,24 +3,15 @@ using System;
 namespace MyOwn.ServiceHarness
 {
     /// <summary>
-    /// POCO save model. Greenfield template — dev điền field game-specific.
-    /// Phải [Serializable] để JsonUtility serialize được.
+    /// POCO save model. [Serializable] để JsonUtility serialize. Sub-data nested cũng phải [Serializable].
+    /// Bump SaveVersion khi đổi schema → handle migration ở PlayerDataSaveLoad.Load().
     /// </summary>
-    /// <remarks>
-    /// Convention:
-    /// - Tất cả field public hoặc [SerializeField] private để JsonUtility nhìn thấy.
-    /// - Sub-data nested phải cũng [Serializable].
-    /// - Bump SaveVersion khi đổi schema → migration logic ở PlayerDataSaveLoad.Load().
-    /// </remarks>
     [Serializable]
     public class PlayerData
     {
         public int SaveVersion = 1;
         public long LastSaveUtcTicks;
 
-        // TODO: Add your game-specific fields, ví dụ:
-        // public CurrencyData Currency = new();
-        // public InventoryData Inventory = new();
-        // public List<QuestProgress> Quests = new();
+        // TODO: thêm game-specific fields (Currency, Inventory, Quests, ...).
     }
 }

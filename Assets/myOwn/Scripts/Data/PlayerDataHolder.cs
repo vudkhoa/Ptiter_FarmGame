@@ -8,14 +8,8 @@ namespace MyOwn.ServiceHarness
 {
     /// <summary>
     /// Wrap PlayerData runtime instance, expose Load/Save/Reset.
-    /// POCO service (KHÔNG MonoBehaviour) — registered Singleton trong RootLifetimeScope.
+    /// POCO Singleton; auto-loads trong StartAsync khi container build.
     /// </summary>
-    /// <remarks>
-    /// VContainer lifecycle:
-    /// - Construct: VContainer gọi constructor, inject IPublisher.
-    /// - StartAsync: tự động chạy do implement IAsyncStartable. Đây là entry-point khởi tạo.
-    /// - Disposed: VContainer auto-call Dispose khi scope destroyed (nếu implement IDisposable).
-    /// </remarks>
     public sealed class PlayerDataHolder : IService, IAsyncStartable
     {
         private readonly IPublisher<PlayerDataLoadedPayload> _loadedPublisher;
@@ -26,9 +20,6 @@ namespace MyOwn.ServiceHarness
         /// <summary>True khi Load() KHÔNG tìm thấy save file → tạo PlayerData mặc định.</summary>
         public bool IsNewlyCreated { get; private set; }
 
-        /// <summary>
-        /// Constructor injection. VContainer tự resolve IPublisher từ MessagePipe registration.
-        /// </summary>
         public PlayerDataHolder(IPublisher<PlayerDataLoadedPayload> loadedPublisher)
         {
             _loadedPublisher = loadedPublisher;
@@ -40,9 +31,9 @@ namespace MyOwn.ServiceHarness
             return UniTask.CompletedTask;
         }
 
+        /// <summary>Re-init explicit (idempotent) — dùng sau cloud restore hoặc trong test.</summary>
         public UniTask InitializeAsync(CancellationToken ct = default)
         {
-            // Re-init explicit (ví dụ sau cloud restore). Idempotent.
             Load();
             return UniTask.CompletedTask;
         }

@@ -5,15 +5,9 @@ using UnityEngine;
 namespace MyOwn.ServiceHarness
 {
     /// <summary>
-    /// Pure IO + JSON serialization. KHÔNG hold runtime state.
-    /// PlayerDataHolder gọi class này; UI/services KHÔNG gọi trực tiếp.
+    /// Pure IO + JSON serialization. KHÔNG hold runtime state — chỉ PlayerDataHolder gọi.
+    /// Atomic write (temp + rename) tránh corrupt nếu crash mid-write.
     /// </summary>
-    /// <remarks>
-    /// Vì sao tách static utility?
-    /// - SRP: IO logic riêng khỏi state container.
-    /// - Test: mock được bằng cách swap file path; PlayerDataHolder không phụ thuộc Unity File API.
-    /// - Atomic write: ghi temp + move để tránh corrupt khi app crash mid-write.
-    /// </remarks>
     public static class PlayerDataSaveLoad
     {
         private const string FILE_NAME = "playerdata.json";

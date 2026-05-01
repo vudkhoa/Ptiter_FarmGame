@@ -8,17 +8,9 @@ using VContainer.Unity;
 namespace MyOwn.ServiceHarness
 {
     /// <summary>
-    /// EXAMPLE service: tick mỗi 1 giây, publish <see cref="ClockTickPayload"/>.
-    /// Demo:
-    /// - Constructor injection (POCO) để nhận IPublisher.
-    /// - VContainer auto-call StartAsync khi container build xong (do implement IAsyncStartable).
-    /// - UniTask.Delay loop với CancellationToken (auto-cancel khi container dispose).
-    /// - Publisher pattern thay cho static GlobalMessagePipe.GetPublisher.
+    /// Tick mỗi 1s, publish <see cref="ClockTickPayload"/>. POCO Singleton ở Root → tick xuyên scene.
+    /// Move sang GameLifetimeScope với Lifetime.Scoped nếu muốn tick chỉ khi gameplay active.
     /// </summary>
-    /// <remarks>
-    /// Lifetime: Singleton (registered ở RootLifetimeScope) → tick chạy xuyên scene.
-    /// Nếu muốn tick chỉ khi gameplay scene active → move sang GameLifetimeScope với Lifetime.Scoped.
-    /// </remarks>
     public sealed class ClockService : IService, IAsyncStartable, IDisposable
     {
         private const float TICK_INTERVAL_SECONDS = 1f;
@@ -31,23 +23,15 @@ namespace MyOwn.ServiceHarness
         public int TickCount => _tickCount;
         public bool IsPaused => _pauseDepth > 0;
 
-        /// <summary>
-        /// VContainer Resolve toàn bộ. 
-        /// Điều kiện: RegisterMessageBroker<ClockTickPayload>(options)
-        /// </summary>
         public ClockService(IPublisher<ClockTickPayload> tickPublisher)
         {
             _tickPublisher = tickPublisher;
         }
 
-        /// <summary>
-        /// VContainer auto-invoke method này sau khi container build xong.
-        /// Đây là entry-point để start tick loop. 
-        /// Điều kiện: class -> IAsyncStartable + call .AsImplementedInterfaces() trong builder.Register
-        /// </summary>
+        /// <summary>Auto-invoked bởi VContainer (IAsyncStartable + AsImplementedInterfaces).</summary>
         public async UniTask StartAsync(CancellationToken cancellation)
         {
-            // Link container's cancellation với loop's own CTS để Pause/Resume/Dispose đều stop được loop.
+            // Link container ct với loop CTS → Dispose stop được loop.
             _loopCts = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
             await TickLoopAsync(_loopCts.Token);
         }
@@ -60,23 +44,22 @@ namespace MyOwn.ServiceHarness
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(TICK_INTERVAL_SECONDS), cancellationToken: ct);
 
-                    // Pause: skip publish nhưng vẫn delay tiếp (KHÔNG break loop) → Resume tự tick lại.
+                    // Pause: skip publish, KHÔNG break loop → Resume tự tick lại.
                     if (IsPaused) continue;
 
                     _tickCount++;
                     var payload = new ClockTickPayload(_tickCount, DateTime.UtcNow);
                     _tickPublisher.Publish(payload);
-                    // Debug.Log($"[Khoa-Debug] Clock Service Time: {_tickCount}");
                 }
             }
             catch (OperationCanceledException)
             {
-                // Expected: container dispose / scene unload → UniTask.Delay throw OCE. Không phải lỗi.
+                // Expected: container dispose / scene unload.
                 Debug.Log($"[ClockService] Tick loop cancelled. Final TickCount={_tickCount}.");
             }
             catch (Exception e)
             {
-                // Unexpected: bug logic / null ref / publisher fail → log Error để fail-loud.
+                // Unexpected: fail-loud cho bug logic.
                 Debug.LogError($"[ClockService] Tick loop crashed: {e}");
             }
         }

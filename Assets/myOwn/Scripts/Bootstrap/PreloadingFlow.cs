@@ -5,13 +5,9 @@ using UnityEngine.SceneManagement;
 namespace MyOwn.ServiceHarness
 {
     /// <summary>
-    /// Đại diện cho preloading phase: load assets, asset bundle, splash, etc.
-    /// Sau khi xong → load Game scene.
+    /// Preloading phase: load assets/splash/etc, sau đó LoadScene("Game").
+    /// Start chạy sau RootLifetimeScope.Awake → container đã sẵn sàng.
     /// </summary>
-    /// <remarks>
-    /// Đặt component này trên GameObject bất kỳ trong scene Preloading.
-    /// Chạy SAU RootLifetimeScope đã build container (vì Start chạy sau Awake).
-    /// </remarks>
     public sealed class PreloadingFlow : MonoBehaviour
     {
         [SerializeField] private string _gameSceneName = "Game";
