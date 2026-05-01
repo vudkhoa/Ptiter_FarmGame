@@ -31,6 +31,10 @@ namespace MyOwn.ServiceHarness
         public int TickCount => _tickCount;
         public bool IsPaused => _pauseDepth > 0;
 
+        /// <summary>
+        /// VContainer Resolve toàn bộ. 
+        /// Điều kiện: RegisterMessageBroker<ClockTickPayload>(options)
+        /// </summary>
         public ClockService(IPublisher<ClockTickPayload> tickPublisher)
         {
             _tickPublisher = tickPublisher;
@@ -38,7 +42,8 @@ namespace MyOwn.ServiceHarness
 
         /// <summary>
         /// VContainer auto-invoke method này sau khi container build xong.
-        /// Đây là entry-point để start tick loop.
+        /// Đây là entry-point để start tick loop. 
+        /// Điều kiện: class -> IAsyncStartable + call .AsImplementedInterfaces() trong builder.Register
         /// </summary>
         public async UniTask StartAsync(CancellationToken cancellation)
         {
@@ -61,7 +66,7 @@ namespace MyOwn.ServiceHarness
                     _tickCount++;
                     var payload = new ClockTickPayload(_tickCount, DateTime.UtcNow);
                     _tickPublisher.Publish(payload);
-                    Debug.Log($"[Khoa-Debug] Clock Service Time: {_tickCount}");
+                    // Debug.Log($"[Khoa-Debug] Clock Service Time: {_tickCount}");
                 }
             }
             catch (OperationCanceledException)

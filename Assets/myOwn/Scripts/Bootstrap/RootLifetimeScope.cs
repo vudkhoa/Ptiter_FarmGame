@@ -25,11 +25,16 @@ namespace MyOwn.ServiceHarness
 
         protected override void Configure(IContainerBuilder builder)
         {
+            // Bootstrap MessagePipe → cho phép inject IPublisher<T> / ISubscriber<T>.
             var options = builder.RegisterMessagePipe();
 
+            // Mỗi payload = 1 "kênh" pub/sub. Quên dòng này → inject IPublisher<T> sẽ throw.
             builder.RegisterMessageBroker<PlayerDataLoadedPayload>(options);
             builder.RegisterMessageBroker<ClockTickPayload>(options);
 
+            // Register service:
+            //   .AsImplementedInterfaces() → VContainer thấy IAsyncStartable → auto-call StartAsync().
+            //   .AsSelf()                  → cho phép [Inject] PlayerDataHolder _holder; (concrete type).
             builder.Register<PlayerDataHolder>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
                 .AsSelf();
