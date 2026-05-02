@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/myOwn/Scenes/Preloading.unity
     guid: 771205e9b288f8841a733a6853d89dc0
   - enabled: 1
-    path: Assets/Module/_Map/Scenes/MapScene.unity
+    path: Assets/Module/Map/Scenes/MapScene.unity
     guid: 2efec8a468012e647a271c286b7ee292
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}

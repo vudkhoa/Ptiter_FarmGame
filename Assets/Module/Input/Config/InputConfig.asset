@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: InputConfig
   m_EditorClassIdentifier: Input::Core.Module.Input.InputConfigSO
   WatchedKeys: 1b000000
-  PointerMoveEpsilon: 0.5
+  PointerMoveEpsilon: 1

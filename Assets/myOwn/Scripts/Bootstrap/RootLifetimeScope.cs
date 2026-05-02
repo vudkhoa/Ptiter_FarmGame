@@ -1,4 +1,5 @@
 using Core.Module.Input;
+using Core.Module.Map;
 using MessagePipe;
 using VContainer;
 using VContainer.Unity;
@@ -32,7 +33,13 @@ namespace MyOwn.ServiceHarness
             builder.RegisterMessageBroker<PointerButtonDownPayload>(options);
             builder.RegisterMessageBroker<KeyDownPayload>(options);
 
-            // AsImplementedInterfaces() → IAsyncStartable visible → auto-call StartAsync().
+            // Map brokers
+            builder.RegisterMessageBroker<MapPlacementStartedPayload>(options);
+            builder.RegisterMessageBroker<MapPreviewMovedPayload>(options);
+            builder.RegisterMessageBroker<MapFurnitureAddedPayload>(options);
+            builder.RegisterMessageBroker<MapPlacementStoppedPayload>(options);
+
+            // AsImplementedInterfaces() → mọi interface (IService, IAsyncStartable, ITickable, IInputService...) visible cho consumer + entry-point dispatcher.
             // AsSelf() → cho phép inject qua concrete type.
             builder.Register<PlayerDataHolder>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
@@ -47,11 +54,6 @@ namespace MyOwn.ServiceHarness
             builder.RegisterComponentInHierarchy<InputService>()
                 .AsImplementedInterfaces()
                 .AsSelf();
-        }
-
-        private void RegisService()
-        {
-
         }
     }
 }

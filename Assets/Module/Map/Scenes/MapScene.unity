@@ -256,6 +256,55 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &42016499
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 42016500}
+  - component: {fileID: 42016501}
+  m_Layer: 0
+  m_Name: MapBridge
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &42016500
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 42016499}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 123408505}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &42016501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 42016499}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8907204c220ee464da8c276bf2bc12f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Map::Core.Module.Map.MapPointerBridge
+  _camera: {fileID: 21659923}
+  _placeLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  _maxRayDistance: 1000
 --- !u!4 &44125397 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6361854648154500075, guid: e9d95adbce2c9154ea0e303ef248d401, type: 3}
@@ -462,6 +511,57 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 110674805}
   m_CullTransparentMesh: 1
+--- !u!1 &123408504
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 123408505}
+  - component: {fileID: 123408506}
+  m_Layer: 0
+  m_Name: GameService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &123408505
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 123408504}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1963677155}
+  - {fileID: 42016500}
+  - {fileID: 1606044949}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &123408506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 123408504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a5c56919ade4c6408e25ac31dd8f97c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: MyOwn::MyOwn.ServiceHarness.GameLifetimeScope
+  parentReference:
+    TypeName: 
+  autoRun: 1
+  autoInjectGameObjects: []
 --- !u!1 &138224136
 GameObject:
   m_ObjectHideFlags: 0
@@ -800,8 +900,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1248229540}
-        m_TargetAssemblyTypeName: Main.Map.PlacementSystem, Map
+      - m_Target: {fileID: 1963677156}
+        m_TargetAssemblyTypeName: Core.Module.Map.MapService, Map
         m_MethodName: StartPlacement
         m_Mode: 3
         m_Arguments:
@@ -1061,8 +1161,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1248229540}
-        m_TargetAssemblyTypeName: Main.Map.PlacementSystem, Map
+      - m_Target: {fileID: 1963677156}
+        m_TargetAssemblyTypeName: Core.Module.Map.MapService, Map
         m_MethodName: StartPlacement
         m_Mode: 3
         m_Arguments:
@@ -1266,7 +1366,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1052030863
 Transform:
   m_ObjectHideFlags: 0
@@ -1529,7 +1629,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1248229539
 Transform:
   m_ObjectHideFlags: 0
@@ -1557,12 +1657,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ba1d3ae1ac1ce34583286802799bd22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Map::Main.Map.PlacementSystem
-  _mouseIndicator: {fileID: 1486551003}
-  _inputManager: {fileID: 1052030864}
-  grid: {fileID: 1428064398}
-  _objData: {fileID: 11400000, guid: 624a09aeb2823524291970cd28f5d4b1, type: 2}
-  gridVisualization: {fileID: 1428064396}
-  _previewSystem: {fileID: 1580808900}
 --- !u!1 &1261491904
 GameObject:
   m_ObjectHideFlags: 0
@@ -1738,7 +1832,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1486551004
 Transform:
   m_ObjectHideFlags: 0
@@ -1848,7 +1942,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1580808899
 Transform:
   m_ObjectHideFlags: 0
@@ -1876,9 +1970,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5f1f56bdcf86c544a3e078098d6dc61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Map::PreviewSystem
-  _previewOffset: 0.06
-  _cursorIndicator: {fileID: 1946227937}
-  _previewMaterialPrefab: {fileID: 2100000, guid: fb7391c3e6362034d9b00face058e337, type: 2}
+--- !u!1 &1606044948
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1606044949}
+  - component: {fileID: 1606044950}
+  m_Layer: 0
+  m_Name: MapPreview
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1606044949
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1606044948}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 123408505}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1606044950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1606044948}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3080f7ab2ed2b8149aa0dffcb3898569, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Map::Core.Module.Map.MapPreviewView
+  _previewMaterial: {fileID: 2100000, guid: fb7391c3e6362034d9b00face058e337, type: 2}
+  _cursor: {fileID: 1946227937}
+  _spawnRoot: {fileID: 1606044949}
+  _previewYOffset: 0.06
 --- !u!1 &1770385616
 GameObject:
   m_ObjectHideFlags: 0
@@ -2104,6 +2243,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6ff905c1644f4e4aa02ce24fdc7977d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Map::CoursorIndicatorBehavior
+--- !u!1 &1963677154
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1963677155}
+  - component: {fileID: 1963677156}
+  m_Layer: 0
+  m_Name: MapService
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1963677155
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1963677154}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 123408505}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1963677156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1963677154}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21f1da41371d5ab428ae15a80295f1ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Map::Core.Module.Map.MapService
+  _database: {fileID: 11400000, guid: 624a09aeb2823524291970cd28f5d4b1, type: 2}
+  _cellSize: 1
 --- !u!1 &2085916294
 GameObject:
   m_ObjectHideFlags: 0
@@ -2297,6 +2482,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 7448678534065296857, guid: e9d95adbce2c9154ea0e303ef248d401, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2312,3 +2501,4 @@ SceneRoots:
   - {fileID: 1261491908}
   - {fileID: 138224140}
   - {fileID: 857082999}
+  - {fileID: 123408505}

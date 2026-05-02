@@ -1,5 +1,4 @@
 using UnityEngine;
-using UVector2Int = UnityEngine.Vector2Int;
 
 namespace Core.Module.Map
 {
@@ -7,9 +6,9 @@ namespace Core.Module.Map
     {
         public readonly int ObjectId;
         public readonly GameObject Prefab;
-        public readonly UVector2Int Size;
+        public readonly Vector2Int Size;
 
-        public MapPlacementStartedPayload(int objectId, GameObject prefab, UVector2Int size)
+        public MapPlacementStartedPayload(int objectId, GameObject prefab, Vector2Int size)
         {
             ObjectId = objectId;
             Prefab = prefab;
