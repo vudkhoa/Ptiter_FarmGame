@@ -1,14 +1,11 @@
 {
-    "name": "MyOwn",
+    "name": "Map",
     "rootNamespace": "",
     "references": [
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:08b38f39e2d9e594389b7a4cf4c2c338",
-        "GUID:f87f2db4f7bec46409857b7e7a6938ff",
         "GUID:4f682e06dbb3e624faedad9cc27106cc",
-        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:89c307639fc21d646960574fe3ac91e1"
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

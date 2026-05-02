@@ -1,51 +1,71 @@
 using UnityEngine;
-using MyOwn.ServiceHarness;
-using VContainer.Unity;
+using UnityEngine.EventSystems;
 using MessagePipe;
 using System.Collections.Generic;
-using UnityEngine.EventSystems;
+using VContainer;
 using UInput = UnityEngine.Input;
 
 namespace Core.Module.Input
 {
-    public sealed class InputService : IService, IInputService, ITickable
+    // Block Conflict Component
+    [DisallowMultipleComponent]
+    public sealed class InputService : MonoBehaviour, IInputService
     {
-        private readonly IPublisher<PointerScreenPayload> _pubScreen;
-        private readonly IPublisher<PointerButtonDownPayload> _pubButton;
-        private readonly IPublisher<KeyDownPayload> _pubKey;
-        private readonly InputConfigSO _config;
+        [SerializeField] private InputConfigSO _config;
+
+        private IPublisher<PointerScreenPayload> _pubScreen;
+        private IPublisher<PointerButtonDownPayload> _pubButton;
+        private IPublisher<KeyDownPayload> _pubKey;
 
         private Vector2 _lastPointerScreen;
         private readonly bool[] _heldButtons = new bool[3];
-        private readonly Dictionary<KeyCode, bool> _heldKeys;
+        private Dictionary<KeyCode, bool> _heldKeys;
 
-        #region Core.Input - Constructor
-        public InputService(IPublisher<PointerScreenPayload> pubScreen,
-                            IPublisher<PointerButtonDownPayload> pubButton,
-                            IPublisher<KeyDownPayload> pubKey,
-                            InputConfigSO config)
+        #region DI - Construct
+        [Inject]
+        public void Construct(
+            IPublisher<PointerScreenPayload> pubScreen,
+            IPublisher<PointerButtonDownPayload> pubButton,
+            IPublisher<KeyDownPayload> pubKey)
         {
             _pubScreen = pubScreen;
             _pubButton = pubButton;
             _pubKey = pubKey;
-            _config = config;
-
-            _heldKeys = new Dictionary<KeyCode, bool>(config.WatchedKeys.Count);
-
-            if (config.WatchedKeys.Count == 0)
-            {
-                Debug.LogWarning("[InputService] WatchedKeys empty");
-            }
-            else
-            {
-                for (int i = 0; i < config.WatchedKeys.Count; i++)
-                    _heldKeys[config.WatchedKeys[i]] = false;
-            }
-
         }
         #endregion
 
-        #region Core.Input - Logic/Implement Interface
+        #region Unity LifeCycle
+        private void Awake()
+        {
+            if (_config == null)
+            {
+                Debug.LogError("[InputService] _config chưa được drag vào Inspector — service inert.");
+                enabled = false;
+                return;
+            }
+
+            _heldKeys = new Dictionary<KeyCode, bool>(_config.WatchedKeys.Count);
+
+            if (_config.WatchedKeys.Count == 0)
+            {
+                Debug.LogWarning("[InputService] WatchedKeys empty — không có key nào được publish.");
+            }
+            else
+            {
+                for (int i = 0; i < _config.WatchedKeys.Count; i++)
+                    _heldKeys[_config.WatchedKeys[i]] = false;
+            }
+        }
+
+        private void Update()
+        {
+            PollPointerScreen();
+            PollButtons();
+            PollWatchedKeys();
+        }
+        #endregion
+
+        #region IInputService - Query API
         public Vector2 PointerScreen => _lastPointerScreen;
 
         public bool IsButtonHeld(int button)
@@ -56,30 +76,24 @@ namespace Core.Module.Input
 
         public bool IsKeyHeld(KeyCode key)
         {
-            return _heldKeys.TryGetValue(key, out var result) && result;
+            return _heldKeys != null
+                && _heldKeys.TryGetValue(key, out var v) && v;
         }
 
         public bool IsPointerOverUI()
         {
-            return EventSystem.current != null &&
-                    EventSystem.current.IsPointerOverGameObject();
+            return EventSystem.current != null
+                && EventSystem.current.IsPointerOverGameObject();
         }
+        #endregion
 
-        //(*)(*)(*) Important
-        public void Tick()
-        {
-            PollPointerScreen();
-            PollButton();
-            PollWatchedKeys();
-        }
-
+        #region Polling
         private void PollPointerScreen()
         {
             Vector2 cur = UInput.mousePosition;
-
-            // Epsilon Logic
             Vector2 delta = cur - _lastPointerScreen;
             float sqrEpsilon = _config.PointerMoveEpsilon * _config.PointerMoveEpsilon;
+
             if (delta.sqrMagnitude > sqrEpsilon)
             {
                 _lastPointerScreen = cur;
@@ -87,14 +101,12 @@ namespace Core.Module.Input
             }
         }
 
-        private void PollButton()
+        private void PollButtons()
         {
-            for (int i = 0; i < _heldButtons.Length; ++i)
+            for (int i = 0; i < _heldButtons.Length; i++)
             {
                 if (UInput.GetMouseButtonDown(i))
-                {
                     _pubButton.Publish(new PointerButtonDownPayload(i));
-                }
 
                 _heldButtons[i] = UInput.GetMouseButton(i);
             }
@@ -103,13 +115,12 @@ namespace Core.Module.Input
         private void PollWatchedKeys()
         {
             var keys = _config.WatchedKeys;
-            for (int i = 0; i < _config.WatchedKeys.Count; ++i)
+            for (int i = 0; i < keys.Count; i++)
             {
                 var key = keys[i];
                 if (UInput.GetKeyDown(key))
-                {
                     _pubKey.Publish(new KeyDownPayload(key));
-                }
+
                 _heldKeys[key] = UInput.GetKey(key);
             }
         }

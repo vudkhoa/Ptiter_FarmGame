@@ -1,3 +1,4 @@
+using Core.Module.Input;
 using MessagePipe;
 using VContainer;
 using VContainer.Unity;
@@ -26,6 +27,11 @@ namespace MyOwn.ServiceHarness
             builder.RegisterMessageBroker<PlayerDataLoadedPayload>(options);
             builder.RegisterMessageBroker<ClockTickPayload>(options);
 
+            // Input module brokers
+            builder.RegisterMessageBroker<PointerScreenPayload>(options);
+            builder.RegisterMessageBroker<PointerButtonDownPayload>(options);
+            builder.RegisterMessageBroker<KeyDownPayload>(options);
+
             // AsImplementedInterfaces() → IAsyncStartable visible → auto-call StartAsync().
             // AsSelf() → cho phép inject qua concrete type.
             builder.Register<PlayerDataHolder>(Lifetime.Singleton)
@@ -35,6 +41,17 @@ namespace MyOwn.ServiceHarness
             builder.Register<ClockService>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
                 .AsSelf();
+
+            // MonoBehaviour services — config tự gắn trên GameObject của service (xem README §6).
+            // GameObject phải nằm trong hierarchy của LifetimeScope này (child của [Bootstrap]).
+            builder.RegisterComponentInHierarchy<InputService>()
+                .AsImplementedInterfaces()
+                .AsSelf();
+        }
+
+        private void RegisService()
+        {
+
         }
     }
 }
