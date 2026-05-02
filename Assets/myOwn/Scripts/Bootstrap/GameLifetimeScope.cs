@@ -1,3 +1,4 @@
+using Core.Module.Map;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -16,17 +17,20 @@ namespace MyOwn.ServiceHarness
             {
                 parentReference.Object = FindAnyObjectByType<RootLifetimeScope>();
                 if (parentReference.Object == null)
-                {
-                    Debug.LogWarning("[GameLifetimeScope] RootLifetimeScope không tìm thấy. Hãy start từ scene Preloading.");
-                }
+                    Debug.LogWarning("[GameLifetimeScope] RootLifetimeScope không tìm thấy. Start từ Preloading.");
             }
-
             base.Awake();
         }
 
         protected override void Configure(IContainerBuilder builder)
         {
-            // TODO: register gameplay-only services với Lifetime.Scoped (EnemySpawner, WaveManager, ...).
+            // Map module — scoped per-scene
+            builder.RegisterComponentInHierarchy<MapService>()
+                   .AsImplementedInterfaces()
+                   .AsSelf();
+
+            builder.RegisterComponentInHierarchy<MapPointerBridge>();
+            builder.RegisterComponentInHierarchy<MapPreviewView>();
         }
     }
 }
