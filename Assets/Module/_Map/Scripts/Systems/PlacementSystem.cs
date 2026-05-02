@@ -5,7 +5,7 @@ namespace Main.Map
 {
     public class PlacementSystem : MonoBehaviour
     {
-        [Header("Settings")]
+        /*[Header("Settings")]
         [SerializeField] private GameObject _mouseIndicator;
         [SerializeField] private InputManager _inputManager;
         [SerializeField] private Grid grid;
@@ -125,6 +125,6 @@ namespace Main.Map
         {
             return furnitureData.CanPlaceObjectAt(gridPosition, _objData.Objects[selectedObjectIndex].Size);
         }
-        #endregion
+        #endregion*/
     }
 }
