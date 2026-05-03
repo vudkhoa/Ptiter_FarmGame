@@ -1,4 +1,5 @@
 using System.Threading;
+using Core.Module.Time;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace MyOwn.ServiceHarness
     public sealed class PlayerDataHolder : IService, IAsyncStartable
     {
         private readonly IPublisher<PlayerDataLoadedPayload> _loadedPublisher;
+        private readonly IServerTimeProvider _timeProvider;
         private PlayerData _data;
 
         public PlayerData Data => _data;
@@ -20,9 +22,12 @@ namespace MyOwn.ServiceHarness
         /// <summary>True khi Load() KHÔNG tìm thấy save file → tạo PlayerData mặc định.</summary>
         public bool IsNewlyCreated { get; private set; }
 
-        public PlayerDataHolder(IPublisher<PlayerDataLoadedPayload> loadedPublisher)
+        public PlayerDataHolder(
+            IPublisher<PlayerDataLoadedPayload> loadedPublisher,
+            IServerTimeProvider timeProvider)
         {
             _loadedPublisher = loadedPublisher;
+            _timeProvider = timeProvider;
         }
 
         public UniTask StartAsync(CancellationToken cancellation)
@@ -50,13 +55,14 @@ namespace MyOwn.ServiceHarness
         public void Save()
         {
             if (_data == null) return;
+            _data.LastSaveUtcTicks = _timeProvider.UtcNow.Ticks;
             PlayerDataSaveLoad.Save(_data);
         }
 
         public void Reset()
         {
             _data = new PlayerData();
-            PlayerDataSaveLoad.Save(_data);
+            Save();
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(true));
         }
     }

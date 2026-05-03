@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using VContainer;
 
-namespace MyOwn.ServiceHarness
+namespace Core.Module.Time
 {
     /// <summary>
     /// UI subscriber: render ClockTickPayload lên TMP. Method Injection vì MonoBehaviour không có constructor.
