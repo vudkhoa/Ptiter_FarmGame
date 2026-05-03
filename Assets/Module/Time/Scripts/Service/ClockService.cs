@@ -63,7 +63,6 @@ namespace Core.Module.Time
                     if (IsPaused) continue;
 
                     _tickCount++;
-                    Debug.Log($"[Khoa-Debug] Test Tick Logic: {_tickCount}");
                     var payload = new ClockTickPayload(_tickCount, _serverTimeProvider.UtcNow);
                     _tickPublisher.Publish(payload);
                 }
@@ -71,7 +70,7 @@ namespace Core.Module.Time
             catch (OperationCanceledException)
             {
                 // Expected: container dispose / scene unload.
-                Debug.Log($"[ClockService] Tick loop cancelled. Final TickCount={_tickCount}.");
+                Debug.LogWarning($"[ClockService] Tick loop cancelled. Final TickCount={_tickCount}.");
             }
             catch (Exception e)
             {
