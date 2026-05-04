@@ -40,7 +40,6 @@ namespace MyOwn.ServiceHarness
             if (data == null) return;
             try
             {
-                data.LastSaveUtcTicks = DateTime.UtcNow.Ticks;
                 var json = JsonUtility.ToJson(data, prettyPrint: false);
                 File.WriteAllText(TempPath, json);
                 if (File.Exists(FilePath)) File.Delete(FilePath);

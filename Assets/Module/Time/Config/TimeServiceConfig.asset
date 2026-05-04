@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ba62812484d8d843a4cc0651cacb44d, type: 3}
+  m_Name: TimeServiceConfig
+  m_EditorClassIdentifier: Clock::Core.Module.Time.TimeServiceConfig
+  _driftThresholdSeconds: 30
+  _driftCheckIntervalSeconds: 2
+  _resyncIntervalSeconds: 300
+  _resetBaselineOnAppFocus: 1

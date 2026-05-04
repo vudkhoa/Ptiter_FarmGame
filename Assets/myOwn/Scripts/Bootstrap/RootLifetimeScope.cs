@@ -3,6 +3,7 @@ using Core.Module.Map;
 using MessagePipe;
 using VContainer;
 using VContainer.Unity;
+using Core.Module.Time;
 
 namespace MyOwn.ServiceHarness
 {
@@ -39,15 +40,27 @@ namespace MyOwn.ServiceHarness
             builder.RegisterMessageBroker<MapFurnitureAddedPayload>(options);
             builder.RegisterMessageBroker<MapPlacementStoppedPayload>(options);
 
+            // Time
+            builder.RegisterMessageBroker<ServerTimeSyncedPayload>(options);
+
             // AsImplementedInterfaces() → mọi interface (IService, IAsyncStartable, ITickable, IInputService...) visible cho consumer + entry-point dispatcher.
             // AsSelf() → cho phép inject qua concrete type.
             builder.Register<PlayerDataHolder>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
                 .AsSelf();
 
-            builder.Register<ClockService>(Lifetime.Singleton)
+            #region Time Block
+            builder.Register<LocalTimeSyncSource>(Lifetime.Singleton)
+                .AsImplementedInterfaces();
+
+            builder.RegisterComponentInHierarchy<ClockService>()
                 .AsImplementedInterfaces()
                 .AsSelf();
+
+            builder.RegisterComponentInHierarchy<ServerTimeService>()
+                .AsImplementedInterfaces()
+                .AsSelf();
+            #endregion
 
             // MonoBehaviour services — config tự gắn trên GameObject của service (xem README §6).
             // GameObject phải nằm trong hierarchy của LifetimeScope này (child của [Bootstrap]).

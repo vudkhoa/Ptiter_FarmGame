@@ -1,6 +1,6 @@
 using System;
 
-namespace MyOwn.ServiceHarness
+namespace Core.Module.Time
 {
     /// <summary>
     /// MessagePipe event: ClockService publish mỗi 1s. readonly struct → zero-alloc.
