@@ -8,7 +8,7 @@ using VContainer;
 namespace Core.Module.Time
 {
     [DisallowMultipleComponent]
-    public class ServerTimeService : MonoBehaviour, IServerTimeProvider
+    public sealed class ServerTimeService : MonoBehaviour, IServerTimeProvider
     {
         [Header("Settings")]
         [SerializeField] private TimeServiceConfig _config;
@@ -52,7 +52,7 @@ namespace Core.Module.Time
         private void Start()
         {
             _loopCts = new CancellationTokenSource();
-            InitializeFlowAsync(_loopCts.Token);
+            InitializeFlowAsync(_loopCts.Token).Forget();
         }
 
         private void OnDestroy()

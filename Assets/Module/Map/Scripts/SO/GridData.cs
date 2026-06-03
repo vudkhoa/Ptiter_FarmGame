@@ -6,7 +6,7 @@ namespace Core.Module.Map
 {
     public class GridData
     {
-        private Dictionary<Vector3Int, PlacementData> placementObjects = new();
+        private readonly Dictionary<Vector3Int, PlacementData> _placementObjects = new();
 
         #region Logic
         public void AddObjectAt(Vector3Int gridPosition, Vector2Int objectSize, int id, int placedObjectIndex)
@@ -16,9 +16,9 @@ namespace Core.Module.Map
 
             foreach (var pos in positionToOccupy)
             {
-                if (placementObjects.ContainsKey(pos))
+                if (_placementObjects.ContainsKey(pos))
                     throw new Exception($"Dictionary already contains key {pos}");
-                placementObjects.Add(pos, data);
+                _placementObjects.Add(pos, data);
             }
         }
 
@@ -37,10 +37,14 @@ namespace Core.Module.Map
 
         public bool CanPlaceObjectAt(Vector3Int gridPosition, Vector2Int objectSize)
         {
-            List<Vector3Int> positionToOccupy = CalculatePositions(gridPosition, objectSize);
-            foreach (var pos in positionToOccupy)
-                if (placementObjects.ContainsKey(pos))
-                    return false;
+            for (int x = 0; x < objectSize.x; x++)
+            {
+                for (int z = 0; z < objectSize.y; z++)
+                {
+                    if (_placementObjects.ContainsKey(gridPosition + new Vector3Int(x, 0, z)))
+                        return false;
+                }
+            }
             return true;
         }
         #endregion

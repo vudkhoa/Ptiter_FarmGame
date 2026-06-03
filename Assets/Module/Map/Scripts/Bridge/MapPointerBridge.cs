@@ -6,6 +6,13 @@ using VContainer;
 
 namespace Core.Module.Map
 {
+    /// <summary>
+    /// - Bridge: Sub.
+    /// - InputService: Call Payload.
+    /// - Bridge: Setup + Call Function.
+    /// - MapService: Define Function.
+    /// </summary>
+
     [DisallowMultipleComponent]
     public sealed class MapPointerBridge : MonoBehaviour
     {

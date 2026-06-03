@@ -13,8 +13,9 @@ public class SelectObjectsScreen : WindowController
 
     public void Bind(MapService map)
     {
+        if (_buttons == null) return;
         foreach (MapPlacer p in _buttons)
-            p.Bind(map);
+            if (p != null) p.Bind(map);
     }
 
     public void OnBeforeWindowOpen()

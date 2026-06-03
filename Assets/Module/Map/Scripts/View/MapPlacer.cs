@@ -1,29 +1,31 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Core.Module.Map
 {
-    public class MapPlacer : MonoBehaviour
+    public sealed class MapPlacer : MonoBehaviour
     {
         [SerializeField] private int _objectId;
-        [SerializeField] private Button btn;
+        [FormerlySerializedAs("btn")]
+        [SerializeField] private Button _btn;
 
         private IMapService _map;
 
         #region Bind - Manual Injection
-        public void Bind(MapService map) 
+        public void Bind(MapService map)
         {
-            _map = map; 
+            _map = map;
         }
 
         private void OnEnable()
         {
-            btn.onClick.AddListener(Place);
+            if (_btn != null) _btn.onClick.AddListener(Place);
         }
 
         private void OnDisable()
         {
-            btn.onClick.RemoveListener(Place);
+            if (_btn != null) _btn.onClick.RemoveListener(Place);
         }
         #endregion
 
