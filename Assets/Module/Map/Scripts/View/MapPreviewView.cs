@@ -48,6 +48,7 @@ namespace Core.Module.Map
         private void OnDestroy()
         {
             _subscriptions?.Dispose();
+            if (_previewMatInstance != null) Destroy(_previewMatInstance);
         }
         #endregion
 

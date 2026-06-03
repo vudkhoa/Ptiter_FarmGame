@@ -7,7 +7,6 @@ using UInput = UnityEngine.Input;
 
 namespace Core.Module.Input
 {
-    // Block Conflict Component
     [DisallowMultipleComponent]
     public sealed class InputService : MonoBehaviour, IInputService
     {
