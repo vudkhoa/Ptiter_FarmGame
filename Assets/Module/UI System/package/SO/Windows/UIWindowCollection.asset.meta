@@ -1,0 +1,8 @@
+fileFormatVersion: 2
+guid: 45b7ad3b40b32954dac4434872031e3a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: '{"Guid":{"value1":5548129636122632612,"value2":3807423450203082926},"Namespace":"BrunoMikoski.UIManager","StaticFilename":"UIWindowCollectionStatic","ParentFolderPath":"Packages\\com.brunomikoski.uimanager\\Scripts\\Runtime\\Core\\Database\\Windows","WriteAsPartialClass":true,"UseBaseClassForItems":false,"EnforceIndirectAccess":false,"WriteAddressableLoadingMethods":false}'
+  assetBundleName: 
+  assetBundleVariant: 

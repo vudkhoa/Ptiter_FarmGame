@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 792b3c15ff664bc59f8f7c83e76741b9, type: 3}
+  m_Name: Popup
+  m_EditorClassIdentifier: BrunoMikoski.UIManager::BrunoMikoski.UIManager.UILayer
+  guid:
+    value1: 5122976976701767119
+    value2: -6791615426856227966
+  collectionGUID:
+    value1: 4918287767224168118
+    value2: -3371389901117598785
+  behaviour: 0
+  includedOnHistory: 0
