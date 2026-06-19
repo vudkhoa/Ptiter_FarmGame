@@ -485,8 +485,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3210446768023469428, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
       propertyPath: m_Name
-      value: Tets UI Manager
+      value: Test_UIManager
       objectReference: {fileID: 0}
+    - target: {fileID: 4427660009537674597, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
+      propertyPath: _map
+      value: 
+      objectReference: {fileID: 1963677156}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
