@@ -50,7 +50,7 @@ GameObject:
   - component: {fileID: 1124413198685414678}
   - component: {fileID: 4427660009537674597}
   m_Layer: 5
-  m_Name: Tets_UIManager
+  m_Name: Test_UIManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
