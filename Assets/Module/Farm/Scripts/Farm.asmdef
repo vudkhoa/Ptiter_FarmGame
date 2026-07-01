@@ -1,0 +1,21 @@
+{
+    "name": "Farm",
+    "rootNamespace": "Core.Module.Farm",
+    "references": [
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:08b38f39e2d9e594389b7a4cf4c2c338",
+        "GUID:bfcf1a5ab2a157d499c3bc9b3b5eabc3",
+        "GUID:72842f58e203ef84d82e49814d3a5adb",
+        "GUID:89c307639fc21d646960574fe3ac91e1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
