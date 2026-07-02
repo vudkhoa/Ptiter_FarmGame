@@ -13,14 +13,14 @@ namespace Core.Module.Farm
         [Header("Production Logic")]
         public float productionTime;
 
-        [Tooltip("Tỉ lệ thời gian bắt đầu chuyển sang Giai đoạn 2 (Đang phát triển)")]
+        [Tooltip("Ratio (0.0 to 1.0) of production progress to transition from Stage 1 (Young) to Stage 2 (Growing).")]
         [Range(0f, 1f)]
         public float stage2Threshold = 0.3f;
 
         public string requiredFoodItemId;
 
         [Header("Visual Progress")]
-        [Tooltip("Phải có đủ 3 sprites tương ứng với 3 giai đoạn")]
+        [Tooltip("Should contain exactly 3 sprites representing: Young -> Growing -> Ripe (Ready to produce).")]
         public Sprite[] growthSprites;
 
         [Header("Yield Configuration")]
