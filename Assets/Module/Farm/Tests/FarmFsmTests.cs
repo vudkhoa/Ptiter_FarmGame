@@ -53,16 +53,29 @@ namespace Core.Module.Farm.Tests
             public bool IsCheatDetected { get; set; } = false;
             public long LastSaveUtcTicks { get; set; } = 0;
             public Dictionary<string, int> Inv = new Dictionary<string, int>();
+            
+            // List to record mock published events for assertions
+            public List<InventoryChangedPayload> PublishedEvents = new List<InventoryChangedPayload>();
 
             public int GetItemCount(string itemId) => Inv.TryGetValue(itemId, out var a) ? a : 0;
-            public void AddItem(string itemId, int amount) => Inv[itemId] = GetItemCount(itemId) + amount;
+            
+            public void AddItem(string itemId, int amount)
+            {
+                Inv[itemId] = GetItemCount(itemId) + amount;
+                // Simulating PlayerDataHolder event dispatching
+                PublishedEvents.Add(new InventoryChangedPayload(itemId, Inv[itemId], amount));
+            }
+            
             public bool RemoveItem(string itemId, int amount)
             {
                 int count = GetItemCount(itemId);
                 if (count < amount) return false;
                 Inv[itemId] = count - amount;
+                // Simulating PlayerDataHolder event dispatching for consumption (negative delta)
+                PublishedEvents.Add(new InventoryChangedPayload(itemId, Inv[itemId], -amount));
                 return true;
             }
+            
             public void Save() { LastSaveUtcTicks = CurrentTicks; }
             public long CurrentTicks { get; set; }
         }
@@ -148,6 +161,9 @@ namespace Core.Module.Farm.Tests
             Assert.AreEqual(FarmSlotState.Ripe, slot.state, "Crop should ripen after growTime (10s)");
             Assert.AreEqual(10f, slot.growthTimeSec, "Growth time should max at 10s");
 
+            // Clear any setup events to verify only the harvest event
+            _mockInventory.PublishedEvents.Clear();
+
             // 5. Harvest (Ripe -> Empty)
             bool harvestResult = farmService.TryHarvest(cell, out string product, out int amount);
             Assert.IsTrue(harvestResult, "Harvesting ripe crop should succeed");
@@ -156,6 +172,13 @@ namespace Core.Module.Farm.Tests
             Assert.AreEqual("wheat_grain", product, "Yield item should be wheat_grain");
             Assert.AreEqual(2, amount, "Yield amount should match harvestAmount");
             Assert.AreEqual(2, _mockInventory.GetItemCount("wheat_grain"), "Inventory should increase by yield amount");
+
+            // Verification of update event dispatching:
+            Assert.AreEqual(1, _mockInventory.PublishedEvents.Count, "Inventory mock should publish exactly 1 update event on harvest");
+            var harvestEvent = _mockInventory.PublishedEvents[0];
+            Assert.AreEqual("wheat_grain", harvestEvent.ItemId, "Event ItemId should be 'wheat_grain'");
+            Assert.AreEqual(2, harvestEvent.NewAmount, "Event NewAmount should represent the updated total in inventory");
+            Assert.AreEqual(2, harvestEvent.Delta, "Event Delta should be +2 (harvest amount)");
         }
 
         [Test]
@@ -195,12 +218,21 @@ namespace Core.Module.Farm.Tests
 
             // Add food and feed again
             _mockInventory.AddItem("wheat_grain", 1);
+            _mockInventory.PublishedEvents.Clear(); // Clear the AddItem event
+            
             bool feedSuccess = farmService.TryFeed(cell);
 
             Assert.IsTrue(feedSuccess, "Feeding should succeed when food is in inventory");
             Assert.IsTrue(slot.isFed, "isFed flag must be true");
             Assert.AreEqual(FarmSlotState.Growing, slot.state, "Animal state should change to Growing after feeding");
             Assert.AreEqual(0, _mockInventory.GetItemCount("wheat_grain"), "Inventory food should be consumed");
+
+            // Verification of consumption event dispatching:
+            Assert.AreEqual(1, _mockInventory.PublishedEvents.Count, "Inventory mock should publish exactly 1 event on feed consumption");
+            var feedEvent = _mockInventory.PublishedEvents[0];
+            Assert.AreEqual("wheat_grain", feedEvent.ItemId, "Event ItemId should be 'wheat_grain'");
+            Assert.AreEqual(0, feedEvent.NewAmount, "Event NewAmount should represent the updated total (0)");
+            Assert.AreEqual(-1, feedEvent.Delta, "Event Delta should be -1 (consumed food)");
 
             // 4. Production (Growing -> Ripe)
             for (int i = 0; i < 15; i++)
@@ -210,6 +242,9 @@ namespace Core.Module.Farm.Tests
             }
             Assert.AreEqual(FarmSlotState.Ripe, slot.state, "Animal should ripen after productionTime (15s)");
 
+            // Clear the feed event before harvesting product
+            _mockInventory.PublishedEvents.Clear();
+
             // 5. Collect product (Ripe -> Empty & Unfed)
             bool collectResult = farmService.TryHarvest(cell, out string product, out int amount);
             Assert.IsTrue(collectResult, "Harvesting animal product should succeed");
@@ -218,6 +253,13 @@ namespace Core.Module.Farm.Tests
             Assert.AreEqual("egg", product);
             Assert.AreEqual(1, amount);
             Assert.AreEqual(1, _mockInventory.GetItemCount("egg"), "Inventory should receive product");
+
+            // Verification of product harvest event dispatching:
+            Assert.AreEqual(1, _mockInventory.PublishedEvents.Count, "Inventory mock should publish exactly 1 update event on product collect");
+            var collectEvent = _mockInventory.PublishedEvents[0];
+            Assert.AreEqual("egg", collectEvent.ItemId, "Event ItemId should be 'egg'");
+            Assert.AreEqual(1, collectEvent.NewAmount, "Event NewAmount should be 1");
+            Assert.AreEqual(1, collectEvent.Delta, "Event Delta should be +1");
         }
     }
 }
