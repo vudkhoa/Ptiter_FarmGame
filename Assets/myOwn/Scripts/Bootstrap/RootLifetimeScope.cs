@@ -1,6 +1,7 @@
 using Core.Module.Input;
 using Core.Module.Map;
 using Core.Module.Farm;
+using Core.Module.Storage;
 using MessagePipe;
 using VContainer;
 using VContainer.Unity;
@@ -45,6 +46,9 @@ namespace MyOwn.ServiceHarness
             // Time & Cheat detection brokers
             builder.RegisterMessageBroker<ServerTimeSyncedPayload>(options);
             builder.RegisterMessageBroker<ClockManipulationDetectedPayload>(options);
+
+            // Storage broker
+            builder.RegisterMessageBroker<InventoryChangedPayload>(options);
 
             // Farm brokers
             builder.RegisterMessageBroker<FarmSlotChangedPayload>(options);

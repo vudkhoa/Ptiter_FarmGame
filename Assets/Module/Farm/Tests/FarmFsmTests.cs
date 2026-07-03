@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using Core.Module.Time;
 using Core.Module.Farm;
+using Core.Module.Storage;
 using MessagePipe;
 
 namespace Core.Module.Farm.Tests
@@ -46,7 +47,7 @@ namespace Core.Module.Farm.Tests
             public DateTime LastSyncedAt => CurrentTime;
         }
 
-        private class MockInventoryProvider : IFarmInventoryProvider
+        private class MockInventoryProvider : IStorageService
         {
             public int Coins { get; set; } = 1000;
             public bool IsCheatDetected { get; set; } = false;

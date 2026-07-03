@@ -1,6 +1,6 @@
-namespace Core.Module.Farm
+namespace Core.Module.Storage
 {
-    public interface IFarmInventoryProvider
+    public interface IStorageService
     {
         int Coins { get; set; }
         bool IsCheatDetected { get; set; }

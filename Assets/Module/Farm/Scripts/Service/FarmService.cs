@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Core.Module.Time;
+using Core.Module.Storage;
 using MessagePipe;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace Core.Module.Farm
     {
         private readonly IServerTimeProvider _timeProvider;
         private readonly FarmDatabaseSO _database;
-        private readonly IFarmInventoryProvider _inventoryProvider;
+        private readonly IStorageService _storageService;
         private readonly IPublisher<FarmSlotChangedPayload> _slotChangedPub;
         private readonly IDisposable _tickSubscription;
 
@@ -23,13 +24,13 @@ namespace Core.Module.Farm
         public FarmService(
             IServerTimeProvider timeProvider,
             FarmDatabaseSO database,
-            IFarmInventoryProvider inventoryProvider,
+            IStorageService storageService,
             ISubscriber<ClockTickPayload> tickSub,
             IPublisher<FarmSlotChangedPayload> slotChangedPub)
         {
             _timeProvider = timeProvider;
             _database = database;
-            _inventoryProvider = inventoryProvider;
+            _storageService = storageService;
             _slotChangedPub = slotChangedPub;
 
             // Subscribe to ClockService tick event (publishes every 1s)
@@ -55,7 +56,7 @@ namespace Core.Module.Farm
 
         private void OnClockTick(ClockTickPayload payload)
         {
-            if (_inventoryProvider.IsCheatDetected) return;
+            if (_storageService.IsCheatDetected) return;
 
             bool anyChanged = false;
             long nowTicks = _timeProvider.UtcNow.Ticks;
@@ -80,12 +81,12 @@ namespace Core.Module.Farm
                 }
             }
 
-            if (anyChanged) _inventoryProvider.Save();
+            if (anyChanged) _storageService.Save();
         }
 
         private void CalculateOfflineProgress(long lastSaveTicks)
         {
-            if (_inventoryProvider.IsCheatDetected) return;
+            if (_storageService.IsCheatDetected) return;
             if (lastSaveTicks <= 0) return;
 
             long nowTicks = _timeProvider.UtcNow.Ticks;
@@ -112,12 +113,12 @@ namespace Core.Module.Farm
                 }
             }
 
-            if (anyChanged) _inventoryProvider.Save();
+            if (anyChanged) _storageService.Save();
         }
 
         public bool TryPlant(Vector3Int cell, string entityId, bool isAnimal)
         {
-            if (_inventoryProvider.IsCheatDetected) return false;
+            if (_storageService.IsCheatDetected) return false;
 
             if (_slots.TryGetValue(cell, out var existingSlot))
             {
@@ -138,13 +139,13 @@ namespace Core.Module.Farm
                 cost = data.coinCost;
             }
 
-            if (_inventoryProvider.Coins < cost)
+            if (_storageService.Coins < cost)
             {
-                Debug.LogWarning($"[FarmService] Not enough coins to plant {entityId}. Cost: {cost}, Has: {_inventoryProvider.Coins}");
+                Debug.LogWarning($"[FarmService] Not enough coins to plant {entityId}. Cost: {cost}, Has: {_storageService.Coins}");
                 return false;
             }
 
-            _inventoryProvider.Coins -= cost;
+            _storageService.Coins -= cost;
 
             var slot = existingSlot ?? new FarmSlotSaveData { cellX = cell.x, cellY = cell.y, cellZ = cell.z };
             slot.isAnimal = isAnimal;
@@ -170,19 +171,19 @@ namespace Core.Module.Farm
             }
 
             _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
-            _inventoryProvider.Save();
+            _storageService.Save();
             return true;
         }
 
         public bool TryFeed(Vector3Int cell)
         {
-            if (_inventoryProvider.IsCheatDetected) return false;
+            if (_storageService.IsCheatDetected) return false;
             if (!_slots.TryGetValue(cell, out var slot) || !slot.isAnimal || slot.state != FarmSlotState.Empty) return false;
 
             var data = _database.GetAnimalById(slot.entityId);
             if (data == null) return false;
 
-            if (_inventoryProvider.RemoveItem(data.requiredFoodItemId, 1))
+            if (_storageService.RemoveItem(data.requiredFoodItemId, 1))
             {
                 slot.state = FarmSlotState.Growing;
                 slot.isFed = true;
@@ -191,7 +192,7 @@ namespace Core.Module.Farm
                 slot.lastUpdateUtcTicks = slot.startTimeUtcTicks;
 
                 _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
-                _inventoryProvider.Save();
+                _storageService.Save();
                 return true;
             }
             else
@@ -206,7 +207,7 @@ namespace Core.Module.Farm
             productItemId = null;
             amount = 0;
 
-            if (_inventoryProvider.IsCheatDetected) return false;
+            if (_storageService.IsCheatDetected) return false;
             if (!_slots.TryGetValue(cell, out var slot) || slot.state != FarmSlotState.Ripe) return false;
 
             if (slot.isAnimal)
@@ -245,9 +246,9 @@ namespace Core.Module.Farm
                 }
             }
 
-            _inventoryProvider.AddItem(productItemId, amount);
+            _storageService.AddItem(productItemId, amount);
             _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
-            _inventoryProvider.Save();
+            _storageService.Save();
             return true;
         }
 

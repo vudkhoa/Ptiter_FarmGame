@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Core.Module.Time;
-using Core.Module.Farm;
+using Core.Module.Storage;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
 using UnityEngine;
@@ -12,13 +12,14 @@ namespace MyOwn.ServiceHarness
     /// <summary>
     /// Wrap PlayerData runtime instance, expose Load/Save/Reset.
     /// POCO Singleton; auto-loads trong StartAsync khi container build.
-    /// Implements IFarmInventoryProvider to decouple Farm module.
+    /// Implements IStorageService to serve as the unified warehouse contract.
     /// </summary>
-    public sealed class PlayerDataHolder : IService, IAsyncStartable, IFarmInventoryProvider
+    public sealed class PlayerDataHolder : IService, IAsyncStartable, IStorageService
     {
         private readonly IPublisher<PlayerDataLoadedPayload> _loadedPublisher;
         private readonly IServerTimeProvider _timeProvider;
         private readonly IDisposable _cheatSubscription;
+        private readonly IPublisher<InventoryChangedPayload> _inventoryChangedPublisher;
         private PlayerData _data;
 
         public PlayerData Data => _data;
@@ -26,7 +27,7 @@ namespace MyOwn.ServiceHarness
         /// <summary>True khi Load() KHÔNG tìm thấy save file → tạo PlayerData mặc định.</summary>
         public bool IsNewlyCreated { get; private set; }
 
-        #region IFarmInventoryProvider Implementation
+        #region IStorageService Implementation
         public int Coins
         {
             get => _data != null ? _data.Coins : 0;
@@ -49,18 +50,36 @@ namespace MyOwn.ServiceHarness
 
         public int GetItemCount(string itemId) => _data != null ? _data.GetItemCount(itemId) : 0;
 
-        public void AddItem(string itemId, int amount) => _data?.AddItem(itemId, amount);
+        public void AddItem(string itemId, int amount)
+        {
+            if (_data == null) return;
+            _data.AddItem(itemId, amount);
+            int newAmt = _data.GetItemCount(itemId);
+            _inventoryChangedPublisher.Publish(new InventoryChangedPayload(itemId, newAmt, amount));
+        }
 
-        public bool RemoveItem(string itemId, int amount) => _data != null && _data.RemoveItem(itemId, amount);
+        public bool RemoveItem(string itemId, int amount)
+        {
+            if (_data == null) return false;
+            bool success = _data.RemoveItem(itemId, amount);
+            if (success)
+            {
+                int newAmt = _data.GetItemCount(itemId);
+                _inventoryChangedPublisher.Publish(new InventoryChangedPayload(itemId, newAmt, -amount));
+            }
+            return success;
+        }
         #endregion
 
         public PlayerDataHolder(
             IPublisher<PlayerDataLoadedPayload> loadedPublisher,
             IServerTimeProvider timeProvider,
-            ISubscriber<ClockManipulationDetectedPayload> cheatSub)
+            ISubscriber<ClockManipulationDetectedPayload> cheatSub,
+            IPublisher<InventoryChangedPayload> inventoryChangedPublisher)
         {
             _loadedPublisher = loadedPublisher;
             _timeProvider = timeProvider;
+            _inventoryChangedPublisher = inventoryChangedPublisher;
 
             // Subscribe to cheat events to lock game production
             _cheatSubscription = cheatSub.Subscribe(OnCheatDetected);
