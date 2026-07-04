@@ -52,6 +52,7 @@ namespace MyOwn.ServiceHarness
 
             // Farm brokers
             builder.RegisterMessageBroker<FarmSlotChangedPayload>(options);
+            builder.RegisterMessageBroker<OpenFarmSelectorUIPayload>(options);
 
             // AsImplementedInterfaces() → mọi interface (IService, IAsyncStartable, ITickable, IInputService...) visible cho consumer + entry-point dispatcher.
             // AsSelf() → cho phép inject qua concrete type.
@@ -74,14 +75,12 @@ namespace MyOwn.ServiceHarness
 
             #region Farm Block
             var farmDatabase = Resources.Load<FarmDatabaseSO>("FarmDatabase");
-            if (farmDatabase != null)
+            if (farmDatabase == null)
             {
-                builder.RegisterInstance(farmDatabase);
+                Debug.LogWarning("[RootLifetimeScope] FarmDatabase SO not found in Resources. Creating a temporary runtime instance to prevent container crash. Make sure to place one at 'Assets/Resources/FarmDatabase.asset'.");
+                farmDatabase = ScriptableObject.CreateInstance<FarmDatabaseSO>();
             }
-            else
-            {
-                Debug.LogWarning("[RootLifetimeScope] FarmDatabase SO not found in Resources. Make sure to place one at 'Assets/Resources/FarmDatabase.asset'.");
-            }
+            builder.RegisterInstance(farmDatabase);
 
             builder.Register<FarmService>(Lifetime.Singleton)
                 .AsImplementedInterfaces()

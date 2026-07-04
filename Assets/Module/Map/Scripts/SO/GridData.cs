@@ -47,6 +47,11 @@ namespace Core.Module.Map
             }
             return true;
         }
+
+        public bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data)
+        {
+            return _placementObjects.TryGetValue(gridPosition, out data);
+        }
         #endregion
     }
 

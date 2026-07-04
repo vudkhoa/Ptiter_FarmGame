@@ -68,6 +68,11 @@ namespace Core.Module.Map
         public int CurrentObjectId => _currentObjectId;
 
         public bool HasActivePlacement => _currentDbIndex >= 0;
+
+        public bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data)
+        {
+            return _grid.TryGetPlacementAt(gridPosition, out data);
+        }
         #endregion
 
         #region IMapService - State Machine
@@ -145,7 +150,7 @@ namespace Core.Module.Map
         #endregion
 
         #region Cell math
-        private Vector3Int WorldToCell(Vector3 w) => new Vector3Int(
+        public Vector3Int WorldToCell(Vector3 w) => new Vector3Int(
             Mathf.FloorToInt(w.x / _cellSize),
             0,
             Mathf.FloorToInt(w.z / _cellSize)

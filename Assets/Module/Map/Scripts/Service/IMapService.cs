@@ -17,5 +17,9 @@ namespace Core.Module.Map
         // World-only API
         void UpdatePreview(Vector3 worldHit);
         bool AddFurniture(Vector3 worldHit);
+
+        // Grid queries & coordinate conversion
+        bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data);
+        Vector3Int WorldToCell(Vector3 worldPosition);
     }
 }
