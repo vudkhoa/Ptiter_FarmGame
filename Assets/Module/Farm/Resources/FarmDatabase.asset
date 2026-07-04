@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c1ba1e791402624bb6c1db1776e4a23, type: 3}
   m_Name: FarmDatabase
   m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmDatabaseSO
-  allCrops: []
-  allAnimals: []
+  allCrops:
+  - {fileID: 11400000, guid: 370119295709fef48b1366fee6681be3, type: 2}
+  allAnimals:
+  - {fileID: 11400000, guid: 93bc546ff7b1cf848af09c58a7e8ba9a, type: 2}

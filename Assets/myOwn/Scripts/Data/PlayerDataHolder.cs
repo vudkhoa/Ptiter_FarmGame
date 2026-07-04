@@ -5,6 +5,7 @@ using Core.Module.Storage;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
 using UnityEngine;
+using VContainer;
 using VContainer.Unity;
 
 namespace MyOwn.ServiceHarness
@@ -20,6 +21,7 @@ namespace MyOwn.ServiceHarness
         private readonly IServerTimeProvider _timeProvider;
         private readonly IDisposable _cheatSubscription;
         private readonly IPublisher<InventoryChangedPayload> _inventoryChangedPublisher;
+        private readonly IObjectResolver _resolver;
         private PlayerData _data;
 
         public PlayerData Data => _data;
@@ -75,11 +77,13 @@ namespace MyOwn.ServiceHarness
             IPublisher<PlayerDataLoadedPayload> loadedPublisher,
             IServerTimeProvider timeProvider,
             ISubscriber<ClockManipulationDetectedPayload> cheatSub,
-            IPublisher<InventoryChangedPayload> inventoryChangedPublisher)
+            IPublisher<InventoryChangedPayload> inventoryChangedPublisher,
+            IObjectResolver resolver)
         {
             _loadedPublisher = loadedPublisher;
             _timeProvider = timeProvider;
             _inventoryChangedPublisher = inventoryChangedPublisher;
+            _resolver = resolver;
 
             // Subscribe to cheat events to lock game production
             _cheatSubscription = cheatSub.Subscribe(OnCheatDetected);
@@ -113,6 +117,24 @@ namespace MyOwn.ServiceHarness
             var loaded = PlayerDataSaveLoad.Load();
             IsNewlyCreated = loaded == null;
             _data = loaded ?? new PlayerData();
+
+            // Khởi tạo FarmService bằng dữ liệu Save vừa load
+            if (_resolver != null)
+            {
+                try
+                {
+                    var farmService = _resolver.Resolve<Core.Module.Farm.IFarmService>();
+                    if (farmService != null)
+                    {
+                        farmService.Initialize(_data.FarmSlots, _data.LastSaveUtcTicks);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[PlayerDataHolder] Bỏ qua khởi tạo FarmService (thường do chạy UnitTest hoặc khởi động sớm): {e.Message}");
+                }
+            }
+
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(IsNewlyCreated));
             Debug.Log($"[PlayerDataHolder] Loaded. IsNewlyCreated={IsNewlyCreated}, SaveVersion={_data.SaveVersion}, Coins={_data.Coins}");
         }

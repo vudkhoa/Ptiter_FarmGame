@@ -37,6 +37,7 @@ namespace MyOwn.ServiceHarness
             builder.RegisterComponentInHierarchy<FarmInputHandler>();
             builder.RegisterComponentInHierarchy<FarmDebugLogger>();
             builder.RegisterComponentInHierarchy<FarmTestHelper>();
+            builder.RegisterComponentInHierarchy<FarmVisualizer>();
         }
     }
 }

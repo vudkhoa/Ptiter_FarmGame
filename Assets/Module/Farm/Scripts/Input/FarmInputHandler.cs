@@ -101,9 +101,9 @@ namespace Core.Module.Farm
             switch (slot.state)
             {
                 case FarmSlotState.Empty:
-                    if (slot.isAnimal && !slot.isFed)
+                    if (slot.isAnimal && !string.IsNullOrEmpty(slot.entityId) && !slot.isFed)
                     {
-                        // Tapping an unfed animal pen triggers FEEDING directly
+                        // Tapping an unfed animal pen (with a purchased animal) triggers FEEDING directly
                         if (_farmService.TryFeed(originCell))
                         {
                             Debug.Log($"[FarmInputHandler] Fed animal at {originCell} successfully.");
@@ -111,7 +111,7 @@ namespace Core.Module.Farm
                     }
                     else
                     {
-                        // Otherwise open UI selector (e.g. crop seed selector)
+                        // Otherwise open UI selector (e.g. crop seed selector or animal shop UI)
                         _openSelectorPub.Publish(new OpenFarmSelectorUIPayload(originCell, isAnimal));
                     }
                     break;
