@@ -18,5 +18,6 @@ namespace Core.Module.Farm
         public long lastUpdateUtcTicks;  // Authoritative UTC last update time
         public int remainingHarvests;    // Sugarcane remaining harvests
         public bool isFed;               // Feed status for animals
+        public bool isAdult;             // Adulthood status for animals
     }
 }

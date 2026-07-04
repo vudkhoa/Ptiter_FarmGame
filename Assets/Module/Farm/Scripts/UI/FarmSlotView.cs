@@ -32,8 +32,20 @@ namespace Core.Module.Farm
             switch (slot.state)
             {
                 case FarmSlotState.Empty:
-                    // This state only has visual properties if it is an unfed animal pen
-                    if (_spriteRenderer != null) _spriteRenderer.sprite = null;
+                    // If it is an adult animal, keep displaying the adult sprite instead of null
+                    if (slot.isAnimal && slot.isAdult)
+                    {
+                        var data = database.GetAnimalById(slot.entityId);
+                        if (data != null && data.growthSprites != null && data.growthSprites.Length >= 2)
+                        {
+                            if (_spriteRenderer != null) _spriteRenderer.sprite = data.growthSprites[2];
+                        }
+                    }
+                    else
+                    {
+                        if (_spriteRenderer != null) _spriteRenderer.sprite = null;
+                    }
+
                     if (_progressBar != null) _progressBar.gameObject.SetActive(false);
                     if (_harvestBubble != null) _harvestBubble.SetActive(false);
 
@@ -81,7 +93,15 @@ namespace Core.Module.Farm
                     {
                         if (_spriteRenderer != null)
                         {
-                            _spriteRenderer.sprite = progress < stage2Threshold ? growthSprites[0] : growthSprites[1];
+                            if (slot.isAnimal && slot.isAdult)
+                            {
+                                // Keep displaying the adult sprite for grown-up animals
+                                _spriteRenderer.sprite = growthSprites[2];
+                            }
+                            else
+                            {
+                                _spriteRenderer.sprite = progress < stage2Threshold ? growthSprites[0] : growthSprites[1];
+                            }
                         }
                     }
 

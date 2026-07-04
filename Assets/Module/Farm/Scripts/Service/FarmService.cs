@@ -217,6 +217,9 @@ namespace Core.Module.Farm
                 productItemId = data.yieldItemId;
                 amount = data.productAmount;
 
+                // Set adulthood status to true upon first harvest
+                slot.isAdult = true;
+
                 // Reset back to Empty (unfed) state for the next feeding cycle
                 slot.state = FarmSlotState.Empty;
                 slot.isFed = false;
