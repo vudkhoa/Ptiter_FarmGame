@@ -139,22 +139,77 @@ namespace MyOwn.ServiceHarness
             Debug.Log($"[PlayerDataHolder] Loaded. IsNewlyCreated={IsNewlyCreated}, SaveVersion={_data.SaveVersion}, Coins={_data.Coins}");
         }
 
+        private CancellationTokenSource _saveCts;
+
         public void Save()
         {
             if (_data == null) return;
+
+            // Hủy tác vụ lưu đang chờ trước đó để bắt đầu đếm ngược lại (Throttling)
+            if (_saveCts != null)
+            {
+                _saveCts.Cancel();
+                _saveCts.Dispose();
+            }
+
+            _saveCts = new CancellationTokenSource();
+            ThrottledSaveAsync(_saveCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ThrottledSaveAsync(CancellationToken ct)
+        {
+            try
+            {
+                // Trì hoãn 1 giây (nếu có click mới trong 1s này, tác vụ sẽ bị hủy và đếm lại từ đầu)
+                await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: ct);
+
+                _data.LastSaveUtcTicks = _timeProvider.UtcNow.Ticks;
+
+                // Sao chép tham chiếu dữ liệu để ghi bất đồng bộ trên ThreadPool, tránh chặn main thread
+                PlayerData saveCopy = _data;
+                await UniTask.RunOnThreadPool(() =>
+                {
+                    PlayerDataSaveLoad.Save(saveCopy);
+                }, cancellationToken: ct);
+
+                Debug.Log("[PlayerDataHolder] Throttled save completed asynchronously on thread pool.");
+            }
+            catch (OperationCanceledException)
+            {
+                // Bị hủy khi có yêu cầu Save tiếp theo trước 1s, đây là hoạt động bình thường của Throttling
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[PlayerDataHolder] Throttled save failed: {e.Message}");
+            }
+        }
+
+        public void SaveImmediate()
+        {
+            if (_data == null) return;
+
+            if (_saveCts != null)
+            {
+                _saveCts.Cancel();
+                _saveCts.Dispose();
+                _saveCts = null;
+            }
+
             _data.LastSaveUtcTicks = _timeProvider.UtcNow.Ticks;
             PlayerDataSaveLoad.Save(_data);
+            Debug.Log("[PlayerDataHolder] Immediate synchronous save completed successfully.");
         }
 
         public void Reset()
         {
             _data = new PlayerData();
-            Save();
+            SaveImmediate(); // Khi reset tài khoản, ghi đè lập tức
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(true));
         }
 
         public void Dispose()
         {
+            SaveImmediate(); // Đảm bảo mọi thay đổi đang chờ trong RAM được ghi xuống ổ đĩa trước khi hủy đối tượng
             _cheatSubscription?.Dispose();
         }
     }

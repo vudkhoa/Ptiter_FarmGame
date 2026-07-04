@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using Core.Module.Map;
 using UnityEngine;
@@ -54,3 +55,4 @@ namespace Core.Module.Farm
         }
     }
 }
+#endif

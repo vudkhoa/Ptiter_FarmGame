@@ -35,9 +35,12 @@ namespace MyOwn.ServiceHarness
 
             // Farm module interactions — scoped per-scene
             builder.RegisterComponentInHierarchy<FarmInputHandler>();
+            builder.RegisterComponentInHierarchy<FarmVisualizer>();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             builder.RegisterComponentInHierarchy<FarmDebugLogger>();
             builder.RegisterComponentInHierarchy<FarmTestHelper>();
-            builder.RegisterComponentInHierarchy<FarmVisualizer>();
+#endif
         }
     }
 }

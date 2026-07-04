@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
 using MessagePipe;
 using UnityEngine;
@@ -46,3 +47,4 @@ namespace Core.Module.Farm
         }
     }
 }
+#endif
