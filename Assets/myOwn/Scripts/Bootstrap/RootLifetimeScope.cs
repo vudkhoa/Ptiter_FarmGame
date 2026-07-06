@@ -6,6 +6,7 @@ using MessagePipe;
 using VContainer;
 using VContainer.Unity;
 using Core.Module.Time;
+using Core.Module.Quest;
 using UnityEngine;
 
 namespace MyOwn.ServiceHarness
@@ -54,6 +55,11 @@ namespace MyOwn.ServiceHarness
             builder.RegisterMessageBroker<FarmSlotChangedPayload>(options);
             builder.RegisterMessageBroker<OpenFarmSelectorUIPayload>(options);
 
+            // Quest brokers
+            builder.RegisterMessageBroker<QuestAcceptedPayload>(options);
+            builder.RegisterMessageBroker<QuestProgressChangedPayload>(options);
+            builder.RegisterMessageBroker<QuestCompletedPayload>(options);
+
             // AsImplementedInterfaces() → mọi interface (IService, IAsyncStartable, ITickable, IInputService...) visible cho consumer + entry-point dispatcher.
             // AsSelf() → cho phép inject qua concrete type.
             builder.Register<PlayerDataHolder>(Lifetime.Singleton)
@@ -89,6 +95,29 @@ namespace MyOwn.ServiceHarness
 
             // MonoBehaviour services — config tự gắn trên GameObject của service (xem README §6).
             // GameObject phải nằm trong hierarchy của LifetimeScope này (child của [Bootstrap]).
+            #region Quest Block
+            var questCatalog = Resources.Load<QuestCatalogSO>("QuestCatalog");
+            if (questCatalog == null)
+            {
+                Debug.LogWarning("[RootLifetimeScope] QuestCatalog SO not found in Resources. Creating a temporary runtime instance to prevent container crash. Make sure to place one at 'Assets/Resources/QuestCatalog.asset' or another Resources folder.");
+                questCatalog = ScriptableObject.CreateInstance<QuestCatalogSO>();
+            }
+            builder.RegisterInstance(questCatalog);
+
+            builder.Register<QuestProgressApplier>(Lifetime.Singleton)
+                .AsSelf();
+            builder.Register<StateReachedObjectiveRule>(Lifetime.Singleton)
+                .AsImplementedInterfaces()
+                .AsSelf();
+            builder.Register<QuestObjectiveRuleRegistry>(Lifetime.Singleton)
+                .AsSelf();
+            builder.Register<QuestCompletionEvaluator>(Lifetime.Singleton)
+                .AsSelf();
+            builder.Register<QuestService>(Lifetime.Singleton)
+                .AsImplementedInterfaces()
+                .AsSelf();
+            #endregion
+
             builder.RegisterComponentInHierarchy<InputService>()
                 .AsImplementedInterfaces()
                 .AsSelf();

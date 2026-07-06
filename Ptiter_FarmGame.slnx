@@ -1,0 +1,14 @@
+﻿<Solution>
+  <Project Path="Quest.csproj" />
+  <Project Path="Clock.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="Assembly-CSharp-firstpass.csproj" />
+  <Project Path="Farm.csproj" />
+  <Project Path="Map.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Farm.Tests.csproj" />
+  <Project Path="Input.csproj" />
+  <Project Path="Quest.Tests.csproj" />
+  <Project Path="Storage.csproj" />
+  <Project Path="MyOwn.csproj" />
+</Solution>
