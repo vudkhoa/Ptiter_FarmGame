@@ -14,6 +14,7 @@ namespace Core.Module.Farm
         [SerializeField] private Camera _camera;
         [SerializeField] private LayerMask _placeLayer;
         [SerializeField] private float _maxRayDistance = 1000f;
+        [SerializeField] private bool _useMathPlane = true;
 
         [Header("Object ID Mappings")]
         [SerializeField] private int _soilId = 101; // ID of Soil/Ruộng from database
@@ -65,10 +66,39 @@ namespace Core.Module.Farm
             Camera cam = _camera != null ? _camera : Camera.main;
             if (cam == null) return;
 
+            Vector3 hitPoint;
+            bool hasHit = false;
+
             var ray = cam.ScreenPointToRay(_inputService.PointerScreen);
-            if (Physics.Raycast(ray, out var hit, _maxRayDistance, _placeLayer))
+            if (_useMathPlane)
             {
-                Vector3Int clickedCell = _mapService.WorldToCell(hit.point);
+                Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+                if (groundPlane.Raycast(ray, out float enter))
+                {
+                    hitPoint = ray.GetPoint(enter);
+                    hasHit = true;
+                }
+                else
+                {
+                    hitPoint = default;
+                }
+            }
+            else
+            {
+                if (Physics.Raycast(ray, out var hit, _maxRayDistance, _placeLayer))
+                {
+                    hitPoint = hit.point;
+                    hasHit = true;
+                }
+                else
+                {
+                    hitPoint = default;
+                }
+            }
+
+            if (hasHit)
+            {
+                Vector3Int clickedCell = _mapService.WorldToCell(hitPoint);
 
                 if (_mapService.TryGetPlacementAt(clickedCell, out var placement))
                 {
