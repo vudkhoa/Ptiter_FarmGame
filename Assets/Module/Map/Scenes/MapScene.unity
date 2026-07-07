@@ -343,6 +343,7 @@ Transform:
   - {fileID: 1963677155}
   - {fileID: 42016500}
   - {fileID: 1606044949}
+  - {fileID: 945751118}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &123408506
@@ -403,6 +404,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1124413198685414678, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
+      propertyPath: initialWindows.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1124413198685414678, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
+      propertyPath: 'initialWindows.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 95301318043aa0c49a7754a16d356d3c, type: 2}
     - target: {fileID: 2488003108628263176, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -491,16 +500,48 @@ PrefabInstance:
       propertyPath: _map
       value: 
       objectReference: {fileID: 1963677156}
+    - target: {fileID: 4427660009537674597, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
+      propertyPath: _choosenWindow
+      value: 
+      objectReference: {fileID: 11400000, guid: 8facc328dbe240947acff453f2a10f38, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3210446768023469428, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 637305286}
   m_SourcePrefab: {fileID: 100100000, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
 --- !u!1 &637305284 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3210446768023469428, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
   m_PrefabInstance: {fileID: 637305283}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &637305285 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1124413198685414678, guid: e99c4a6fc728c7946b2ed348e3456f40, type: 3}
+  m_PrefabInstance: {fileID: 637305283}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 637305284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 412da974132c4e118585904ca28f3597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BrunoMikoski.UIManager::BrunoMikoski.UIManager.WindowsManager
+--- !u!114 &637305286
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 637305284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96e300c3c3c4cfd4eb1eb36e0575aef9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MyOwn.ServiceHarness.FarmUIBridge
+  _windowsManager: {fileID: 637305285}
+  _farmSelectorWindow: {fileID: 11400000, guid: a529ddd07b5ba1d4ca4659890a6ed4c9, type: 2}
 --- !u!1 &658099385
 GameObject:
   m_ObjectHideFlags: 0
@@ -744,6 +785,83 @@ MonoBehaviour:
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
+--- !u!1 &945751117
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 945751118}
+  - component: {fileID: 945751119}
+  - component: {fileID: 945751121}
+  - component: {fileID: 945751120}
+  m_Layer: 0
+  m_Name: FarmInput
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &945751118
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 945751117}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 123408505}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &945751119
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 945751117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e334dacb7ebb654b9bcf2b5e4e549f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmInputHandler
+  _camera: {fileID: 21659923}
+  _placeLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  _maxRayDistance: 1000
+  _soilId: 101
+  _barnId: 102
+--- !u!114 &945751120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 945751117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca7fa3d3ed5539840a4c8258ee552e40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmTestHelper
+--- !u!114 &945751121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 945751117}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c768d1b6bc5cbc947a8b4c24fb0faa27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmDebugLogger
 --- !u!1 &1261491904
 GameObject:
   m_ObjectHideFlags: 0
@@ -852,6 +970,53 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.015, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1359646555
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1359646557}
+  - component: {fileID: 1359646556}
+  m_Layer: 0
+  m_Name: FarmVisualizer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1359646556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1359646555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05a7ff4caea8f424494eb94ef1dd8886, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmVisualizer
+  _slotViewPrefab: {fileID: 313763533857048325, guid: 00958c8747edcf945aba4b2df5241309, type: 3}
+  _cellSize: 1
+  _offset: {x: 0.5, y: 0.1, z: 0.5}
+--- !u!4 &1359646557
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1359646555}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1227.3572, y: 776.93146, z: -16.14639}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1185,3 +1350,4 @@ SceneRoots:
   - {fileID: 857082999}
   - {fileID: 123408505}
   - {fileID: 637305283}
+  - {fileID: 1359646557}

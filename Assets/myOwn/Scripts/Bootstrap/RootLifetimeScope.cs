@@ -1,9 +1,12 @@
 using Core.Module.Input;
 using Core.Module.Map;
+using Core.Module.Farm;
+using Core.Module.Storage;
 using MessagePipe;
 using VContainer;
 using VContainer.Unity;
 using Core.Module.Time;
+using UnityEngine;
 
 namespace MyOwn.ServiceHarness
 {
@@ -40,8 +43,16 @@ namespace MyOwn.ServiceHarness
             builder.RegisterMessageBroker<MapFurnitureAddedPayload>(options);
             builder.RegisterMessageBroker<MapPlacementStoppedPayload>(options);
 
-            // Time
+            // Time & Cheat detection brokers
             builder.RegisterMessageBroker<ServerTimeSyncedPayload>(options);
+            builder.RegisterMessageBroker<ClockManipulationDetectedPayload>(options);
+
+            // Storage broker
+            builder.RegisterMessageBroker<InventoryChangedPayload>(options);
+
+            // Farm brokers
+            builder.RegisterMessageBroker<FarmSlotChangedPayload>(options);
+            builder.RegisterMessageBroker<OpenFarmSelectorUIPayload>(options);
 
             // AsImplementedInterfaces() → mọi interface (IService, IAsyncStartable, ITickable, IInputService...) visible cho consumer + entry-point dispatcher.
             // AsSelf() → cho phép inject qua concrete type.
@@ -50,7 +61,7 @@ namespace MyOwn.ServiceHarness
                 .AsSelf();
 
             #region Time Block
-            builder.Register<LocalTimeSyncSource>(Lifetime.Singleton)
+            builder.Register<WebTimeSyncSource>(Lifetime.Singleton)
                 .AsImplementedInterfaces();
 
             builder.RegisterComponentInHierarchy<ClockService>()
@@ -58,6 +69,20 @@ namespace MyOwn.ServiceHarness
                 .AsSelf();
 
             builder.RegisterComponentInHierarchy<ServerTimeService>()
+                .AsImplementedInterfaces()
+                .AsSelf();
+            #endregion
+
+            #region Farm Block
+            var farmDatabase = Resources.Load<FarmDatabaseSO>("FarmDatabase");
+            if (farmDatabase == null)
+            {
+                Debug.LogWarning("[RootLifetimeScope] FarmDatabase SO not found in Resources. Creating a temporary runtime instance to prevent container crash. Make sure to place one at 'Assets/Resources/FarmDatabase.asset'.");
+                farmDatabase = ScriptableObject.CreateInstance<FarmDatabaseSO>();
+            }
+            builder.RegisterInstance(farmDatabase);
+
+            builder.Register<FarmService>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
                 .AsSelf();
             #endregion

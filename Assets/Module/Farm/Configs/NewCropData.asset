@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9564554b3bbc0b54aa0c88356506759d, type: 3}
+  m_Name: NewCropData
+  m_EditorClassIdentifier: Farm::Core.Module.Farm.CropData
+  cropId: c_wheat
+  cropName: "L\xFAa"
+  coinCost: 10
+  growTime: 20
+  stage2Threshold: 0.3
+  growthSprites:
+  - {fileID: 1361422450, guid: 10ae80c372095f048bf5ac234d3e33f4, type: 3}
+  - {fileID: -1497780954, guid: 5676e81e38293f54193b5f138e3a0825, type: 3}
+  - {fileID: -661961260, guid: 72dad26dc9bf7004285651e718ccf3f1, type: 3}
+  yieldItemId: seed
+  harvestAmount: 2
+  maxHarvestBatches: 1

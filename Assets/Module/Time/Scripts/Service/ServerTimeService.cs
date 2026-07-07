@@ -1,4 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using MessagePipe;
 using System;
 using System.Threading;
@@ -16,6 +16,7 @@ namespace Core.Module.Time
         // Runtime Service
         private ITimeSyncSource _syncSource;
         private IPublisher<ServerTimeSyncedPayload> _syncedPublisher;
+        private IPublisher<ClockManipulationDetectedPayload> _cheatPublisher;
 
         // Runtime Properties
         private TimeSpan _offset;
@@ -30,11 +31,13 @@ namespace Core.Module.Time
         [Inject]
         public void Construct(
             ITimeSyncSource syncSource,
-            IPublisher<ServerTimeSyncedPayload> syncedPublisher
+            IPublisher<ServerTimeSyncedPayload> syncedPublisher,
+            IPublisher<ClockManipulationDetectedPayload> cheatPublisher
             )
         {
             _syncSource = syncSource;
             _syncedPublisher = syncedPublisher;
+            _cheatPublisher = cheatPublisher;
         }
         #endregion
 
@@ -89,6 +92,20 @@ namespace Core.Module.Time
 
             if (result.Success)
             {
+                // If already synced once, compare offsets to check for clock manipulation
+                if (_isSynced)
+                {
+                    double offsetChange = Math.Abs((result.Offset - _offset).TotalSeconds);
+                    if (offsetChange > _config._driftThresholdSeconds)
+                    {
+                        Debug.LogError($"[ANTI-CHEAT] Clock manipulation detected on resync! Offset shifted by {offsetChange}s");
+                        _cheatPublisher.Publish(new ClockManipulationDetectedPayload(
+                            DateTime.UtcNow + _offset, 
+                            DateTime.UtcNow + result.Offset
+                        ));
+                    }
+                }
+
                 _offset = result.Offset;
                 _lastSyncedAt = result.SyncedAtUtc;
                 _isSynced = true;
@@ -114,12 +131,10 @@ namespace Core.Module.Time
             }
             catch (OperationCanceledException)
             {
-                // Expected — OnDestroy cancel CTS lúc app shutdown / scene unload.
                 Debug.Log("[ServerTimeService] Resync loop cancelled.");
             }
             catch (Exception e)
             {
-                // Unexpected — fail loud.
                 Debug.LogError($"[ServerTimeService] Resync loop crashed: {e}");
             }
         }
