@@ -21,6 +21,10 @@ MonoBehaviour:
     ID: 1
     Size: {x: 1, y: 2}
     Prefab: {fileID: 4448643452415640710, guid: 5a47464c4919db4478f4400bacf375cb, type: 3}
+  - name: Bonsai
+    ID: 2
+    Size: {x: 1, y: 1}
+    Prefab: {fileID: 2273041281127926635, guid: ae52bbda48f03314fbe0c9838ac8a276, type: 3}
   - name: Soil
     ID: 101
     Size: {x: 1, y: 1}

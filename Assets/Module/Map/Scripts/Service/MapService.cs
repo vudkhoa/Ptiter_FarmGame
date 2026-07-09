@@ -15,8 +15,8 @@ namespace Core.Module.Map
 
         [Header("Tilemap & Grid Configuration")]
         [SerializeField] private Grid _unityGrid;
-        [SerializeField] private Tilemap _groundTilemap;
-        [SerializeField] private List<string> _forbiddenTileKeywords = new() { "water", "void" };
+        [SerializeField] private List<Tilemap> _buildableTilemaps = new();
+        [SerializeField] private List<Tilemap> _obstacleTilemaps = new();
 
         private IPublisher<MapPlacementStartedPayload> _pubStart;
         private IPublisher<MapPreviewMovedPayload> _pubMove;
@@ -157,7 +157,6 @@ namespace Core.Module.Map
 
         private bool IsTilemapPlacementValid(Vector3Int cell, Vector2Int size)
         {
-            if (_groundTilemap == null) return true;
             for (int x = 0; x < size.x; x++)
             {
                 for (int z = 0; z < size.y; z++)
@@ -165,15 +164,31 @@ namespace Core.Module.Map
                     Vector3Int targetLogicalCell = cell + new Vector3Int(x, 0, z);
                     // Ánh xạ tọa độ logic (x, 0, z) sang tọa độ Unity Grid (x, z, y) do swizzle XZY
                     Vector3Int unityCell = new Vector3Int(targetLogicalCell.x, targetLogicalCell.z, targetLogicalCell.y);
-                    TileBase tile = _groundTilemap.GetTile(unityCell);
-                    if (tile == null) return false; // Không được đặt lên ô trống vô định
-
-                    string nameLower = tile.name.ToLower();
-                    foreach (var keyword in _forbiddenTileKeywords)
+                    
+                    // 1. Kiểm tra Buildable: Phải có ít nhất 1 Tilemap trong danh sách chứa gạch tại đây
+                    if (_buildableTilemaps != null && _buildableTilemaps.Count > 0)
                     {
-                        if (nameLower.Contains(keyword.ToLower()))
+                        bool hasValidBase = false;
+                        foreach (var tilemap in _buildableTilemaps)
                         {
-                            return false;
+                            if (tilemap != null && tilemap.GetTile(unityCell) != null)
+                            {
+                                hasValidBase = true;
+                                break;
+                            }
+                        }
+                        if (!hasValidBase) return false; // Không có gạch nền nào đỡ ở dưới
+                    }
+
+                    // 2. Kiểm tra Obstacle: Không được phép có gạch của bất kỳ Tilemap chướng ngại vật nào
+                    if (_obstacleTilemaps != null && _obstacleTilemaps.Count > 0)
+                    {
+                        foreach (var tilemap in _obstacleTilemaps)
+                        {
+                            if (tilemap != null && tilemap.GetTile(unityCell) != null)
+                            {
+                                return false; // Dính chướng ngại vật
+                            }
                         }
                     }
                 }
