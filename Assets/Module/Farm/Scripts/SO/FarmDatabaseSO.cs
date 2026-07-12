@@ -6,42 +6,26 @@ namespace Core.Module.Farm
     [CreateAssetMenu(fileName = "FarmDatabase", menuName = "GDD/Farm/Farm Database")]
     public class FarmDatabaseSO : ScriptableObject
     {
-        [SerializeField] private List<CropData> allCrops = new List<CropData>();
-        [SerializeField] private List<AnimalData> allAnimals = new List<AnimalData>();
+        [SerializeField] private List<FarmEntityData> allEntities = new List<FarmEntityData>();
 
-        public IReadOnlyList<CropData> AllCrops => allCrops;
-        public IReadOnlyList<AnimalData> AllAnimals => allAnimals;
+        public IReadOnlyList<FarmEntityData> AllEntities => allEntities;
 
-        private Dictionary<string, CropData> _cropCache;
-        private Dictionary<string, AnimalData> _animalCache;
+        private Dictionary<string, FarmEntityData> _entityCache;
 
         public void InitializeLookups()
         {
-            _cropCache = new Dictionary<string, CropData>();
-            foreach (var crop in allCrops)
+            _entityCache = new Dictionary<string, FarmEntityData>();
+            foreach (var entity in allEntities)
             {
-                if (crop != null && !_cropCache.ContainsKey(crop.cropId))
-                    _cropCache.Add(crop.cropId, crop);
-            }
-
-            _animalCache = new Dictionary<string, AnimalData>();
-            foreach (var animal in allAnimals)
-            {
-                if (animal != null && !_animalCache.ContainsKey(animal.animalId))
-                    _animalCache.Add(animal.animalId, animal);
+                if (entity != null && !_entityCache.ContainsKey(entity.EntityId))
+                    _entityCache.Add(entity.EntityId, entity);
             }
         }
 
-        public CropData GetCropById(string id)
+        public FarmEntityData GetEntityById(string id)
         {
-            if (_cropCache == null) InitializeLookups();
-            return _cropCache.TryGetValue(id, out var crop) ? crop : null;
-        }
-
-        public AnimalData GetAnimalById(string id)
-        {
-            if (_animalCache == null) InitializeLookups();
-            return _animalCache.TryGetValue(id, out var animal) ? animal : null;
+            if (_entityCache == null) InitializeLookups();
+            return _entityCache.TryGetValue(id, out var entity) ? entity : null;
         }
     }
 }

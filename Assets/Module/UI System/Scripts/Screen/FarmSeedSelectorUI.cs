@@ -76,25 +76,17 @@ namespace MyOwn.ServiceHarness
                 }
             }
 
-            // Populate based on Crops vs Animals
-            if (_currentContext.IsAnimal)
+            // Duyệt danh sách AllEntities duy nhất từ FarmDatabaseSO và lọc theo loại Crop / Animal
+            if (_database.AllEntities != null)
             {
-                if (_database.AllAnimals != null)
+                foreach (var entity in _database.AllEntities)
                 {
-                    foreach (var animal in _database.AllAnimals)
+                    if (entity == null) continue;
+
+                    bool matchesAnimalContext = entity.entityType == FarmEntityType.Animal;
+                    if (matchesAnimalContext == _currentContext.IsAnimal)
                     {
-                        CreateItemButton(animal.animalId, animal.animalName, animal.purchaseCost, _currentContext);
-                    }
-                }
-            }
-            else
-            {
-                if (_database.AllCrops != null)
-                {
-                    foreach (var crop in _database.AllCrops)
-                    {
-                        Debug.Log("HAS CROP");
-                        CreateItemButton(crop.cropId, crop.cropName, crop.coinCost, _currentContext);
+                        CreateItemButton(entity.EntityId, entity.entityName, entity.coinCost, _currentContext);
                     }
                 }
             }
