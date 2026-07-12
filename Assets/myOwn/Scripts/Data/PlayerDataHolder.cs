@@ -174,7 +174,9 @@ namespace MyOwn.ServiceHarness
             catch (OperationCanceledException)
             {
                 // Bị hủy khi có yêu cầu Save tiếp theo trước 1s, đây là hoạt động bình thường của Throttling
+#if UNITY_EDITOR
                 Debug.LogWarning("[PlayerDataHolder] Save operation canceled because a newer save request was initiated.");
+#endif
             }
             catch (Exception e)
             {
