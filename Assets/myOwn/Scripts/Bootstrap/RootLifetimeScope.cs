@@ -4,6 +4,7 @@ using MessagePipe;
 using VContainer;
 using VContainer.Unity;
 using Core.Module.Time;
+using myOwn.Firebase;
 
 namespace MyOwn.ServiceHarness
 {
@@ -43,6 +44,9 @@ namespace MyOwn.ServiceHarness
             // Time
             builder.RegisterMessageBroker<ServerTimeSyncedPayload>(options);
 
+            // Firebase
+            builder.RegisterMessageBroker<FirebaseReadyPayload>(options);
+
             // AsImplementedInterfaces() → mọi interface (IService, IAsyncStartable, ITickable, IInputService...) visible cho consumer + entry-point dispatcher.
             // AsSelf() → cho phép inject qua concrete type.
             builder.Register<PlayerDataHolder>(Lifetime.Singleton)
@@ -58,6 +62,18 @@ namespace MyOwn.ServiceHarness
                 .AsSelf();
 
             builder.RegisterComponentInHierarchy<ServerTimeService>()
+                .AsImplementedInterfaces()
+                .AsSelf();
+            #endregion
+
+            #region Firebase Block
+            // FirebaseInitService: IAsyncStartable → tự chạy CheckAndFixDependencies lúc container build.
+            // AsImplementedInterfaces để lộ IAsyncStartable (tự StartAsync) + IFirebaseGate (consumer inject).
+            builder.Register<FirebaseInitService>(Lifetime.Singleton)
+                .AsImplementedInterfaces()
+                .AsSelf();
+
+            builder.Register<FirebaseCloudService>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
                 .AsSelf();
             #endregion
