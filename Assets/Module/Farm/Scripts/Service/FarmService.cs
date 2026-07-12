@@ -59,14 +59,19 @@ namespace Core.Module.Farm
             if (_storageService.IsCheatDetected) return;
 
             bool anyChanged = false;
-            long nowTicks = _timeProvider.UtcNow.Ticks;
+            long nowTicks = payload.UtcNow.Ticks;
 
             foreach (var slot in _activeSlotsList)
             {
                 if (slot.state == FarmSlotState.Growing)
                 {
-                    ProgressGrowth(slot, 1f, nowTicks);
-                    anyChanged = true;
+                    float elapsed = (float)TimeSpan.FromTicks(nowTicks - slot.lastUpdateUtcTicks).TotalSeconds;
+                    // Đảm bảo không cộng thời gian âm nếu có sai số nhỏ ở clock
+                    if (elapsed > 0f)
+                    {
+                        ProgressGrowth(slot, elapsed, nowTicks);
+                        anyChanged = true;
+                    }
                 }
             }
 
