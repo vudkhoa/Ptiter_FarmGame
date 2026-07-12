@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "912012867839",
+    "project_id": "ptitgame-farm",
+    "storage_bucket": "ptitgame-farm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:912012867839:android:034183b87e14482030f4ca",
+        "android_client_info": {
+          "package_name": "com.ptitgame.farm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfUerlGLULDU4CTvXuRXVTD05c4UFrGH4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
