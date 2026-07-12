@@ -9,6 +9,7 @@ namespace MyOwn.ServiceHarness
     [Serializable]
     public class PlayerData
     {
+        public string PlayerId;
         public int SaveVersion = 1;
         public long LastSaveUtcTicks;
 
