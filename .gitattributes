@@ -1,0 +1,29 @@
+# ============================================================
+# Git LFS — binary lớn (Firebase native + libs). Bắt buộc cho team:
+# mọi máy phải chạy `git lfs install` MỘT LẦN trước khi pull/clone,
+# nếu không sẽ nhận file "pointer" text thay vì binary thật → Firebase gãy.
+# ============================================================
+
+# Firebase / native platform binaries (thường >100MB, vượt giới hạn GitHub)
+*.bundle  filter=lfs diff=lfs merge=lfs -text
+*.dll     filter=lfs diff=lfs merge=lfs -text
+*.so      filter=lfs diff=lfs merge=lfs -text
+*.a       filter=lfs diff=lfs merge=lfs -text
+*.dylib   filter=lfs diff=lfs merge=lfs -text
+*.aar     filter=lfs diff=lfs merge=lfs -text
+*.srcaar  filter=lfs diff=lfs merge=lfs -text
+*.jar     filter=lfs diff=lfs merge=lfs -text
+
+# Native symbols / archives lớn khác (đề phòng)
+*.framework/** filter=lfs diff=lfs merge=lfs -text
+
+# ============================================================
+# (Tùy chọn) Media binary lớn của game — bật dần nếu gặp file nặng:
+# *.psd  filter=lfs diff=lfs merge=lfs -text
+# *.fbx  filter=lfs diff=lfs merge=lfs -text
+# *.wav  filter=lfs diff=lfs merge=lfs -text
+# *.mp4  filter=lfs diff=lfs merge=lfs -text
+# ============================================================
+
+# Chuẩn hóa line-ending cho file text (tránh diff rác giữa Windows/macOS)
+* text=auto
