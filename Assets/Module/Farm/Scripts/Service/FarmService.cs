@@ -65,19 +65,8 @@ namespace Core.Module.Farm
             {
                 if (slot.state == FarmSlotState.Growing)
                 {
-                    float requiredTime = GetRequiredTime(slot);
-
-                    slot.growthTimeSec += 1f;
-                    slot.lastUpdateUtcTicks = nowTicks;
+                    ProgressGrowth(slot, 1f, nowTicks);
                     anyChanged = true;
-
-                    if (slot.growthTimeSec >= requiredTime)
-                    {
-                        slot.state = FarmSlotState.Ripe;
-                        slot.growthTimeSec = requiredTime;
-                    }
-
-                    _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
                 }
             }
 
@@ -99,24 +88,33 @@ namespace Core.Module.Farm
             {
                 if (slot.state == FarmSlotState.Growing)
                 {
-                    float requiredTime = GetRequiredTime(slot);
-                    slot.growthTimeSec += (float)elapsedSeconds;
-                    slot.lastUpdateUtcTicks = nowTicks;
+                    ProgressGrowth(slot, (float)elapsedSeconds, nowTicks);
                     anyChanged = true;
-
-                    if (slot.growthTimeSec >= requiredTime)
-                    {
-                        slot.state = FarmSlotState.Ripe;
-                        slot.growthTimeSec = requiredTime;
-                    }
-                    _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
                 }
             }
 
             if (anyChanged) _storageService.Save();
         }
 
-        public bool TryPlant(Vector3Int cell, string entityId, bool isAnimal)
+        /// <summary>
+        /// Tiến hành phát triển ô đất nông sản (Helper dùng chung để tránh trùng lặp code).
+        /// </summary>
+        private void ProgressGrowth(FarmSlotSaveData slot, float elapsedSeconds, long nowTicks)
+        {
+            float requiredTime = GetRequiredTime(slot);
+            slot.growthTimeSec += elapsedSeconds;
+            slot.lastUpdateUtcTicks = nowTicks;
+
+            if (slot.growthTimeSec >= requiredTime)
+            {
+                slot.state = FarmSlotState.Ripe;
+                slot.growthTimeSec = requiredTime;
+            }
+
+            _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
+        }
+
+        public bool TryPlant(Vector3Int cell, string entityId)
         {
             if (_storageService.IsCheatDetected) return false;
 
@@ -137,12 +135,12 @@ namespace Core.Module.Farm
             _storageService.Coins -= entity.coinCost;
 
             var slot = existingSlot ?? new FarmSlotSaveData { cellX = cell.x, cellY = cell.y, cellZ = cell.z };
-            slot.isAnimal = isAnimal;
             slot.entityId = entityId;
             slot.growthTimeSec = 0;
             slot.startTimeUtcTicks = _timeProvider.UtcNow.Ticks;
             slot.lastUpdateUtcTicks = slot.startTimeUtcTicks;
 
+            // Xử lý Generic: Cây trồng tự động Grow, Động vật bắt đầu dạng Empty (chờ cho ăn)
             bool hasInputs = entity.inputs != null && entity.inputs.Length > 0;
             slot.state = hasInputs ? FarmSlotState.Empty : FarmSlotState.Growing;
             slot.isFed = !hasInputs;
@@ -166,10 +164,10 @@ namespace Core.Module.Farm
         public bool TryFeed(Vector3Int cell)
         {
             if (_storageService.IsCheatDetected) return false;
-            if (!_slots.TryGetValue(cell, out var slot) || !slot.isAnimal || slot.state != FarmSlotState.Empty) return false;
+            if (!_slots.TryGetValue(cell, out var slot) || slot.state != FarmSlotState.Empty) return false;
 
             var entity = _database.GetEntityById(slot.entityId);
-            if (entity == null || entity.inputs == null) return false;
+            if (entity == null || entity.entityType != FarmEntityType.Animal || entity.inputs == null) return false;
 
             // Kiểm tra đủ toàn bộ inputs yêu cầu hay không
             bool hasAllInputs = true;
@@ -235,7 +233,8 @@ namespace Core.Module.Farm
             }
 
             // 2. Cập nhật trạng thái vòng đời sau thu hoạch
-            if (slot.isAnimal)
+            bool isAnimal = entity.entityType == FarmEntityType.Animal;
+            if (isAnimal)
             {
                 slot.isAdult = true; // Đánh dấu trưởng thành
             }
@@ -251,7 +250,7 @@ namespace Core.Module.Farm
                 slot.remainingHarvests--;
                 if (slot.remainingHarvests > 0)
                 {
-                    // Thu hoạch nhiều đợt: quay lại lớn tiếp nếu mọc lại tự động
+                    // Thu hoạch nhiều đợt (ví dụ: Mía): quay lại lớn tiếp nếu mọc lại tự động
                     slot.state = entity.autoRestart ? FarmSlotState.Growing : FarmSlotState.Empty;
                     slot.isFed = !entity.autoRestart;
                     slot.growthTimeSec = 0;

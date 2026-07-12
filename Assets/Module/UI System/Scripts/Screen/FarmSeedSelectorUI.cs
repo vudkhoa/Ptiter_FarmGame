@@ -120,7 +120,7 @@ namespace MyOwn.ServiceHarness
 
                 btn.onClick.AddListener(() =>
                 {
-                    if (_farmService.TryPlant(payload.Cell, entityId, payload.IsAnimal))
+                    if (_farmService.TryPlant(payload.Cell, entityId))
                     {
                         Close();
                     }

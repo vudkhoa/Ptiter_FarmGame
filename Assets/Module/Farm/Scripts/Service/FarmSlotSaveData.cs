@@ -9,7 +9,6 @@ namespace Core.Module.Farm
         public int cellY;
         public int cellZ;
 
-        public bool isAnimal;            // true = Animal/Barn, false = Crop/Field
         public string entityId;          // Crop ID or Animal ID from SO config
         public FarmSlotState state;
 

@@ -25,15 +25,20 @@ namespace Core.Module.Farm
                 return;
             }
 
+            // Fetch ScriptableObject config to retrieve entity details dynamically
+            var entity = database.GetEntityById(slot.entityId);
+            if (entity == null) return;
+
+            bool isAnimal = entity.entityType == FarmEntityType.Animal;
+
             // 2. Resolve Slot States
             switch (slot.state)
             {
                 case FarmSlotState.Empty:
                     // If it is an adult animal, keep displaying the adult sprite instead of null
-                    if (slot.isAnimal && slot.isAdult)
+                    if (isAnimal && slot.isAdult)
                     {
-                        var entity = database.GetEntityById(slot.entityId);
-                        if (entity != null && entity.growthSprites != null && entity.growthSprites.Length >= 3)
+                        if (entity.growthSprites != null && entity.growthSprites.Length >= 3)
                         {
                             if (_spriteRenderer != null) _spriteRenderer.sprite = entity.growthSprites[2];
                         }
@@ -46,7 +51,7 @@ namespace Core.Module.Farm
                     if (_progressBar != null) _progressBar.gameObject.SetActive(false);
                     if (_harvestBubble != null) _harvestBubble.SetActive(false);
 
-                    if (slot.isAnimal && !slot.isFed)
+                    if (isAnimal && !slot.isFed)
                     {
                         if (_feedBubble != null) _feedBubble.SetActive(true);
                     }
@@ -60,13 +65,9 @@ namespace Core.Module.Farm
                     if (_feedBubble != null) _feedBubble.SetActive(false);
                     if (_harvestBubble != null) _harvestBubble.SetActive(false);
 
-                    // Fetch ScriptableObject config and calculate growth stage
-                    var activeEntity = database.GetEntityById(slot.entityId);
-                    if (activeEntity == null) return;
-
-                    Sprite[] growthSprites = activeEntity.growthSprites;
-                    float requiredTime = activeEntity.processTime;
-                    float stage2Threshold = activeEntity.stage2Threshold;
+                    Sprite[] growthSprites = entity.growthSprites;
+                    float requiredTime = entity.processTime;
+                    float stage2Threshold = entity.stage2Threshold;
 
                     float progress = requiredTime > 0 ? slot.growthTimeSec / requiredTime : 0;
                     progress = Mathf.Clamp01(progress);
@@ -76,7 +77,7 @@ namespace Core.Module.Farm
                     {
                         if (_spriteRenderer != null)
                         {
-                            if (slot.isAnimal && slot.isAdult)
+                            if (isAnimal && slot.isAdult)
                             {
                                 // Keep displaying the adult sprite for grown-up animals
                                 _spriteRenderer.sprite = growthSprites[2];
@@ -103,10 +104,9 @@ namespace Core.Module.Farm
 
                     // Get Ripe Sprite (Stage 3)
                     Sprite ripeSprite = null;
-                    var ripeEntity = database.GetEntityById(slot.entityId);
-                    if (ripeEntity != null && ripeEntity.growthSprites != null && ripeEntity.growthSprites.Length >= 3)
+                    if (entity.growthSprites != null && entity.growthSprites.Length >= 3)
                     {
-                        ripeSprite = ripeEntity.growthSprites[2];
+                        ripeSprite = entity.growthSprites[2];
                     }
 
                     if (_spriteRenderer != null && ripeSprite != null)

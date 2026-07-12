@@ -146,7 +146,7 @@ namespace Core.Module.Farm.Tests
             Assert.IsNull(slot, "Initial soil tile slot should be empty/null");
 
             // 2. TryPlant (Empty -> Growing)
-            bool plantResult = farmService.TryPlant(cell, "wheat", isAnimal: false);
+            bool plantResult = farmService.TryPlant(cell, "wheat");
             slot = farmService.GetSlotAt(cell);
 
             Assert.IsTrue(plantResult, "Planting crop should succeed");
@@ -207,7 +207,7 @@ namespace Core.Module.Farm.Tests
             Vector3Int cell = new Vector3Int(2, 0, 2);
 
             // 1. Buy Animal (Empty & Unfed)
-            farmService.TryPlant(cell, "chicken", isAnimal: true);
+            farmService.TryPlant(cell, "chicken");
             var slot = farmService.GetSlotAt(cell);
 
             Assert.AreEqual(FarmSlotState.Empty, slot.state, "New animal pen slot must be Empty");
