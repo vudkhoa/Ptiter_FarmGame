@@ -21,38 +21,75 @@ namespace MyOwn.ServiceHarness
         // Flag raised if clock manipulation is detected to freeze production
         public bool IsCheatDetected = false;
 
+        [NonSerialized]
+        private Dictionary<string, int> _inventoryCache;
+
+        private void RebuildInventoryCache()
+        {
+            if (_inventoryCache == null)
+                _inventoryCache = new Dictionary<string, int>();
+            else
+                _inventoryCache.Clear();
+
+            if (Inventory != null)
+            {
+                foreach (var entry in Inventory)
+                {
+                    if (entry.itemId != null)
+                    {
+                        _inventoryCache[entry.itemId] = entry.amount;
+                    }
+                }
+            }
+        }
+
         #region Inventory Helpers
         public int GetItemCount(string id)
         {
-            if (Inventory == null) return 0;
-            var entry = Inventory.Find(e => e.itemId == id);
-            return entry.itemId != null ? entry.amount : 0;
+            if (_inventoryCache == null) RebuildInventoryCache();
+            return _inventoryCache.TryGetValue(id, out var amt) ? amt : 0;
         }
 
         public void AddItem(string id, int amount)
         {
             if (Inventory == null) Inventory = new List<InventoryEntry>();
+            if (_inventoryCache == null) RebuildInventoryCache();
+
             for (int i = 0; i < Inventory.Count; i++)
             {
                 if (Inventory[i].itemId == id)
                 {
-                    Inventory[i] = new InventoryEntry(id, Inventory[i].amount + amount);
+                    int newAmount = Inventory[i].amount + amount;
+                    Inventory[i] = new InventoryEntry(id, newAmount);
+                    _inventoryCache[id] = newAmount;
                     return;
                 }
             }
             Inventory.Add(new InventoryEntry(id, amount));
+            _inventoryCache[id] = amount;
         }
 
         public bool RemoveItem(string id, int amount)
         {
             if (Inventory == null) return false;
+            if (_inventoryCache == null) RebuildInventoryCache();
+
             for (int i = 0; i < Inventory.Count; i++)
             {
                 if (Inventory[i].itemId == id)
                 {
                     if (Inventory[i].amount < amount) return false;
-                    Inventory[i] = new InventoryEntry(id, Inventory[i].amount - amount);
-                    if (Inventory[i].amount <= 0) Inventory.RemoveAt(i);
+                    int newAmount = Inventory[i].amount - amount;
+                    if (newAmount <= 0)
+                    {
+                        Inventory.RemoveAt(i);
+                        _inventoryCache.Remove(id);
+                    }
+                    else
+                    {
+                        Inventory[i] = new InventoryEntry(id, newAmount);
+                        _inventoryCache[id] = newAmount;
+                    }
                     return true;
                 }
             }
