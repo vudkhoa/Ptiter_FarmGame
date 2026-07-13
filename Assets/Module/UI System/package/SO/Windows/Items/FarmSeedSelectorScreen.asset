@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 330ee8a66cfa49f39e39a05c481e7550, type: 3}
+  m_Name: FarmSeedSelectorScreen
+  m_EditorClassIdentifier: BrunoMikoski.UIManager::BrunoMikoski.UIManager.PrefabUIWindow
+  guid:
+    value1: 4784699969014333755
+    value2: 8477563966156221614
+  collectionGUID:
+    value1: 5548129636122632612
+    value2: 3807423450203082926
+  layer: {fileID: 11400000, guid: 7feff1acbb8eb8042886f9bfea3874a0, type: 2}
+  group:
+    indirectReferences:
+    - collectionItemGUIDValueA: 5648016018135734384
+      collectionItemGUIDValueB: 6491183528186622891
+      collectionGUIDValueA: 5201288740882502542
+      collectionGUIDValueB: -6867844229614343778
+      itemLastKnownName: Main
+      collectionLastKnownName: UIGroupCollection
+  <CanReceiveFocus>k__BackingField: 1
+  windowControllerPrefab: {fileID: 5167658983560496137, guid: 8480b4c515f5def4db0991312e5fa21c, type: 3}

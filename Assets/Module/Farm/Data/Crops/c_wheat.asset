@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1896f10acafde014b89424e0d3af3298, type: 3}
+  m_Name: c_wheat
+  m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmEntityData
+  entityName: "L\xFAa"
+  entityType: 0
+  coinCost: 10
+  inputs: []
+  outputs:
+  - item: {fileID: 11400000, guid: 22200000000000000000000000000001, type: 2}
+    amount: 2
+  processTime: 60
+  stage2Threshold: 0.3
+  growthSprites: []
+  autoRestart: 1
+  maxCycles: 1

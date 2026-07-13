@@ -13,8 +13,33 @@ namespace MyOwn.ServiceHarness
         private const string FILE_NAME = "playerdata.json";
         private const string TEMP_SUFFIX = ".tmp";
 
-        private static string FilePath => Path.Combine(Application.persistentDataPath, FILE_NAME);
-        private static string TempPath => FilePath + TEMP_SUFFIX;
+        private static string _filePath;
+        private static string _tempPath;
+
+        private static string FilePath
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_filePath))
+                {
+                    // Lần truy xuất đầu tiên sẽ luôn từ Main Thread (khi Load được gọi lúc bắt đầu game)
+                    _filePath = Path.Combine(Application.persistentDataPath, FILE_NAME);
+                }
+                return _filePath;
+            }
+        }
+
+        private static string TempPath
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_tempPath))
+                {
+                    _tempPath = FilePath + TEMP_SUFFIX;
+                }
+                return _tempPath;
+            }
+        }
 
         /// <summary>Returns null nếu file không tồn tại hoặc parse fail.</summary>
         public static PlayerData Load()

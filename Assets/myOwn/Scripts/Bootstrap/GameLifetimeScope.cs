@@ -1,4 +1,5 @@
 using Core.Module.Map;
+using Core.Module.Farm;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -31,6 +32,15 @@ namespace MyOwn.ServiceHarness
 
             builder.RegisterComponentInHierarchy<MapPointerBridge>();
             builder.RegisterComponentInHierarchy<MapPreviewView>();
+
+            // Farm module interactions — scoped per-scene
+            builder.RegisterComponentInHierarchy<FarmInputHandler>();
+            builder.RegisterComponentInHierarchy<FarmVisualizer>();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            builder.RegisterComponentInHierarchy<FarmDebugLogger>();
+            builder.RegisterComponentInHierarchy<FarmTestHelper>();
+#endif
         }
     }
 }
