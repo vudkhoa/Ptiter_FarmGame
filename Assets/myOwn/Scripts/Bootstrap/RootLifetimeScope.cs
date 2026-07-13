@@ -7,6 +7,7 @@ using VContainer;
 using VContainer.Unity;
 using Core.Module.Time;
 using Core.Module.Quest;
+using Core.Module.Quest.Utils;
 using UnityEngine;
 
 namespace MyOwn.ServiceHarness
@@ -116,6 +117,10 @@ namespace MyOwn.ServiceHarness
             builder.Register<QuestService>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
                 .AsSelf();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            builder.RegisterEntryPoint<FarmQuestTestFlow>();
+            builder.RegisterEntryPoint<QuestTestPanelBootstrap>();
+#endif
             #endregion
 
             builder.RegisterComponentInHierarchy<InputService>()
