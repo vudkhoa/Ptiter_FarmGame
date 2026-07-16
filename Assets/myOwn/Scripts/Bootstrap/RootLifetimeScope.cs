@@ -119,7 +119,6 @@ namespace MyOwn.ServiceHarness
                 .AsSelf();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             builder.RegisterEntryPoint<FarmQuestTestFlow>();
-            builder.RegisterEntryPoint<QuestTestPanelBootstrap>();
 #endif
             #endregion
 

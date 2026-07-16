@@ -13,7 +13,6 @@ namespace Core.Module.Quest.View
     /// </summary>
     public sealed class QuestTestPanelView : MonoBehaviour
     {
-        private const float PanelWidth = 330f;
         private const float ScreenMargin = 16f;
 
         private QuestCatalogSO _catalog;
@@ -56,11 +55,13 @@ namespace Core.Module.Quest.View
             EnsureStyles();
 
             int questCount = _catalog.quests != null ? _catalog.quests.Count : 0;
-            float panelHeight = Mathf.Max(90f, 54f + questCount * 94f);
+            // Roughly one third of the right half of the screen (1/6 full width).
+            float panelWidth = Mathf.Clamp(Screen.width / 6f, 220f, 280f);
+            float panelHeight = Mathf.Max(76f, 44f + questCount * 70f);
             var panelRect = new Rect(
-                Screen.width - PanelWidth - ScreenMargin,
+                Screen.width - panelWidth - ScreenMargin,
                 ScreenMargin,
-                PanelWidth,
+                panelWidth,
                 panelHeight);
 
             GUILayout.BeginArea(panelRect, _panelStyle);
@@ -125,26 +126,26 @@ namespace Core.Module.Quest.View
 
             _panelStyle = new GUIStyle(GUI.skin.box)
             {
-                padding = new RectOffset(16, 16, 12, 12),
+                padding = new RectOffset(10, 10, 8, 8),
                 normal = { background = Texture2D.grayTexture }
             };
             _titleStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 18,
+                fontSize = 15,
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter,
                 normal = { textColor = Color.white }
             };
             _questNameStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 14,
+                fontSize = 12,
                 fontStyle = FontStyle.Bold,
                 wordWrap = true,
                 normal = { textColor = new Color(1f, 0.88f, 0.35f) }
             };
             _bodyStyle = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 12,
+                fontSize = 10,
                 wordWrap = true,
                 normal = { textColor = Color.white }
             };
