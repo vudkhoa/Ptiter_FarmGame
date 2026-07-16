@@ -136,7 +136,6 @@ namespace MyOwn.ServiceHarness
             }
 
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(IsNewlyCreated));
-            Debug.Log($"[PlayerDataHolder] Loaded. IsNewlyCreated={IsNewlyCreated}, SaveVersion={_data.SaveVersion}, Coins={_data.Coins}");
         }
 
         private CancellationTokenSource _saveCts;
@@ -171,12 +170,13 @@ namespace MyOwn.ServiceHarness
                 {
                     PlayerDataSaveLoad.Save(saveCopy);
                 }, cancellationToken: ct);
-
-                Debug.Log("[PlayerDataHolder] Throttled save completed asynchronously on thread pool.");
             }
             catch (OperationCanceledException)
             {
                 // Bị hủy khi có yêu cầu Save tiếp theo trước 1s, đây là hoạt động bình thường của Throttling
+#if UNITY_EDITOR
+                Debug.LogWarning("[PlayerDataHolder] Save operation canceled because a newer save request was initiated.");
+#endif
             }
             catch (Exception e)
             {
@@ -197,7 +197,6 @@ namespace MyOwn.ServiceHarness
 
             _data.LastSaveUtcTicks = _timeProvider.UtcNow.Ticks;
             PlayerDataSaveLoad.Save(_data);
-            Debug.Log("[PlayerDataHolder] Immediate synchronous save completed successfully.");
         }
 
         public void Reset()

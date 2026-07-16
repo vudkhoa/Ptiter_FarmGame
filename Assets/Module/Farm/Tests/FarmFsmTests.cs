@@ -16,8 +16,8 @@ namespace Core.Module.Farm.Tests
         private MockInventoryProvider _mockInventory;
         private FarmDatabaseSO _mockDatabase;
         
-        private CropData _sampleCrop;
-        private AnimalData _sampleAnimal;
+        private FarmEntityData _sampleCrop;
+        private FarmEntityData _sampleAnimal;
 
         private class StubDisposable : IDisposable
         {
@@ -86,33 +86,43 @@ namespace Core.Module.Farm.Tests
             _mockTimeProvider = new MockTimeProvider();
             _mockInventory = new MockInventoryProvider();
 
+            // Setup mock ItemDataSO
+            var wheatGrainItem = ScriptableObject.CreateInstance<ItemDataSO>();
+            wheatGrainItem.name = "wheat_grain";
+            wheatGrainItem.displayName = "Wheat Grain";
+
+            var eggItem = ScriptableObject.CreateInstance<ItemDataSO>();
+            eggItem.name = "egg";
+            eggItem.displayName = "Egg";
+
             // Setup Crop mockup: wheat grows in 10s
-            _sampleCrop = ScriptableObject.CreateInstance<CropData>();
-            _sampleCrop.cropId = "wheat";
-            _sampleCrop.cropName = "Wheat";
-            _sampleCrop.growTime = 10f;
+            _sampleCrop = ScriptableObject.CreateInstance<FarmEntityData>();
+            _sampleCrop.name = "wheat";
+            _sampleCrop.entityName = "Wheat";
+            _sampleCrop.entityType = FarmEntityType.Crop;
+            _sampleCrop.processTime = 10f;
             _sampleCrop.coinCost = 10;
-            _sampleCrop.yieldItemId = "wheat_grain";
-            _sampleCrop.harvestAmount = 2;
-            _sampleCrop.maxHarvestBatches = 1;
+            _sampleCrop.outputs = new OutputReward[] { new OutputReward { item = wheatGrainItem, amount = 2 } };
+            _sampleCrop.autoRestart = true;
+            _sampleCrop.maxCycles = 1;
 
             // Setup Animal mockup: chicken produces in 15s
-            _sampleAnimal = ScriptableObject.CreateInstance<AnimalData>();
-            _sampleAnimal.animalId = "chicken";
-            _sampleAnimal.animalName = "Chicken";
-            _sampleAnimal.productionTime = 15f;
-            _sampleAnimal.purchaseCost = 50;
-            _sampleAnimal.requiredFoodItemId = "wheat_grain";
-            _sampleAnimal.yieldItemId = "egg";
-            _sampleAnimal.productAmount = 1;
+            _sampleAnimal = ScriptableObject.CreateInstance<FarmEntityData>();
+            _sampleAnimal.name = "chicken";
+            _sampleAnimal.entityName = "Chicken";
+            _sampleAnimal.entityType = FarmEntityType.Animal;
+            _sampleAnimal.processTime = 15f;
+            _sampleAnimal.coinCost = 50;
+            _sampleAnimal.inputs = new InputRequirement[] { new InputRequirement { item = wheatGrainItem, amount = 1 } };
+            _sampleAnimal.outputs = new OutputReward[] { new OutputReward { item = eggItem, amount = 1 } };
+            _sampleAnimal.autoRestart = false;
+            _sampleAnimal.maxCycles = -1;
 
             // Setup Database mockup
             _mockDatabase = ScriptableObject.CreateInstance<FarmDatabaseSO>();
-            var allCropsField = typeof(FarmDatabaseSO).GetField("allCrops", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var allAnimalsField = typeof(FarmDatabaseSO).GetField("allAnimals", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var allEntitiesField = typeof(FarmDatabaseSO).GetField("allEntities", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             
-            allCropsField.SetValue(_mockDatabase, new List<CropData> { _sampleCrop });
-            allAnimalsField.SetValue(_mockDatabase, new List<AnimalData> { _sampleAnimal });
+            allEntitiesField.SetValue(_mockDatabase, new List<FarmEntityData> { _sampleCrop, _sampleAnimal });
             _mockDatabase.InitializeLookups();
         }
 
@@ -136,7 +146,7 @@ namespace Core.Module.Farm.Tests
             Assert.IsNull(slot, "Initial soil tile slot should be empty/null");
 
             // 2. TryPlant (Empty -> Growing)
-            bool plantResult = farmService.TryPlant(cell, "wheat", isAnimal: false);
+            bool plantResult = farmService.TryPlant(cell, "wheat");
             slot = farmService.GetSlotAt(cell);
 
             Assert.IsTrue(plantResult, "Planting crop should succeed");
@@ -197,7 +207,7 @@ namespace Core.Module.Farm.Tests
             Vector3Int cell = new Vector3Int(2, 0, 2);
 
             // 1. Buy Animal (Empty & Unfed)
-            farmService.TryPlant(cell, "chicken", isAnimal: true);
+            farmService.TryPlant(cell, "chicken");
             var slot = farmService.GetSlotAt(cell);
 
             Assert.AreEqual(FarmSlotState.Empty, slot.state, "New animal pen slot must be Empty");

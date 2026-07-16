@@ -131,13 +131,10 @@ namespace Core.Module.Farm
             switch (slot.state)
             {
                 case FarmSlotState.Empty:
-                    if (slot.isAnimal && !string.IsNullOrEmpty(slot.entityId) && !slot.isFed)
+                    if (isAnimal && !string.IsNullOrEmpty(slot.entityId) && !slot.isFed)
                     {
                         // Tapping an unfed animal pen (with a purchased animal) triggers FEEDING directly
-                        if (_farmService.TryFeed(originCell))
-                        {
-                            Debug.Log($"[FarmInputHandler] Fed animal at {originCell} successfully.");
-                        }
+                        _farmService.TryFeed(originCell);
                     }
                     else
                     {
@@ -147,16 +144,11 @@ namespace Core.Module.Farm
                     break;
 
                 case FarmSlotState.Growing:
-                    // Currently, crops/animals in growing stage cannot be manually interacted with
-                    Debug.Log($"[FarmInputHandler] Slot at {originCell} is growing. Time elapsed: {slot.growthTimeSec}s.");
                     break;
 
                 case FarmSlotState.Ripe:
                     // Tapping a ripe crop/animal triggers HARVESTING directly
-                    if (_farmService.TryHarvest(originCell, out var product, out var amount))
-                    {
-                        Debug.Log($"[FarmInputHandler] Harvested {amount}x {product} at {originCell} successfully.");
-                    }
+                    _farmService.TryHarvest(originCell, out _, out _);
                     break;
             }
         }

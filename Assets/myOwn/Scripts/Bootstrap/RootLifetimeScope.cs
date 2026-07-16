@@ -9,6 +9,7 @@ using Core.Module.Time;
 using Core.Module.Quest;
 using Core.Module.Quest.Utils;
 using UnityEngine;
+using myOwn.Firebase;
 
 namespace MyOwn.ServiceHarness
 {
@@ -60,6 +61,8 @@ namespace MyOwn.ServiceHarness
             builder.RegisterMessageBroker<QuestAcceptedPayload>(options);
             builder.RegisterMessageBroker<QuestProgressChangedPayload>(options);
             builder.RegisterMessageBroker<QuestCompletedPayload>(options);
+            // Firebase
+            builder.RegisterMessageBroker<FirebaseReadyPayload>(options);
 
             // AsImplementedInterfaces() → mọi interface (IService, IAsyncStartable, ITickable, IInputService...) visible cho consumer + entry-point dispatcher.
             // AsSelf() → cho phép inject qua concrete type.
@@ -90,6 +93,18 @@ namespace MyOwn.ServiceHarness
             builder.RegisterInstance(farmDatabase);
 
             builder.Register<FarmService>(Lifetime.Singleton)
+                .AsImplementedInterfaces()
+                .AsSelf();
+            #endregion
+
+            #region Firebase Block
+            // FirebaseInitService: IAsyncStartable → tự chạy CheckAndFixDependencies lúc container build.
+            // AsImplementedInterfaces để lộ IAsyncStartable (tự StartAsync) + IFirebaseGate (consumer inject).
+            builder.Register<FirebaseInitService>(Lifetime.Singleton)
+                .AsImplementedInterfaces()
+                .AsSelf();
+
+            builder.Register<FirebaseCloudService>(Lifetime.Singleton)
                 .AsImplementedInterfaces()
                 .AsSelf();
             #endregion
