@@ -507,5 +507,102 @@ namespace Core.Module.Farm.Tests
         }
 
         #endregion
+
+        #region Nhóm Test Tăng Tốc Vật Phẩm (TryApplyItem Tests)
+
+        [Test]
+        public void Test_ApplyItem_Booster_ReducesGrowthTime_And_Publishes_CaredEvent()
+        {
+            var service = CreateFarmService();
+            Vector3Int cell = new Vector3Int(1, 0, 1);
+            service.TryPlant(cell, "wheat");
+
+            var fertilizer = ScriptableObject.CreateInstance<BoosterItemDataSO>();
+            fertilizer.name = "fertilizer";
+            fertilizer.displayName = "Super Fertilizer";
+            fertilizer.boostAmountSec = 5f;
+
+            _mockInventory.AddItem("fertilizer", 1);
+
+            bool success = service.TryApplyItem(cell, fertilizer);
+            var slot = service.GetSlotAt(cell);
+
+            Assert.IsTrue(success);
+            Assert.AreEqual(5f, slot.growthTimeSec);
+            Assert.AreEqual(FarmSlotState.Growing, slot.state);
+            Assert.AreEqual(0, _mockInventory.GetItemCount("fertilizer"));
+
+            Assert.AreEqual(1, _caredPub.Published.Count);
+            var caredEvent = _caredPub.Published[0];
+            Assert.AreEqual("wheat", caredEvent.EntityId);
+            Assert.AreEqual(cell, caredEvent.Cell);
+            Assert.AreEqual(1, caredEvent.InputsApplied.Length);
+            Assert.AreEqual("fertilizer", caredEvent.InputsApplied[0].item.ItemId);
+        }
+
+        [Test]
+        public void Test_ApplyItem_Booster_RipensCropInstantly_IfBoostExceedsRemainingTime()
+        {
+            var service = CreateFarmService();
+            Vector3Int cell = new Vector3Int(1, 0, 1);
+            service.TryPlant(cell, "wheat");
+
+            var superFertilizer = ScriptableObject.CreateInstance<BoosterItemDataSO>();
+            superFertilizer.name = "super_fertilizer";
+            superFertilizer.displayName = "Ultra Accelerator";
+            superFertilizer.boostAmountSec = 12f;
+
+            _mockInventory.AddItem("super_fertilizer", 1);
+
+            bool success = service.TryApplyItem(cell, superFertilizer);
+            var slot = service.GetSlotAt(cell);
+
+            Assert.IsTrue(success);
+            Assert.AreEqual(10f, slot.growthTimeSec);
+            Assert.AreEqual(FarmSlotState.Ripe, slot.state);
+
+            Assert.AreEqual(1, _ripePub.Published.Count);
+            Assert.AreEqual("wheat", _ripePub.Published[0].EntityId);
+        }
+
+        [Test]
+        public void Test_ApplyItem_Fails_If_ItemNotBooster()
+        {
+            var service = CreateFarmService();
+            Vector3Int cell = new Vector3Int(1, 0, 1);
+            service.TryPlant(cell, "wheat");
+
+            var seed = ScriptableObject.CreateInstance<ItemDataSO>();
+            seed.name = "wheat_grain";
+
+            _mockInventory.AddItem("wheat_grain", 1);
+
+            bool success = service.TryApplyItem(cell, seed);
+            var slot = service.GetSlotAt(cell);
+
+            Assert.IsFalse(success);
+            Assert.AreEqual(0f, slot.growthTimeSec);
+            Assert.AreEqual(1, _mockInventory.GetItemCount("wheat_grain"));
+        }
+
+        [Test]
+        public void Test_ApplyItem_Fails_If_MissingInventoryItem()
+        {
+            var service = CreateFarmService();
+            Vector3Int cell = new Vector3Int(1, 0, 1);
+            service.TryPlant(cell, "wheat");
+
+            var fertilizer = ScriptableObject.CreateInstance<BoosterItemDataSO>();
+            fertilizer.name = "fertilizer";
+            fertilizer.boostAmountSec = 5f;
+
+            bool success = service.TryApplyItem(cell, fertilizer);
+            var slot = service.GetSlotAt(cell);
+
+            Assert.IsFalse(success);
+            Assert.AreEqual(0f, slot.growthTimeSec);
+        }
+
+        #endregion
     }
 }

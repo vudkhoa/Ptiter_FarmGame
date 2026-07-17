@@ -311,6 +311,64 @@ namespace Core.Module.Farm
             return true;
         }
 
+        public bool TryApplyItem(Vector3Int cell, ItemDataSO item)
+        {
+            if (_storageService.IsCheatDetected) return false;
+            if (item == null) return false;
+            if (!_slots.TryGetValue(cell, out var slot)) return false;
+
+            var entity = _database.GetEntityById(slot.entityId);
+            if (entity == null) return false;
+
+            if (slot.state == FarmSlotState.Growing && item is BoosterItemDataSO boosterItem)
+            {
+                if (_storageService.GetItemCount(item.ItemId) < 1)
+                {
+                    Debug.LogWarning($"[FarmService] Player does not have booster item {item.ItemId} in inventory.");
+                    return false;
+                }
+
+                _storageService.RemoveItem(item.ItemId, 1);
+
+                float requiredTime = GetRequiredTime(slot);
+                float stage2Threshold = entity.stage2Threshold;
+                float oldProgress = requiredTime > 0 ? slot.growthTimeSec / requiredTime : 0;
+
+                slot.growthTimeSec += boosterItem.boostAmountSec;
+                if (slot.growthTimeSec >= requiredTime)
+                {
+                    slot.growthTimeSec = requiredTime;
+                    slot.state = FarmSlotState.Ripe;
+                    _ripePub.Publish(new FarmEntityRipePayload(slot.entityId, cell, entity.entityType));
+                }
+                else
+                {
+                    float newProgress = requiredTime > 0 ? slot.growthTimeSec / requiredTime : 0;
+                    int totalSprites = entity.growthSprites != null ? entity.growthSprites.Length : 0;
+                    if (totalSprites >= 3)
+                    {
+                        if (oldProgress < stage2Threshold && newProgress >= stage2Threshold)
+                        {
+                            _stageChangedPub.Publish(new FarmEntityStageChangedPayload(slot.entityId, cell, entity.entityType, 1));
+                        }
+                    }
+                }
+
+                _caredPub.Publish(new FarmEntityCaredPayload(
+                    slot.entityId,
+                    cell,
+                    entity.entityType,
+                    new InputRequirement[] { new InputRequirement { item = item, amount = 1 } }
+                ));
+
+                _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
+                _storageService.Save();
+                return true;
+            }
+
+            return false;
+        }
+
         private float GetRequiredTime(FarmSlotSaveData slot)
         {
             var entity = _database.GetEntityById(slot.entityId);
