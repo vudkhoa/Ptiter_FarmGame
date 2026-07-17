@@ -54,6 +54,11 @@ namespace MyOwn.ServiceHarness
             // Farm brokers
             builder.RegisterMessageBroker<FarmSlotChangedPayload>(options);
             builder.RegisterMessageBroker<OpenFarmSelectorUIPayload>(options);
+            builder.RegisterMessageBroker<FarmEntityPlantedPayload>(options);
+            builder.RegisterMessageBroker<FarmEntityCaredPayload>(options);
+            builder.RegisterMessageBroker<FarmEntityStageChangedPayload>(options);
+            builder.RegisterMessageBroker<FarmEntityRipePayload>(options);
+            builder.RegisterMessageBroker<FarmEntityHarvestedPayload>(options);
 
             // Firebase
             builder.RegisterMessageBroker<FirebaseReadyPayload>(options);
