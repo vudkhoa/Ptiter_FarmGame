@@ -1,8 +1,5 @@
 using Core.Module.Map;
 using Core.Module.Farm;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-using Core.Module.Quest.View;
-#endif
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -43,7 +40,6 @@ namespace MyOwn.ServiceHarness
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             builder.RegisterComponentInHierarchy<FarmDebugLogger>();
             builder.RegisterComponentInHierarchy<FarmTestHelper>();
-            builder.RegisterComponentInHierarchy<QuestTestPanelView>();
 #endif
         }
     }
