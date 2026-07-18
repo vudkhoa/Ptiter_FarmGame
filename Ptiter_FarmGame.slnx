@@ -10,6 +10,5 @@
   <Project Path="Input.csproj" />
   <Project Path="Quest.Tests.csproj" />
   <Project Path="Storage.csproj" />
-  <Project Path="Quest.Editor.csproj" />
   <Project Path="MyOwn.csproj" />
 </Solution>
