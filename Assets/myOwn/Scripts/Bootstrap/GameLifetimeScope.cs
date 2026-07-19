@@ -25,22 +25,10 @@ namespace MyOwn.ServiceHarness
 
         protected override void Configure(IContainerBuilder builder)
         {
-            // Map module — scoped per-scene
-            builder.RegisterComponentInHierarchy<MapService>()
-                   .AsImplementedInterfaces()
-                   .AsSelf();
-
-            builder.RegisterComponentInHierarchy<MapPointerBridge>();
-            builder.RegisterComponentInHierarchy<MapPreviewView>();
-
-            // Farm module interactions — scoped per-scene
-            builder.RegisterComponentInHierarchy<FarmInputHandler>();
-            builder.RegisterComponentInHierarchy<FarmVisualizer>();
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            builder.RegisterComponentInHierarchy<FarmDebugLogger>();
-            builder.RegisterComponentInHierarchy<FarmTestHelper>();
-#endif
+            // Component sống theo scene — mỗi module tự khai trong {Module}ModuleInstaller.cs.
+            // Broker + service global đã đăng ký ở RootLifetimeScope, scope này kế thừa hết.
+            builder.RegisterMapSceneComponents()
+                   .RegisterFarmSceneComponents();
         }
     }
 }
