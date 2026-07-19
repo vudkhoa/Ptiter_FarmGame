@@ -19,6 +19,7 @@ namespace Core.Module.Map
         [SerializeField] private Camera _camera;
         [SerializeField] private LayerMask _placeLayer;
         [SerializeField] private float _maxRayDistance = 1000f;
+        [SerializeField] private bool _useMathPlane = true;
 
         private IMapService _map;
         private IInputService _input;
@@ -79,6 +80,18 @@ namespace Core.Module.Map
         private bool TryRaycast(Vector2 screen, out Vector3 world)
         {
             var ray = _camera.ScreenPointToRay(screen);
+            if (_useMathPlane)
+            {
+                Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+                if (groundPlane.Raycast(ray, out float enter))
+                {
+                    world = ray.GetPoint(enter);
+                    return true;
+                }
+                world = default;
+                return false;
+            }
+
             if (Physics.Raycast(ray, out var hit, _maxRayDistance, _placeLayer))
             {
                 world = hit.point;
