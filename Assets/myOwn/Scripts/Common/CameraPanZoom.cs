@@ -76,6 +76,10 @@ namespace Core.Common
 
             HandleZoom();
             HandlePan();
+        }
+
+        private void LateUpdate()
+        {
             ApplyMovement();
         }
 
