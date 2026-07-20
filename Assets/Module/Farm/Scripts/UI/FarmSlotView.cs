@@ -38,9 +38,10 @@ namespace Core.Module.Farm
                     // If it is an adult animal, keep displaying the adult sprite instead of null
                     if (isAnimal && slot.isAdult)
                     {
-                        if (entity.growthSprites != null && entity.growthSprites.Length >= 3)
+                        if (entity.growthSprites != null && entity.growthSprites.Length > 0)
                         {
-                            if (_spriteRenderer != null) _spriteRenderer.sprite = entity.growthSprites[2];
+                            int lastIdx = entity.growthSprites.Length - 1;
+                            if (_spriteRenderer != null) _spriteRenderer.sprite = entity.growthSprites[lastIdx];
                         }
                     }
                     else
@@ -73,18 +74,27 @@ namespace Core.Module.Farm
                     progress = Mathf.Clamp01(progress);
 
                     // Apply Morphing Sprites (Stage 1 vs Stage 2)
-                    if (growthSprites != null && growthSprites.Length >= 2)
+                    if (growthSprites != null && growthSprites.Length > 0)
                     {
                         if (_spriteRenderer != null)
                         {
                             if (isAnimal && slot.isAdult)
                             {
                                 // Keep displaying the adult sprite for grown-up animals
-                                _spriteRenderer.sprite = growthSprites[2];
+                                _spriteRenderer.sprite = growthSprites[growthSprites.Length - 1];
                             }
                             else
                             {
-                                _spriteRenderer.sprite = progress < stage2Threshold ? growthSprites[0] : growthSprites[1];
+                                int spriteIndex = 0;
+                                if (growthSprites.Length == 2)
+                                {
+                                    spriteIndex = 0;
+                                }
+                                else if (growthSprites.Length >= 3)
+                                {
+                                    spriteIndex = progress < stage2Threshold ? 0 : 1;
+                                }
+                                _spriteRenderer.sprite = growthSprites[spriteIndex];
                             }
                         }
                     }
@@ -104,9 +114,9 @@ namespace Core.Module.Farm
 
                     // Get Ripe Sprite (Stage 3)
                     Sprite ripeSprite = null;
-                    if (entity.growthSprites != null && entity.growthSprites.Length >= 3)
+                    if (entity.growthSprites != null && entity.growthSprites.Length > 0)
                     {
-                        ripeSprite = entity.growthSprites[2];
+                        ripeSprite = entity.growthSprites[entity.growthSprites.Length - 1];
                     }
 
                     if (_spriteRenderer != null && ripeSprite != null)

@@ -13,6 +13,11 @@ namespace Core.Module.Farm
         private readonly FarmDatabaseSO _database;
         private readonly IStorageService _storageService;
         private readonly IPublisher<FarmSlotChangedPayload> _slotChangedPub;
+        private readonly IPublisher<FarmEntityPlantedPayload> _plantedPub;
+        private readonly IPublisher<FarmEntityCaredPayload> _caredPub;
+        private readonly IPublisher<FarmEntityStageChangedPayload> _stageChangedPub;
+        private readonly IPublisher<FarmEntityRipePayload> _ripePub;
+        private readonly IPublisher<FarmEntityHarvestedPayload> _harvestedPub;
         private readonly IDisposable _tickSubscription;
 
         private readonly Dictionary<Vector3Int, FarmSlotSaveData> _slots = new Dictionary<Vector3Int, FarmSlotSaveData>();
@@ -26,12 +31,22 @@ namespace Core.Module.Farm
             FarmDatabaseSO database,
             IStorageService storageService,
             ISubscriber<ClockTickPayload> tickSub,
-            IPublisher<FarmSlotChangedPayload> slotChangedPub)
+            IPublisher<FarmSlotChangedPayload> slotChangedPub,
+            IPublisher<FarmEntityPlantedPayload> plantedPub,
+            IPublisher<FarmEntityCaredPayload> caredPub,
+            IPublisher<FarmEntityStageChangedPayload> stageChangedPub,
+            IPublisher<FarmEntityRipePayload> ripePub,
+            IPublisher<FarmEntityHarvestedPayload> harvestedPub)
         {
             _timeProvider = timeProvider;
             _database = database;
             _storageService = storageService;
             _slotChangedPub = slotChangedPub;
+            _plantedPub = plantedPub;
+            _caredPub = caredPub;
+            _stageChangedPub = stageChangedPub;
+            _ripePub = ripePub;
+            _harvestedPub = harvestedPub;
 
             // Subscribe to ClockService tick event (publishes every 1s)
             _tickSubscription = tickSub.Subscribe(OnClockTick);
@@ -101,19 +116,36 @@ namespace Core.Module.Farm
             if (anyChanged) _storageService.Save();
         }
 
-        /// <summary>
-        /// Tiến hành phát triển ô đất nông sản (Helper dùng chung để tránh trùng lặp code).
-        /// </summary>
         private void ProgressGrowth(FarmSlotSaveData slot, float elapsedSeconds, long nowTicks)
         {
             float requiredTime = GetRequiredTime(slot);
+            var entity = _database.GetEntityById(slot.entityId);
+            float stage2Threshold = entity != null ? entity.stage2Threshold : 0.3f;
+            FarmEntityType entityType = entity != null ? entity.entityType : FarmEntityType.Crop;
+
+            float oldProgress = requiredTime > 0 ? slot.growthTimeSec / requiredTime : 0;
+
             slot.growthTimeSec += elapsedSeconds;
             slot.lastUpdateUtcTicks = nowTicks;
+
+            float newProgress = requiredTime > 0 ? slot.growthTimeSec / requiredTime : 0;
 
             if (slot.growthTimeSec >= requiredTime)
             {
                 slot.state = FarmSlotState.Ripe;
                 slot.growthTimeSec = requiredTime;
+                _ripePub.Publish(new FarmEntityRipePayload(slot.entityId, new Vector3Int(slot.cellX, slot.cellY, slot.cellZ), entityType));
+            }
+            else
+            {
+                int totalSprites = (entity != null && entity.growthSprites != null) ? entity.growthSprites.Length : 0;
+                if (totalSprites >= 3)
+                {
+                    if (oldProgress < stage2Threshold && newProgress >= stage2Threshold)
+                    {
+                        _stageChangedPub.Publish(new FarmEntityStageChangedPayload(slot.entityId, new Vector3Int(slot.cellX, slot.cellY, slot.cellZ), entityType, 1));
+                    }
+                }
             }
 
             _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
@@ -161,6 +193,7 @@ namespace Core.Module.Farm
                 }
             }
 
+            _plantedPub.Publish(new FarmEntityPlantedPayload(entityId, cell, entity.entityType));
             _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
             _storageService.Save();
             return true;
@@ -172,7 +205,7 @@ namespace Core.Module.Farm
             if (!_slots.TryGetValue(cell, out var slot) || slot.state != FarmSlotState.Empty) return false;
 
             var entity = _database.GetEntityById(slot.entityId);
-            if (entity == null || entity.entityType != FarmEntityType.Animal || entity.inputs == null) return false;
+            if (entity == null || entity.inputs == null) return false;
 
             // Kiểm tra đủ toàn bộ inputs yêu cầu hay không
             bool hasAllInputs = true;
@@ -199,6 +232,7 @@ namespace Core.Module.Farm
                 slot.startTimeUtcTicks = _timeProvider.UtcNow.Ticks;
                 slot.lastUpdateUtcTicks = slot.startTimeUtcTicks;
 
+                _caredPub.Publish(new FarmEntityCaredPayload(slot.entityId, cell, entity.entityType, entity.inputs));
                 _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
                 _storageService.Save();
                 return true;
@@ -271,9 +305,68 @@ namespace Core.Module.Farm
                 }
             }
 
+            _harvestedPub.Publish(new FarmEntityHarvestedPayload(entity.EntityId, cell, productItemId, amount, entity.entityType));
             _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
             _storageService.Save();
             return true;
+        }
+
+        public bool TryApplyItem(Vector3Int cell, ItemDataSO item)
+        {
+            if (_storageService.IsCheatDetected) return false;
+            if (item == null) return false;
+            if (!_slots.TryGetValue(cell, out var slot)) return false;
+
+            var entity = _database.GetEntityById(slot.entityId);
+            if (entity == null) return false;
+
+            if (slot.state == FarmSlotState.Growing && item is BoosterItemDataSO boosterItem)
+            {
+                if (_storageService.GetItemCount(item.ItemId) < 1)
+                {
+                    Debug.LogWarning($"[FarmService] Player does not have booster item {item.ItemId} in inventory.");
+                    return false;
+                }
+
+                _storageService.RemoveItem(item.ItemId, 1);
+
+                float requiredTime = GetRequiredTime(slot);
+                float stage2Threshold = entity.stage2Threshold;
+                float oldProgress = requiredTime > 0 ? slot.growthTimeSec / requiredTime : 0;
+
+                slot.growthTimeSec += boosterItem.boostAmountSec;
+                if (slot.growthTimeSec >= requiredTime)
+                {
+                    slot.growthTimeSec = requiredTime;
+                    slot.state = FarmSlotState.Ripe;
+                    _ripePub.Publish(new FarmEntityRipePayload(slot.entityId, cell, entity.entityType));
+                }
+                else
+                {
+                    float newProgress = requiredTime > 0 ? slot.growthTimeSec / requiredTime : 0;
+                    int totalSprites = entity.growthSprites != null ? entity.growthSprites.Length : 0;
+                    if (totalSprites >= 3)
+                    {
+                        if (oldProgress < stage2Threshold && newProgress >= stage2Threshold)
+                        {
+                            _stageChangedPub.Publish(new FarmEntityStageChangedPayload(slot.entityId, cell, entity.entityType, 1));
+                        }
+                    }
+                }
+
+                _caredPub.Publish(new FarmEntityCaredPayload(
+                    slot.entityId,
+                    cell,
+                    entity.entityType,
+                    new InputRequirement[] { new InputRequirement { item = item, amount = 1 } }
+                ));
+
+                _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
+                _storageService.Save();
+                return true;
+            }
+
+            return false;
         }
 
         private float GetRequiredTime(FarmSlotSaveData slot)
