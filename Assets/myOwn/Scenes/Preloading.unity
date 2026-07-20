@@ -430,6 +430,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Clock::Core.Module.Time.ClockService
   _tickIntervalSeconds: 1
+  _config: {fileID: 11400000, guid: 210f0ffad612d18448753bb4c7b1d9a3, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
