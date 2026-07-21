@@ -26,7 +26,8 @@ namespace Core.Module.Farm
             FarmDatabaseSO database,
             IStorageService storageService,
             ISubscriber<ClockTickPayload> tickSub,
-            IPublisher<FarmSlotChangedPayload> slotChangedPub)
+            IPublisher<FarmSlotChangedPayload> slotChangedPub,
+            IFarmSaveSource saveSource)
         {
             _timeProvider = timeProvider;
             _database = database;
@@ -35,6 +36,15 @@ namespace Core.Module.Farm
 
             // Subscribe to ClockService tick event (publishes every 1s)
             _tickSubscription = tickSub.Subscribe(OnClockTick);
+
+            // Nạp save ngay trong constructor — service không tồn tại ở trạng thái "chưa Initialize".
+            if (saveSource?.FarmSlots == null)
+            {
+                Debug.LogError("[FarmService] Không lấy được save slot (PlayerData chưa load xong?). Ruộng sẽ rỗng và thao tác trồng KHÔNG được lưu.");
+                return;
+            }
+
+            Initialize(saveSource.FarmSlots, saveSource.LastSaveUtcTicks);
         }
 
         public void Initialize(List<FarmSlotSaveData> savedSlots, long lastSaveUtcTicks)

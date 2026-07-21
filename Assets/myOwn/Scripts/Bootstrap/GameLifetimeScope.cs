@@ -26,9 +26,10 @@ namespace MyOwn.ServiceHarness
         protected override void Configure(IContainerBuilder builder)
         {
             // Component sống theo scene — mỗi module tự khai trong {Module}ModuleInstaller.cs.
-            // Broker + service global đã đăng ký ở RootLifetimeScope, scope này kế thừa hết.
+            // Broker global đã đăng ký ở RootLifetimeScope, scope này kế thừa hết.
+            // FarmDatabaseSO do MapSceneBootstrap Enqueue vào trước khi gọi Build().
             builder.RegisterMapSceneComponents()
-                   .RegisterFarmSceneComponents();
+                   .RegisterFarmGameplay();
         }
     }
 }

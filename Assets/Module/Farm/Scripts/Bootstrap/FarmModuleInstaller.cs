@@ -1,5 +1,4 @@
 using MessagePipe;
-using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
@@ -7,12 +6,11 @@ namespace Core.Module.Farm
 {
     /// <summary>
     /// Khai báo mọi thứ module Farm cần để chạy.
-    /// Farm chia 2 tầng: FarmService/Database là global (Root), các handler & view là per-scene (Game).
+    /// Root chỉ giữ broker (kênh dùng chung). FarmDatabaseSO do MapSceneBootstrap nạp bằng Addressables
+    /// rồi Enqueue vào Game scope — FarmService và view sống theo scene gameplay.
     /// </summary>
     public static class FarmModuleInstaller
     {
-        private const string FarmDatabaseResourcePath = "FarmDatabase";
-
         /// <summary>Chỉ mở các kênh pub/sub (broker) do Farm sở hữu.</summary>
         public static IContainerBuilder RegisterFarmEvents(
             this IContainerBuilder builder,
@@ -23,25 +21,25 @@ namespace Core.Module.Farm
             return builder;
         }
 
-        /// <summary>Broker + service global. Gọi ở ROOT scope.</summary>
+        /// <summary>Broker global. Gọi ở ROOT scope.</summary>
         public static IContainerBuilder RegisterFarmModule(
             this IContainerBuilder builder,
             MessagePipeOptions options)
         {
             builder.RegisterFarmEvents(options);
+            return builder;
+        }
 
-            builder.RegisterInstance(LoadFarmDatabase());
-
+        /// <summary>
+        /// Service + component sống theo scene. Gọi ở GAME scope.
+        /// Điều kiện: FarmDatabaseSO phải được Enqueue vào scope này trước khi Build.
+        /// </summary>
+        public static IContainerBuilder RegisterFarmGameplay(this IContainerBuilder builder)
+        {
             builder.Register<FarmService>(Lifetime.Singleton)
                    .AsImplementedInterfaces()
                    .AsSelf();
 
-            return builder;
-        }
-
-        /// <summary>Component sống theo scene. Gọi ở GAME scope.</summary>
-        public static IContainerBuilder RegisterFarmSceneComponents(this IContainerBuilder builder)
-        {
             builder.RegisterComponentInHierarchy<FarmInputHandler>();
             builder.RegisterComponentInHierarchy<FarmVisualizer>();
 
@@ -51,17 +49,6 @@ namespace Core.Module.Farm
 #endif
 
             return builder;
-        }
-
-        private static FarmDatabaseSO LoadFarmDatabase()
-        {
-            var database = Resources.Load<FarmDatabaseSO>(FarmDatabaseResourcePath);
-            if (database == null)
-            {
-                Debug.LogWarning("[RootLifetimeScope] FarmDatabase SO not found in Resources. Creating a temporary runtime instance to prevent container crash. Make sure to place one at 'Assets/Resources/FarmDatabase.asset'.");
-                database = ScriptableObject.CreateInstance<FarmDatabaseSO>();
-            }
-            return database;
         }
     }
 }

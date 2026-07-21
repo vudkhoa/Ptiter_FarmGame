@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using Core.Module.Farm;
 using Core.Module.Time;
 using Core.Module.Storage;
 using Cysharp.Threading.Tasks;
@@ -15,16 +17,18 @@ namespace MyOwn.ServiceHarness
     /// POCO Singleton; auto-loads trong StartAsync khi container build.
     /// Implements IStorageService to serve as the unified warehouse contract.
     /// </summary>
-    public sealed class PlayerDataHolder : IService, IAsyncStartable, IStorageService
+    public sealed class PlayerDataHolder : IService, IAsyncStartable, IStorageService, IFarmSaveSource
     {
         private readonly IPublisher<PlayerDataLoadedPayload> _loadedPublisher;
         private readonly IServerTimeProvider _timeProvider;
         private readonly IDisposable _cheatSubscription;
         private readonly IPublisher<InventoryChangedPayload> _inventoryChangedPublisher;
-        private readonly IObjectResolver _resolver;
         private PlayerData _data;
 
         public PlayerData Data => _data;
+
+        /// <summary>IFarmSaveSource — FarmService tự đọc khi được dựng, thay vì tầng app với xuống resolve nó.</summary>
+        public List<FarmSlotSaveData> FarmSlots => _data?.FarmSlots;
 
         /// <summary>True khi Load() KHÔNG tìm thấy save file → tạo PlayerData mặc định.</summary>
         public bool IsNewlyCreated { get; private set; }
@@ -77,13 +81,11 @@ namespace MyOwn.ServiceHarness
             IPublisher<PlayerDataLoadedPayload> loadedPublisher,
             IServerTimeProvider timeProvider,
             ISubscriber<ClockManipulationDetectedPayload> cheatSub,
-            IPublisher<InventoryChangedPayload> inventoryChangedPublisher,
-            IObjectResolver resolver)
+            IPublisher<InventoryChangedPayload> inventoryChangedPublisher)
         {
             _loadedPublisher = loadedPublisher;
             _timeProvider = timeProvider;
             _inventoryChangedPublisher = inventoryChangedPublisher;
-            _resolver = resolver;
 
             // Subscribe to cheat events to lock game production
             _cheatSubscription = cheatSub.Subscribe(OnCheatDetected);
@@ -118,23 +120,7 @@ namespace MyOwn.ServiceHarness
             IsNewlyCreated = loaded == null;
             _data = loaded ?? new PlayerData();
 
-            // Khởi tạo FarmService bằng dữ liệu Save vừa load
-            if (_resolver != null)
-            {
-                try
-                {
-                    var farmService = _resolver.Resolve<Core.Module.Farm.IFarmService>();
-                    if (farmService != null)
-                    {
-                        farmService.Initialize(_data.FarmSlots, _data.LastSaveUtcTicks);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning($"[PlayerDataHolder] Bỏ qua khởi tạo FarmService (thường do chạy UnitTest hoặc khởi động sớm): {e.Message}");
-                }
-            }
-
+            // FarmService tự đọc slot qua IFarmSaveSource lúc nó được dựng ở scene gameplay.
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(IsNewlyCreated));
         }
 
