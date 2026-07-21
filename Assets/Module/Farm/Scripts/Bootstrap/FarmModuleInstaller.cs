@@ -5,13 +5,12 @@ using VContainer.Unity;
 namespace Core.Module.Farm
 {
     /// <summary>
-    /// Khai báo mọi thứ module Farm cần để chạy.
-    /// Root chỉ giữ broker (kênh dùng chung). FarmDatabaseSO do MapSceneBootstrap nạp bằng Addressables
-    /// rồi Enqueue vào Game scope — FarmService và view sống theo scene gameplay.
+    /// Wires up the Farm module. Root holds only the shared brokers;
+    /// FarmService and its views live in the gameplay scene, with the database enqueued by MapSceneBootstrap.
     /// </summary>
     public static class FarmModuleInstaller
     {
-        /// <summary>Chỉ mở các kênh pub/sub (broker) do Farm sở hữu.</summary>
+        /// <summary>Opens the pub/sub channels owned by Farm.</summary>
         public static IContainerBuilder RegisterFarmEvents(
             this IContainerBuilder builder,
             MessagePipeOptions options)
@@ -21,7 +20,7 @@ namespace Core.Module.Farm
             return builder;
         }
 
-        /// <summary>Broker global. Gọi ở ROOT scope.</summary>
+        /// <summary>Global brokers. Call this from the ROOT scope.</summary>
         public static IContainerBuilder RegisterFarmModule(
             this IContainerBuilder builder,
             MessagePipeOptions options)
@@ -31,8 +30,8 @@ namespace Core.Module.Farm
         }
 
         /// <summary>
-        /// Service + component sống theo scene. Gọi ở GAME scope.
-        /// Điều kiện: FarmDatabaseSO phải được Enqueue vào scope này trước khi Build.
+        /// Scene-scoped service and components. Call this from the GAME scope.
+        /// Requires FarmDatabaseSO to be enqueued into the same scope before Build().
         /// </summary>
         public static IContainerBuilder RegisterFarmGameplay(this IContainerBuilder builder)
         {

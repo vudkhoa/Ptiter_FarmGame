@@ -3,17 +3,13 @@ using Core.Module.Farm;
 using Cysharp.Threading.Tasks;
 using MyOwn.ServiceHarness;
 using UnityEngine;
-using VContainer;
 using VContainer.Unity;
 
 namespace MyOwn.Bootstrap
 {
     /// <summary>
-    /// Điểm vào của scene gameplay: nạp asset bằng Addressables → build GameLifetimeScope → mở cổng scene.
-    ///
-    /// Hai điều kiện bắt buộc, sai một cái là scene chạy sai mà không báo:
-    ///  1. GameLifetimeScope phải TẮT autoRun, nếu không nó tự build trước khi có database.
-    ///  2. _gameplayRoot phải để INACTIVE sẵn trong scene, để Awake/Start của đám con chỉ chạy sau khi inject xong.
+    /// Gameplay scene entry point: load assets, build the scope, then open the scene gate.
+    /// Requires GameLifetimeScope.autoRun to be OFF and _gameplayRoot to be INACTIVE in the scene.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class MapSceneBootstrap : MonoBehaviour
@@ -23,7 +19,7 @@ namespace MyOwn.Bootstrap
         [SerializeField] private FarmDatabaseReference _farmDataRef;
 
         [Header("Scene Gate")]
-        [Tooltip("Root chứa toàn bộ object cần inject. Để inactive trong scene; bật lên sau khi container build xong.")]
+        [Tooltip("Root holding every object that needs injection. Keep it inactive; it is enabled once the container is built.")]
         [SerializeField] private GameObject _gameplayRoot;
 
         private void Start()
@@ -43,36 +39,32 @@ namespace MyOwn.Bootstrap
         {
             if (_scope == null)
             {
-                Debug.LogError("[MapSceneBootstrap] Chưa gán GameLifetimeScope — scene sẽ không có container nào.");
+                Debug.LogError("[MapSceneBootstrap] Scope field is empty - this scene will have no container at all.");
                 return;
             }
 
-            // Root đang bật sẵn nghĩa là Awake/Start của đám con đã chạy trước khi container tồn tại:
-            // field [Inject] còn null, và lỗi thường im lặng (`?.` nuốt mất) chứ không ném exception.
+            // An already-active root means its children ran Awake/Start before injection, which fails silently.
             if (_gameplayRoot != null && _gameplayRoot.activeSelf)
             {
-                Debug.LogWarning($"[MapSceneBootstrap] '{_gameplayRoot.name}' đang bật sẵn trong scene. Tắt nó đi trong Inspector, nếu không mọi thứ inject đều chạy trước khi build.");
+                Debug.LogWarning($"[MapSceneBootstrap] '{_gameplayRoot.name}' is active in the scene - turn it off, otherwise injected objects start before the container exists.");
             }
 
             var database = await LoadFarmDatabaseAsync();
 
-            // Enqueue chỉ áp cho scope build bên trong using; ra khỏi block là Pop khỏi stack tĩnh của VContainer.
+            // Enqueue only applies to scopes built inside this using block.
             using (LifetimeScope.Enqueue(b => b.RegisterInstance(database)))
             {
                 _scope.Build();
             }
 
-            await UniTask.NextFrame();
+            if (_gameplayRoot == null)
+            {
+                Debug.LogError("[MapSceneBootstrap] GameplayRoot field is empty - the scene gate never opens and gameplay stays dead.");
+                return;
+            }
 
-            // Mở cổng: từ đây Awake/Start của đám con mới chạy, và chúng đã được inject lúc Build.
-            if (_gameplayRoot != null)
-            {
-                _gameplayRoot.SetActive(true);
-            }
-            else
-            {
-                Debug.LogError("[MapSceneBootstrap] Chưa gán GameplayRoot — không mở được cổng scene, gameplay sẽ không chạy.");
-            }
+            // Opening the gate: children now run Awake/Start with their dependencies already injected.
+            _gameplayRoot.SetActive(true);
         }
 
         private async UniTask<FarmDatabaseSO> LoadFarmDatabaseAsync()
@@ -87,18 +79,18 @@ namespace MyOwn.Bootstrap
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[MapSceneBootstrap] Load FarmDatabase thất bại: {e}");
+                    Debug.LogError($"[MapSceneBootstrap] Failed to load FarmDatabase: {e}");
                 }
             }
             else
             {
-                Debug.LogError("[MapSceneBootstrap] FarmDataRef chưa gán hoặc key không hợp lệ.");
+                Debug.LogError("[MapSceneBootstrap] FarmDataRef is unassigned or its Addressables key is invalid.");
             }
 
             if (database == null)
             {
-                // Vẫn build scope với database rỗng: mất Farm còn hơn mất cả scene (Map, Input, UI).
-                Debug.LogError("[MapSceneBootstrap] Chạy với FarmDatabase RỖNG — không trồng được gì. Kiểm tra FarmDataRef và group FarmData.");
+                // Still build with an empty database: losing Farm beats losing the whole scene.
+                Debug.LogError("[MapSceneBootstrap] Running with an EMPTY FarmDatabase - nothing can be planted. Check FarmDataRef and the FarmData group.");
                 database = ScriptableObject.CreateInstance<FarmDatabaseSO>();
             }
 
