@@ -164,7 +164,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MyOwn.ServiceHarness.PreloadingFlow
   _gameSceneName: MapScene
-  _delaySeconds: 0.5
+  _delaySeconds: 0
 --- !u!1 &531325927
 GameObject:
   m_ObjectHideFlags: 0
