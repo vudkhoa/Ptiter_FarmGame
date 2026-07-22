@@ -3,6 +3,7 @@ using Core.Module.Farm;
 using Cysharp.Threading.Tasks;
 using MyOwn.ServiceHarness;
 using UnityEngine;
+using VContainer;
 using VContainer.Unity;
 
 namespace MyOwn.Bootstrap
