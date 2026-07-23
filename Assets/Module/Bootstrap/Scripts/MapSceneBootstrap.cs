@@ -1,8 +1,10 @@
 using System;
 using Core.Module.Farm;
+using Core.Module.Quest;
 using Cysharp.Threading.Tasks;
 using MyOwn.ServiceHarness;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using VContainer;
 using VContainer.Unity;
 
@@ -17,7 +19,8 @@ namespace MyOwn.Bootstrap
     {
         [Header("Container")]
         [SerializeField] private GameLifetimeScope _scope;
-        [SerializeField] private FarmDatabaseReference _farmDataRef;
+        [SerializeField] private AssetReference _farmDataRef;
+        [SerializeField] private AssetReference _questCatalogRef; 
 
         [Header("Scene Gate")]
         [Tooltip("Root holding every object that needs injection. Keep it inactive; it is enabled once the container is built.")]
@@ -33,6 +36,11 @@ namespace MyOwn.Bootstrap
             if (_farmDataRef != null && _farmDataRef.IsValid())
             {
                 _farmDataRef.ReleaseAsset();
+            }
+
+            if (_questCatalogRef != null && _questCatalogRef.IsValid())
+            {
+                _questCatalogRef.ReleaseAsset();
             }
         }
 
@@ -50,10 +58,15 @@ namespace MyOwn.Bootstrap
                 Debug.LogWarning($"[MapSceneBootstrap] '{_gameplayRoot.name}' is active in the scene - turn it off, otherwise injected objects start before the container exists.");
             }
 
-            var database = await LoadFarmDatabaseAsync();
+            var farmDatabase = await LoadFarmDatabaseAsync();
+            var questCatalogDatabase = await LoadQuestCatalogAsync();
 
             // Enqueue only applies to scopes built inside this using block.
-            using (LifetimeScope.Enqueue(b => b.RegisterInstance(database)))
+            using (LifetimeScope.Enqueue(b =>
+               {
+                   b.RegisterInstance(farmDatabase);
+                   b.RegisterInstance(questCatalogDatabase);
+               }))
             {
                 _scope.Build();
             }
@@ -68,6 +81,7 @@ namespace MyOwn.Bootstrap
             _gameplayRoot.SetActive(true);
         }
 
+        #region Load Data
         private async UniTask<FarmDatabaseSO> LoadFarmDatabaseAsync()
         {
             FarmDatabaseSO database = null;
@@ -76,7 +90,10 @@ namespace MyOwn.Bootstrap
             {
                 try
                 {
-                    database = await _farmDataRef.LoadAssetAsync();
+                    var handle = _farmDataRef.LoadAssetAsync<FarmDatabaseSO>();
+                    await handle.ToUniTask();
+                    database = handle.Result;
+
                 }
                 catch (Exception e)
                 {
@@ -97,5 +114,38 @@ namespace MyOwn.Bootstrap
 
             return database;
         }
+
+        private async UniTask<QuestCatalogSO> LoadQuestCatalogAsync()
+        {
+            QuestCatalogSO database = null;
+
+            if (_questCatalogRef != null && _questCatalogRef.RuntimeKeyIsValid())
+            {
+                try
+                {
+                    var handle = _questCatalogRef.LoadAssetAsync<QuestCatalogSO>();
+                    await handle.ToUniTask();
+                    database = handle.Result;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[MapSceneBootstrap] Failed to load QuestCatalog: {e}");
+                }
+            }
+            else
+            {
+                Debug.LogError("[MapSceneBootstrap] QuestCatalogRef is unassigned or its Addressables key is invalid.");
+            }
+
+            if (database == null)
+            {
+                // Still build with an empty catalog: losing Quest beats losing the whole scene.
+                Debug.LogError("[MapSceneBootstrap] Running with an EMPTY QuestCatalog - no quests will load. Check QuestCatalogRef and the Addressables group.");
+                database = ScriptableObject.CreateInstance<QuestCatalogSO>();
+            }
+
+            return database;
+        }
+        #endregion
     }
 }

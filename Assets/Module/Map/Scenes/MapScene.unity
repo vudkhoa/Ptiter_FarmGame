@@ -406,6 +406,12 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  _questCatalogRef:
+    m_AssetGUID: 9b0df97cebb54a9d8c50cfbb7616c2bf
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
   _gameplayRoot: {fileID: 1870457101}
 --- !u!1 &480779547
 GameObject:

@@ -1,5 +1,6 @@
 using Core.Module.Map;
 using Core.Module.Farm;
+using Core.Module.Quest;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -28,9 +29,10 @@ namespace MyOwn.ServiceHarness
         protected override void Configure(IContainerBuilder builder)
         {
             // Scene-scoped components only; global brokers are inherited from RootLifetimeScope.
-            // FarmDatabaseSO is enqueued by MapSceneBootstrap right before Build() is called.
+            // FarmDatabaseSO + QuestCatalogSO are enqueued by MapSceneBootstrap right before Build() is called.
             builder.RegisterMapSceneComponents()
-                   .RegisterFarmGameplay();
+                   .RegisterFarmGameplay()
+                   .RegisterQuestGameplay();
         }
     }
 }
