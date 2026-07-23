@@ -38,6 +38,36 @@ namespace MyOwn.ServiceHarness
 
             #region App Block — không thuộc module nào (cùng assembly MyOwn với file này)
             builder.RegisterMessageBroker<PlayerDataLoadedPayload>(options);
+            builder.RegisterMessageBroker<ClockTickPayload>(options);
+
+            // Input module brokers
+            builder.RegisterMessageBroker<PointerScreenPayload>(options);
+            builder.RegisterMessageBroker<PointerButtonDownPayload>(options);
+            builder.RegisterMessageBroker<KeyDownPayload>(options);
+
+            // Map brokers
+            builder.RegisterMessageBroker<MapPlacementStartedPayload>(options);
+            builder.RegisterMessageBroker<MapPreviewMovedPayload>(options);
+            builder.RegisterMessageBroker<MapFurnitureAddedPayload>(options);
+            builder.RegisterMessageBroker<MapPlacementStoppedPayload>(options);
+
+            // Time & Cheat detection brokers
+            builder.RegisterMessageBroker<ServerTimeSyncedPayload>(options);
+            builder.RegisterMessageBroker<ClockManipulationDetectedPayload>(options);
+
+            // Storage broker
+            builder.RegisterMessageBroker<InventoryChangedPayload>(options);
+
+            // Farm brokers
+            builder.RegisterMessageBroker<FarmSlotChangedPayload>(options);
+            builder.RegisterMessageBroker<OpenFarmSelectorUIPayload>(options);
+            builder.RegisterMessageBroker<FarmEntityPlantedPayload>(options);
+            builder.RegisterMessageBroker<FarmEntityCaredPayload>(options);
+            builder.RegisterMessageBroker<FarmEntityStageChangedPayload>(options);
+            builder.RegisterMessageBroker<FarmEntityRipePayload>(options);
+            builder.RegisterMessageBroker<FarmEntityHarvestedPayload>(options);
+
+            // Firebase
             builder.RegisterMessageBroker<FirebaseReadyPayload>(options);
 
             // AsImplementedInterfaces() → mọi interface (IService, IAsyncStartable, ITickable...) visible cho consumer + entry-point dispatcher.
