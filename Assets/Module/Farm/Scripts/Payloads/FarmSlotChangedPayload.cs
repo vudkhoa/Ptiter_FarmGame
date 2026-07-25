@@ -4,7 +4,7 @@ namespace Core.Module.Farm
     {
         public readonly FarmSlotSaveData Slot;
 
-        public FarmSlotChangedPayload(FarmSlotSaveData slot)
+    public FarmSlotChangedPayload(FarmSlotSaveData slot)
         {
             Slot = slot;
         }

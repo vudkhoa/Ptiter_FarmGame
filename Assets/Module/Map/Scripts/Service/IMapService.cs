@@ -21,5 +21,6 @@ namespace Core.Module.Map
         // Grid queries & coordinate conversion
         bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data);
         Vector3Int WorldToCell(Vector3 worldPosition);
+        Vector3 CellToWorld(Vector3Int cellPosition);
     }
 }

@@ -30,7 +30,6 @@ namespace Core.Module.Time
         private void OnTick(ClockTickPayload payload)
         {
             if (_label == null) return;
-            Debug.Log($"Call On Tick");
             _label.text = $"Ticks: {payload.TickCount}\n{payload.UtcNow:HH:mm:ss}";
         }
     }

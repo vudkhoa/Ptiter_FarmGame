@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using MessagePipe;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using VContainer;
 
 namespace Core.Module.Map
@@ -10,6 +12,11 @@ namespace Core.Module.Map
         [Header("Ref")]
         [SerializeField] private ObjectDatabaseSO _database;
         [SerializeField] private float _cellSize = 1f;
+
+        [Header("Tilemap & Grid Configuration")]
+        [SerializeField] private Grid _unityGrid;
+        [SerializeField] private List<Tilemap> _buildableTilemaps = new();
+        [SerializeField] private List<Tilemap> _obstacleTilemaps = new();
 
         private IPublisher<MapPlacementStartedPayload> _pubStart;
         private IPublisher<MapPreviewMovedPayload> _pubMove;
@@ -124,7 +131,7 @@ namespace Core.Module.Map
             _lastCell = cell;
 
             var data = _database.Objects[_currentDbIndex];
-            bool valid = _grid.CanPlaceObjectAt(cell, data.Size);
+            bool valid = _grid.CanPlaceObjectAt(cell, data.Size) && IsTilemapPlacementValid(cell, data.Size);
             var snapped = CellToWorld(cell);
 
             _pubMove.Publish(new MapPreviewMovedPayload(snapped, cell, valid));
@@ -137,7 +144,7 @@ namespace Core.Module.Map
             var cell = WorldToCell(worldHit);
             var data = _database.Objects[_currentDbIndex];
 
-            if (!_grid.CanPlaceObjectAt(cell, data.Size)) return false;
+            if (!_grid.CanPlaceObjectAt(cell, data.Size) || !IsTilemapPlacementValid(cell, data.Size)) return false;
 
             _grid.AddObjectAt(cell, data.Size, data.ID, _changeCount);
             _changeCount++;
@@ -147,20 +154,80 @@ namespace Core.Module.Map
 
             return true;
         }
+
+        private bool IsTilemapPlacementValid(Vector3Int cell, Vector2Int size)
+        {
+            for (int x = 0; x < size.x; x++)
+            {
+                for (int z = 0; z < size.y; z++)
+                {
+                    Vector3Int targetLogicalCell = cell + new Vector3Int(x, 0, z);
+                    // Ánh xạ tọa độ logic (x, 0, z) sang tọa độ Unity Grid (x, z, y) do swizzle XZY
+                    Vector3Int unityCell = new Vector3Int(targetLogicalCell.x, targetLogicalCell.z, targetLogicalCell.y);
+                    
+                    // 1. Kiểm tra Buildable: Phải có ít nhất 1 Tilemap trong danh sách chứa gạch tại đây
+                    if (_buildableTilemaps != null && _buildableTilemaps.Count > 0)
+                    {
+                        bool hasValidBase = false;
+                        foreach (var tilemap in _buildableTilemaps)
+                        {
+                            if (tilemap != null && tilemap.GetTile(unityCell) != null)
+                            {
+                                hasValidBase = true;
+                                break;
+                            }
+                        }
+                        if (!hasValidBase) return false; // Không có gạch nền nào đỡ ở dưới
+                    }
+
+                    // 2. Kiểm tra Obstacle: Không được phép có gạch của bất kỳ Tilemap chướng ngại vật nào
+                    if (_obstacleTilemaps != null && _obstacleTilemaps.Count > 0)
+                    {
+                        foreach (var tilemap in _obstacleTilemaps)
+                        {
+                            if (tilemap != null && tilemap.GetTile(unityCell) != null)
+                            {
+                                return false; // Dính chướng ngại vật
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
         #endregion
 
         #region Cell math
-        public Vector3Int WorldToCell(Vector3 w) => new Vector3Int(
-            Mathf.FloorToInt(w.x / _cellSize),
-            0,
-            Mathf.FloorToInt(w.z / _cellSize)
-        );
+        public Vector3Int WorldToCell(Vector3 w)
+        {
+            if (_unityGrid != null)
+            {
+                Vector3Int unityCell = _unityGrid.WorldToCell(w);
+                // Unity Grid XZY trả về (x, z, y) của hệ tọa độ thế giới.
+                // Chúng ta ánh xạ về dạng logic của game: (x, 0, z).
+                return new Vector3Int(unityCell.x, 0, unityCell.y);
+            }
+            return new Vector3Int(
+                Mathf.FloorToInt(w.x / _cellSize),
+                0,
+                Mathf.FloorToInt(w.z / _cellSize)
+            );
+        }
 
-        private Vector3 CellToWorld(Vector3Int c) => new Vector3(
-            c.x * _cellSize,
-            0f,
-            c.z * _cellSize
-        );
+        public Vector3 CellToWorld(Vector3Int c)
+        {
+            if (_unityGrid != null)
+            {
+                // Ánh xạ tọa độ logic (x, 0, z) sang tọa độ Unity Grid (x, z, y) trước khi chuyển đổi
+                Vector3Int unityCell = new Vector3Int(c.x, c.z, c.y);
+                return _unityGrid.CellToWorld(unityCell);
+            }
+            return new Vector3(
+                c.x * _cellSize,
+                0f,
+                c.z * _cellSize
+            );
+        }
         #endregion
     }
 }

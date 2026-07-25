@@ -1,6 +1,7 @@
 // TODO: Recheck UI
 using System;
 using System.Collections.Generic;
+using Core.Module.Map;
 using MessagePipe;
 using UnityEngine;
 using VContainer;
@@ -19,6 +20,7 @@ namespace Core.Module.Farm
 
         private IFarmService _farmService;
         private FarmDatabaseSO _database;
+        private IMapService _mapService;
         private IDisposable _subscription;
 
         private readonly Dictionary<Vector3Int, FarmSlotView> _spawnedViews = new Dictionary<Vector3Int, FarmSlotView>();
@@ -28,10 +30,12 @@ namespace Core.Module.Farm
         public void Construct(
             IFarmService farmService,
             FarmDatabaseSO database,
+            IMapService mapService,
             ISubscriber<FarmSlotChangedPayload> slotChangedSub)
         {
             _farmService = farmService;
             _database = database;
+            _mapService = mapService;
 
             // Subscribe to state change events
             _subscription = slotChangedSub.Subscribe(OnSlotChanged);
@@ -84,7 +88,7 @@ namespace Core.Module.Farm
             // 2. Otherwise, spawn the visual slot prefab if not already present
             if (!_spawnedViews.TryGetValue(cell, out var spawnedView) || spawnedView == null)
             {
-                Vector3 worldPos = new Vector3(cell.x * _cellSize, 0f, cell.z * _cellSize) + _offset;
+                Vector3 worldPos = _mapService.CellToWorld(cell) + _offset;
                 spawnedView = Instantiate(_slotViewPrefab, worldPos, Quaternion.identity, transform);
                 _spawnedViews[cell] = spawnedView;
             }
