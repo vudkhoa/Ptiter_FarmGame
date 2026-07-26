@@ -30,6 +30,12 @@ namespace Core.Module.Quest
             MessagePipeOptions options)
         {
             builder.RegisterQuestEvents(options);
+
+            // QuestCatalogProvider: preload QuestCatalogSO at boot (IBootPreloader).
+            builder.Register<QuestCatalogProvider>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()   // IQuestCatalogProvider + IBootPreloader
+                   .AsSelf();
+
             return builder;
         }
 

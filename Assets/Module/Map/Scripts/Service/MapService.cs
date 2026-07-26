@@ -58,14 +58,14 @@ namespace Core.Module.Map
         {
             if (_database == null)
             {
-                Debug.LogError($"[MapService] {nameof(_database)} null — drag ObjectDatabaseSO vào Inspector.");
+                Debug.LogError($"[MapService] {nameof(_database)} is null - check ObjectDatabaseSO registration in RootLifetimeScope.");
                 enabled = false;
                 return;
             }
 
             if (_cellSize <= 0)
             {
-                Debug.LogError($"[MapService] _cellSize phải > 0.");
+                Debug.LogError($"[MapService] _cellSize must be > 0.");
                 enabled = false;
                 return;
             }
@@ -115,7 +115,7 @@ namespace Core.Module.Map
             var data = _database.Objects[idx];
             if (!_catalog.TryGet(data.ID, out var prefab))
             {
-                Debug.LogError($"[MapService] Prefab ID {data.ID} chưa preload trong catalog.");
+                Debug.LogError($"[MapService] Prefab ID {data.ID} is not preloaded in the catalog.");
                 return;
             }
 
@@ -161,7 +161,7 @@ namespace Core.Module.Map
             if (!_grid.CanPlaceObjectAt(cell, data.Size) || !IsTilemapPlacementValid(cell, data.Size)) return false;
             if (!_catalog.TryGet(data.ID, out var prefab))
             {
-                Debug.LogError($"[MapService] Prefab ID {data.ID} chưa preload trong catalog.");
+                Debug.LogError($"[MapService] Prefab ID {data.ID} is not preloaded in the catalog.");
                 return false;
             }
 
@@ -183,7 +183,7 @@ namespace Core.Module.Map
                     Vector3Int targetLogicalCell = cell + new Vector3Int(x, 0, z);
                     // Ánh xạ tọa độ logic (x, 0, z) sang tọa độ Unity Grid (x, z, y) do swizzle XZY
                     Vector3Int unityCell = new Vector3Int(targetLogicalCell.x, targetLogicalCell.z, targetLogicalCell.y);
-                    
+
                     // 1. Kiểm tra Buildable: Phải có ít nhất 1 Tilemap trong danh sách chứa gạch tại đây
                     if (_buildableTilemaps != null && _buildableTilemaps.Count > 0)
                     {

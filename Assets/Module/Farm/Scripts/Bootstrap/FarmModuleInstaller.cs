@@ -26,6 +26,12 @@ namespace Core.Module.Farm
             MessagePipeOptions options)
         {
             builder.RegisterFarmEvents(options);
+
+            // FarmDatabaseProvider: preload FarmDatabaseSO at boot (IBootPreloader).
+            builder.Register<FarmDatabaseProvider>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()   // IFarmDatabaseProvider + IBootPreloader
+                   .AsSelf();
+
             return builder;
         }
 

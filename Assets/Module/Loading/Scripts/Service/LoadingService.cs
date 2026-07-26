@@ -8,7 +8,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Core.Module.Loading
 {
-    public class LoadingService : ILoadingService, IAssetLoader, IDisposable
+    public sealed class LoadingService : ILoadingService, IAssetLoader, IDisposable
     {
         private readonly IReadOnlyList<IBootPreloader> _preloads;
         private readonly IPublisher<LoadingProgressPayload> _progressPub;
@@ -47,7 +47,7 @@ namespace Core.Module.Loading
             Report(LoadingPhase.CheckCatalog, 10, "Catalog Ready");
 
             // Phase 3: Download -> Flow For Remote.
-            Report(LoadingPhase.Download, 55, "Success Download");
+            Report(LoadingPhase.Download, 55, "Content ready");
 
             // Phase 3: Preloading Content
             int count = _preloads.Count;

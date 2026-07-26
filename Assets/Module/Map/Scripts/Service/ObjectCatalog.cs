@@ -16,7 +16,7 @@ namespace Core.Module.Map
         private readonly ObjectDatabaseSO _database;              // RegisterInstance ở root
         private readonly Dictionary<int, GameObject> _dict = new();
 
-        public string DisplayName => "Đang tải vật thể...";
+        public string DisplayName => "Loading objects...";
 
         public ObjectCatalog(ObjectDatabaseSO database) => _database = database;
 
@@ -28,8 +28,12 @@ namespace Core.Module.Map
             {
                 ct.ThrowIfCancellationRequested();
                 ObjectData dt = _database.Objects[i];
-                if (dt.Prefab == null || !dt.Prefab.RuntimeKeyIsValid()) return;
-                try 
+                if (dt.Prefab == null || !dt.Prefab.RuntimeKeyIsValid())
+                {
+                    Debug.LogError($"[ObjectCatalog] ID {dt.ID} has no valid AssetRef - skipped.");
+                    continue;
+                }
+                try
                 {
                     GameObject gO = await loader.LoadTrackerAsync(dt.Prefab);
                     if (gO != null)
