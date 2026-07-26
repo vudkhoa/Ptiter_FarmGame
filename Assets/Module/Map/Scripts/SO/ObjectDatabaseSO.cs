@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Core.Module.Map
 {
@@ -16,6 +17,6 @@ namespace Core.Module.Map
         public string name;
         public int ID;
         public Vector2Int Size;
-        public GameObject Prefab;
+        public AssetReferenceGameObject Prefab;
     }
 }

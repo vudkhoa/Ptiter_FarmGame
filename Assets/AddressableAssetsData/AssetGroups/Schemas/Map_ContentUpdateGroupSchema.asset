@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5834b5087d578d24c926ce20cd31e6d6, type: 3}
-  m_Name: FarmData_ContentUpdateGroupSchema
+  m_Name: Map_ContentUpdateGroupSchema
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.GroupSchemas.ContentUpdateGroupSchema
-  m_Group: {fileID: 11400000, guid: afd413d28b8f83445bb0e4fe6a5529e2, type: 2}
+  m_Group: {fileID: 11400000, guid: e0f1a86c4ee35ef48b51c8504c852f6f, type: 2}
   m_StaticContent: 0

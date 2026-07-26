@@ -9,8 +9,10 @@ namespace Core.Module.Map
     [DisallowMultipleComponent]
     public sealed class MapService : MonoBehaviour, IMapService
     {
+        // Injected from root container (registered once in RootLifetimeScope).
+        private ObjectDatabaseSO _database;
+
         [Header("Ref")]
-        [SerializeField] private ObjectDatabaseSO _database;
         [SerializeField] private float _cellSize = 1f;
 
         [Header("Tilemap & Grid Configuration")]
@@ -30,18 +32,24 @@ namespace Core.Module.Map
         private int _changeCount;
         private Vector3Int _lastCell = new(int.MinValue, 0, 0);
 
+        private IObjectCatalog _catalog;
+
         #region DI - Constructor
         [Inject]
         public void Construct(
             IPublisher<MapPlacementStartedPayload> pubStart,
             IPublisher<MapPreviewMovedPayload> pubMove,
             IPublisher<MapFurnitureAddedPayload> pubAdded,
-            IPublisher<MapPlacementStoppedPayload> pubStop)
+            IPublisher<MapPlacementStoppedPayload> pubStop,
+            IObjectCatalog catalog,
+            ObjectDatabaseSO database)
         {
             _pubStart = pubStart;
             _pubMove = pubMove;
             _pubAdded = pubAdded;
             _pubStop = pubStop;
+            _catalog = catalog;
+            _database = database;
         }
         #endregion
 
@@ -105,11 +113,17 @@ namespace Core.Module.Map
             }
 
             var data = _database.Objects[idx];
+            if (!_catalog.TryGet(data.ID, out var prefab))
+            {
+                Debug.LogError($"[MapService] Prefab ID {data.ID} chưa preload trong catalog.");
+                return;
+            }
+
             _currentObjectId = data.ID;
             _currentDbIndex = idx;
             _lastCell = new Vector3Int(int.MinValue, 0, 0);
 
-            _pubStart.Publish(new MapPlacementStartedPayload(data.ID, data.Prefab, data.Size));
+            _pubStart.Publish(new MapPlacementStartedPayload(data.ID, prefab, data.Size));
         }
 
         public void StopPlacement()
@@ -145,12 +159,17 @@ namespace Core.Module.Map
             var data = _database.Objects[_currentDbIndex];
 
             if (!_grid.CanPlaceObjectAt(cell, data.Size) || !IsTilemapPlacementValid(cell, data.Size)) return false;
+            if (!_catalog.TryGet(data.ID, out var prefab))
+            {
+                Debug.LogError($"[MapService] Prefab ID {data.ID} chưa preload trong catalog.");
+                return false;
+            }
 
             _grid.AddObjectAt(cell, data.Size, data.ID, _changeCount);
             _changeCount++;
 
             var snapped = CellToWorld(cell);
-            _pubAdded.Publish(new MapFurnitureAddedPayload(data.ID, data.Prefab, snapped, cell, _changeCount));
+            _pubAdded.Publish(new MapFurnitureAddedPayload(data.ID, prefab, snapped, cell, _changeCount));
 
             return true;
         }

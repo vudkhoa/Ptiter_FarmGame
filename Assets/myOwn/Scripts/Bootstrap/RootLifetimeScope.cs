@@ -1,3 +1,4 @@
+using UnityEngine;
 using Core.Module.Input;
 using Core.Module.Map;
 using Core.Module.Farm;
@@ -16,6 +17,9 @@ namespace MyOwn.ServiceHarness
     /// </summary>
     public sealed class RootLifetimeScope : LifetimeScope
     {
+        [Header("Boot data (cấp cho preloader chạy lúc boot)")]
+        [SerializeField] private ObjectDatabaseSO _objectDatabase;
+
         protected override void Awake()
         {
             DontDestroyOnLoad(gameObject);
@@ -35,6 +39,9 @@ namespace MyOwn.ServiceHarness
                    .RegisterStorageModule(options)
                    .RegisterFarmModule(options)
                    .RegisterQuestModule(options);
+
+            // ObjectCatalog (preloader) cần ObjectDatabaseSO qua constructor → phải có trong container.
+            builder.RegisterInstance(_objectDatabase);
 
             #region App Block — không thuộc module nào (cùng assembly MyOwn với file này)
             builder.RegisterMessageBroker<PlayerDataLoadedPayload>(options);

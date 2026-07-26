@@ -46,7 +46,6 @@ namespace Core.Module.Farm
             builder.RegisterComponentInHierarchy<FarmDebugLogger>();
             builder.RegisterComponentInHierarchy<FarmTestHelper>();
 #endif
-
             return builder;
         }
     }
