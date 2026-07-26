@@ -35,6 +35,12 @@ namespace Core.Module.Farm.Tests
             public void Dispose() {}
         }
 
+        private class StubSaveSource : IFarmSaveSource
+        {
+            public List<FarmSlotSaveData> FarmSlots { get; set; } = new List<FarmSlotSaveData>();
+            public long LastSaveUtcTicks { get; set; }
+        }
+
         private class StubSubscriber<T> : ISubscriber<T>
         {
             public IDisposable Subscribe(IMessageHandler<T> handler, params MessageHandlerFilter<T>[] filters)
@@ -159,9 +165,13 @@ namespace Core.Module.Farm.Tests
                 _caredPub,
                 _stageChangedPub,
                 _ripePub,
-                _harvestedPub
+                _harvestedPub,
+                new StubSaveSource
+                {
+                    FarmSlots = savedSlots ?? new List<FarmSlotSaveData>(),
+                    LastSaveUtcTicks = 0
+                }
             );
-            service.Initialize(savedSlots ?? new List<FarmSlotSaveData>(), 0);
             return service;
         }
 

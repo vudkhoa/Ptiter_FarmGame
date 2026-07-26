@@ -9,8 +9,10 @@ namespace Core.Module.Map
     [DisallowMultipleComponent]
     public sealed class MapService : MonoBehaviour, IMapService
     {
+        // Injected from root container (registered once in RootLifetimeScope).
+        private ObjectDatabaseSO _database;
+
         [Header("Ref")]
-        [SerializeField] private ObjectDatabaseSO _database;
         [SerializeField] private float _cellSize = 1f;
 
         [Header("Tilemap & Grid Configuration")]
@@ -30,18 +32,24 @@ namespace Core.Module.Map
         private int _changeCount;
         private Vector3Int _lastCell = new(int.MinValue, 0, 0);
 
+        private IObjectCatalog _catalog;
+
         #region DI - Constructor
         [Inject]
         public void Construct(
             IPublisher<MapPlacementStartedPayload> pubStart,
             IPublisher<MapPreviewMovedPayload> pubMove,
             IPublisher<MapFurnitureAddedPayload> pubAdded,
-            IPublisher<MapPlacementStoppedPayload> pubStop)
+            IPublisher<MapPlacementStoppedPayload> pubStop,
+            IObjectCatalog catalog,
+            ObjectDatabaseSO database)
         {
             _pubStart = pubStart;
             _pubMove = pubMove;
             _pubAdded = pubAdded;
             _pubStop = pubStop;
+            _catalog = catalog;
+            _database = database;
         }
         #endregion
 
@@ -50,14 +58,14 @@ namespace Core.Module.Map
         {
             if (_database == null)
             {
-                Debug.LogError($"[MapService] {nameof(_database)} null — drag ObjectDatabaseSO vào Inspector.");
+                Debug.LogError($"[MapService] {nameof(_database)} is null - check ObjectDatabaseSO registration in RootLifetimeScope.");
                 enabled = false;
                 return;
             }
 
             if (_cellSize <= 0)
             {
-                Debug.LogError($"[MapService] _cellSize phải > 0.");
+                Debug.LogError($"[MapService] _cellSize must be > 0.");
                 enabled = false;
                 return;
             }
@@ -105,11 +113,17 @@ namespace Core.Module.Map
             }
 
             var data = _database.Objects[idx];
+            if (!_catalog.TryGet(data.ID, out var prefab))
+            {
+                Debug.LogError($"[MapService] Prefab ID {data.ID} is not preloaded in the catalog.");
+                return;
+            }
+
             _currentObjectId = data.ID;
             _currentDbIndex = idx;
             _lastCell = new Vector3Int(int.MinValue, 0, 0);
 
-            _pubStart.Publish(new MapPlacementStartedPayload(data.ID, data.Prefab, data.Size));
+            _pubStart.Publish(new MapPlacementStartedPayload(data.ID, prefab, data.Size));
         }
 
         public void StopPlacement()
@@ -145,12 +159,17 @@ namespace Core.Module.Map
             var data = _database.Objects[_currentDbIndex];
 
             if (!_grid.CanPlaceObjectAt(cell, data.Size) || !IsTilemapPlacementValid(cell, data.Size)) return false;
+            if (!_catalog.TryGet(data.ID, out var prefab))
+            {
+                Debug.LogError($"[MapService] Prefab ID {data.ID} is not preloaded in the catalog.");
+                return false;
+            }
 
             _grid.AddObjectAt(cell, data.Size, data.ID, _changeCount);
             _changeCount++;
 
             var snapped = CellToWorld(cell);
-            _pubAdded.Publish(new MapFurnitureAddedPayload(data.ID, data.Prefab, snapped, cell, _changeCount));
+            _pubAdded.Publish(new MapFurnitureAddedPayload(data.ID, prefab, snapped, cell, _changeCount));
 
             return true;
         }
@@ -164,7 +183,7 @@ namespace Core.Module.Map
                     Vector3Int targetLogicalCell = cell + new Vector3Int(x, 0, z);
                     // Ánh xạ tọa độ logic (x, 0, z) sang tọa độ Unity Grid (x, z, y) do swizzle XZY
                     Vector3Int unityCell = new Vector3Int(targetLogicalCell.x, targetLogicalCell.z, targetLogicalCell.y);
-                    
+
                     // 1. Kiểm tra Buildable: Phải có ít nhất 1 Tilemap trong danh sách chứa gạch tại đây
                     if (_buildableTilemaps != null && _buildableTilemaps.Count > 0)
                     {

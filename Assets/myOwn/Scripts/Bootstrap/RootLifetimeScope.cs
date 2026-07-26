@@ -1,3 +1,4 @@
+using UnityEngine;
 using Core.Module.Input;
 using Core.Module.Map;
 using Core.Module.Farm;
@@ -7,6 +8,7 @@ using VContainer;
 using VContainer.Unity;
 using Core.Module.Time;
 using Core.Module.Quest;
+using Core.Module.Loading;
 using myOwn.Firebase;
 
 namespace MyOwn.ServiceHarness
@@ -16,10 +18,17 @@ namespace MyOwn.ServiceHarness
     /// </summary>
     public sealed class RootLifetimeScope : LifetimeScope
     {
+        [Header("Boot data (cấp cho preloader chạy lúc boot)")]
+        [SerializeField] private ObjectDatabaseSO _objectDatabase;
+        [SerializeField] private FarmDatabaseReference _farmDatabaseRef;
+        [SerializeField] private QuestCatalogReference _questCatalogRef;
+
         protected override void Awake()
         {
-            DontDestroyOnLoad(gameObject);
+            // Build while still in this scene so RegisterComponentInHierarchy can find scene objects
+            // (PreloadingFlow, LoadingScreenView). Then persist the root across scene loads.
             base.Awake();
+            DontDestroyOnLoad(gameObject);
         }
 
         protected override void Configure(IContainerBuilder builder)
@@ -34,7 +43,17 @@ namespace MyOwn.ServiceHarness
                    .RegisterTimeModule(options)
                    .RegisterStorageModule(options)
                    .RegisterFarmModule(options)
-                   .RegisterQuestModule(options);
+                   .RegisterQuestModule(options)
+                   .RegisterLoadingModule(options);
+
+            // Boot data + Addressable refs cấp cho preloader (nạp trong RunBootSequenceAsync).
+            builder.RegisterInstance(_objectDatabase);
+            builder.RegisterInstance(_farmDatabaseRef);
+            builder.RegisterInstance(_questCatalogRef);
+
+            // Objects sống trong scene Preloading → đăng ký để được inject.
+            builder.RegisterComponentInHierarchy<PreloadingFlow>();
+            builder.RegisterComponentInHierarchy<LoadingScreenView>();
 
             #region App Block — không thuộc module nào (cùng assembly MyOwn với file này)
             builder.RegisterMessageBroker<PlayerDataLoadedPayload>(options);
