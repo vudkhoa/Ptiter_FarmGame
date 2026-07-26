@@ -24,6 +24,12 @@ namespace Core.Module.Farm.Tests
             public void Dispose() {}
         }
 
+        private class StubSaveSource : IFarmSaveSource
+        {
+            public List<FarmSlotSaveData> FarmSlots { get; set; } = new List<FarmSlotSaveData>();
+            public long LastSaveUtcTicks { get; set; }
+        }
+
         // Stub MessagePipe events publishers/subscribers
         private class StubPublisher<T> : IPublisher<T>
         {
@@ -135,9 +141,9 @@ namespace Core.Module.Farm.Tests
                 _mockDatabase,
                 _mockInventory,
                 new StubSubscriber<ClockTickPayload>(),
-                new StubPublisher<FarmSlotChangedPayload>()
+                new StubPublisher<FarmSlotChangedPayload>(),
+                new StubSaveSource { FarmSlots = savedSlots }
             );
-            farmService.Initialize(savedSlots, 0);
 
             Vector3Int cell = new Vector3Int(1, 0, 1);
 
@@ -200,9 +206,9 @@ namespace Core.Module.Farm.Tests
                 _mockDatabase,
                 _mockInventory,
                 new StubSubscriber<ClockTickPayload>(),
-                new StubPublisher<FarmSlotChangedPayload>()
+                new StubPublisher<FarmSlotChangedPayload>(),
+                new StubSaveSource { FarmSlots = savedSlots }
             );
-            farmService.Initialize(savedSlots, 0);
 
             Vector3Int cell = new Vector3Int(2, 0, 2);
 

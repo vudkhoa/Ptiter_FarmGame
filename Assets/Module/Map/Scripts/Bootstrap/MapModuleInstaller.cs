@@ -28,6 +28,13 @@ namespace Core.Module.Map
             MessagePipeOptions options)
         {
             builder.RegisterMapEvents(options);
+
+            // ObjectCatalog: preload prefab lúc boot (IBootPreloader) + cho MapService tra ID→prefab.
+            // ObjectDatabaseSO được RegisterInstance ở RootLifetimeScope (A1).
+            builder.Register<ObjectCatalog>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()   // IObjectCatalog + IBootPreloader
+                   .AsSelf();
+
             return builder;
         }
 

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using Core.Module.Farm;
 using Core.Module.Time;
 using Core.Module.Storage;
 using Cysharp.Threading.Tasks;
@@ -11,22 +13,23 @@ using VContainer.Unity;
 namespace MyOwn.ServiceHarness
 {
     /// <summary>
-    /// Wrap PlayerData runtime instance, expose Load/Save/Reset.
-    /// POCO Singleton; auto-loads trong StartAsync khi container build.
-    /// Implements IStorageService to serve as the unified warehouse contract.
+    /// Owns the runtime PlayerData instance and exposes Load/Save/Reset.
+    /// Loads itself in StartAsync when the container builds; serves as the single storage contract.
     /// </summary>
-    public sealed class PlayerDataHolder : IService, IAsyncStartable, IStorageService
+    public sealed class PlayerDataHolder : IService, IAsyncStartable, IStorageService, IFarmSaveSource
     {
         private readonly IPublisher<PlayerDataLoadedPayload> _loadedPublisher;
         private readonly IServerTimeProvider _timeProvider;
         private readonly IDisposable _cheatSubscription;
         private readonly IPublisher<InventoryChangedPayload> _inventoryChangedPublisher;
-        private readonly IObjectResolver _resolver;
         private PlayerData _data;
 
         public PlayerData Data => _data;
 
-        /// <summary>True khi Load() KHÔNG tìm thấy save file → tạo PlayerData mặc định.</summary>
+        /// <summary>IFarmSaveSource: FarmService reads this itself when it is constructed.</summary>
+        public List<FarmSlotSaveData> FarmSlots => _data?.FarmSlots;
+
+        /// <summary>True when Load() found no save file and fell back to a default PlayerData.</summary>
         public bool IsNewlyCreated { get; private set; }
 
         #region IStorageService Implementation
@@ -77,15 +80,13 @@ namespace MyOwn.ServiceHarness
             IPublisher<PlayerDataLoadedPayload> loadedPublisher,
             IServerTimeProvider timeProvider,
             ISubscriber<ClockManipulationDetectedPayload> cheatSub,
-            IPublisher<InventoryChangedPayload> inventoryChangedPublisher,
-            IObjectResolver resolver)
+            IPublisher<InventoryChangedPayload> inventoryChangedPublisher)
         {
             _loadedPublisher = loadedPublisher;
             _timeProvider = timeProvider;
             _inventoryChangedPublisher = inventoryChangedPublisher;
-            _resolver = resolver;
 
-            // Subscribe to cheat events to lock game production
+            // Listen for clock tampering so production can be locked down.
             _cheatSubscription = cheatSub.Subscribe(OnCheatDetected);
         }
 
@@ -105,7 +106,7 @@ namespace MyOwn.ServiceHarness
             return UniTask.CompletedTask;
         }
 
-        /// <summary>Re-init explicit (idempotent) — dùng sau cloud restore hoặc trong test.</summary>
+        /// <summary>Idempotent re-init, used after a cloud restore or inside tests.</summary>
         public UniTask InitializeAsync(CancellationToken ct = default)
         {
             Load();
@@ -118,23 +119,6 @@ namespace MyOwn.ServiceHarness
             IsNewlyCreated = loaded == null;
             _data = loaded ?? new PlayerData();
 
-            // Khởi tạo FarmService bằng dữ liệu Save vừa load
-            if (_resolver != null)
-            {
-                try
-                {
-                    var farmService = _resolver.Resolve<Core.Module.Farm.IFarmService>();
-                    if (farmService != null)
-                    {
-                        farmService.Initialize(_data.FarmSlots, _data.LastSaveUtcTicks);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning($"[PlayerDataHolder] Bỏ qua khởi tạo FarmService (thường do chạy UnitTest hoặc khởi động sớm): {e.Message}");
-                }
-            }
-
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(IsNewlyCreated));
         }
 
@@ -144,7 +128,7 @@ namespace MyOwn.ServiceHarness
         {
             if (_data == null) return;
 
-            // Hủy tác vụ lưu đang chờ trước đó để bắt đầu đếm ngược lại (Throttling)
+            // Cancel the pending save so the 1s countdown restarts (throttling).
             if (_saveCts != null)
             {
                 _saveCts.Cancel();
@@ -159,12 +143,12 @@ namespace MyOwn.ServiceHarness
         {
             try
             {
-                // Trì hoãn 1 giây (nếu có click mới trong 1s này, tác vụ sẽ bị hủy và đếm lại từ đầu)
+                // Wait 1s; a newer save request cancels this one and restarts the countdown.
                 await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: ct);
 
                 _data.LastSaveUtcTicks = _timeProvider.UtcNow.Ticks;
 
-                // Sao chép tham chiếu dữ liệu để ghi bất đồng bộ trên ThreadPool, tránh chặn main thread
+                // Hold the reference locally so the write can run off the main thread.
                 PlayerData saveCopy = _data;
                 await UniTask.RunOnThreadPool(() =>
                 {
@@ -173,9 +157,9 @@ namespace MyOwn.ServiceHarness
             }
             catch (OperationCanceledException)
             {
-                // Bị hủy khi có yêu cầu Save tiếp theo trước 1s, đây là hoạt động bình thường của Throttling
+                // Normal throttling behaviour, not a failure: a newer save request replaced this one.
 #if UNITY_EDITOR
-                Debug.LogWarning("[PlayerDataHolder] Save operation canceled because a newer save request was initiated.");
+                Debug.Log("[PlayerDataHolder] Save skipped - a newer save request replaced it.");
 #endif
             }
             catch (Exception e)
@@ -202,14 +186,24 @@ namespace MyOwn.ServiceHarness
         public void Reset()
         {
             _data = new PlayerData();
-            SaveImmediate(); // Khi reset tài khoản, ghi đè lập tức
+            // Wiping an account must hit disk right away, not through the throttle.
+            SaveImmediate();
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(true));
         }
 
         public void Dispose()
         {
-            SaveImmediate(); // Đảm bảo mọi thay đổi đang chờ trong RAM được ghi xuống ổ đĩa trước khi hủy đối tượng
+            // Flush pending in-memory changes to disk before this object goes away.
+            SaveImmediate();
+
             _cheatSubscription?.Dispose();
+
+            if (_saveCts != null)
+            {
+                _saveCts.Cancel();
+                _saveCts.Dispose();
+                _saveCts = null;
+            }
         }
     }
 }
