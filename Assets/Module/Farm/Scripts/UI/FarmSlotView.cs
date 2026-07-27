@@ -12,13 +12,34 @@ namespace Core.Module.Farm
         [SerializeField] private Slider _progressBar;
         [SerializeField] private GameObject _feedBubble;      // Needs Food bubble
         [SerializeField] private GameObject _harvestBubble;   // Ready to Harvest bubble
+        [SerializeField] private bool _useBillboard = true;
+        [SerializeField, Min(0f)] private float _cropHorizontalSpacing = 0.4f;
+        [SerializeField, Min(0f)] private float _cropVerticalSpacing = 0.22f;
+        [SerializeField] private int _cropSortingOrder = 1;
+
+        private SpriteRenderer[] _cropRenderers;
+        private Vector3 _spriteBaseLocalPosition;
+        private Camera _camera;
+
+        private void Awake()
+        {
+            if (_spriteRenderer != null)
+            {
+                _spriteBaseLocalPosition = _spriteRenderer.transform.localPosition;
+                _cropRenderers = new SpriteRenderer[4];
+                _cropRenderers[0] = _spriteRenderer;
+            }
+
+            _camera = Camera.main;
+            if (_useBillboard) FaceCamera();
+        }
 
         public void UpdateView(FarmSlotSaveData slot, FarmDatabaseSO database)
         {
             // 1. If slot data is null or completely empty (unplanted Soil / unoccupied Barn)
             if (slot == null || (slot.state == FarmSlotState.Empty && string.IsNullOrEmpty(slot.entityId)))
             {
-                if (_spriteRenderer != null) _spriteRenderer.sprite = null;
+                SetEntitySprite(null, false);
                 if (_progressBar != null) _progressBar.gameObject.SetActive(false);
                 if (_feedBubble != null) _feedBubble.SetActive(false);
                 if (_harvestBubble != null) _harvestBubble.SetActive(false);
@@ -41,12 +62,12 @@ namespace Core.Module.Farm
                         if (entity.growthSprites != null && entity.growthSprites.Length > 0)
                         {
                             int lastIdx = entity.growthSprites.Length - 1;
-                            if (_spriteRenderer != null) _spriteRenderer.sprite = entity.growthSprites[lastIdx];
+                            SetEntitySprite(entity.growthSprites[lastIdx], false);
                         }
                     }
                     else
                     {
-                        if (_spriteRenderer != null) _spriteRenderer.sprite = null;
+                        SetEntitySprite(null, false);
                     }
 
                     if (_progressBar != null) _progressBar.gameObject.SetActive(false);
@@ -78,14 +99,15 @@ namespace Core.Module.Farm
                     {
                         if (_spriteRenderer != null)
                         {
+                            int spriteIndex;
                             if (isAnimal && slot.isAdult)
                             {
                                 // Keep displaying the adult sprite for grown-up animals
-                                _spriteRenderer.sprite = growthSprites[growthSprites.Length - 1];
+                                spriteIndex = growthSprites.Length - 1;
                             }
                             else
                             {
-                                int spriteIndex = 0;
+                                spriteIndex = 0;
                                 if (growthSprites.Length == 2)
                                 {
                                     spriteIndex = 0;
@@ -94,8 +116,9 @@ namespace Core.Module.Farm
                                 {
                                     spriteIndex = progress < stage2Threshold ? 0 : 1;
                                 }
-                                _spriteRenderer.sprite = growthSprites[spriteIndex];
                             }
+
+                            SetEntitySprite(growthSprites[spriteIndex], !isAnimal);
                         }
                     }
 
@@ -121,9 +144,80 @@ namespace Core.Module.Farm
 
                     if (_spriteRenderer != null && ripeSprite != null)
                     {
-                        _spriteRenderer.sprite = ripeSprite;
+                        SetEntitySprite(ripeSprite, !isAnimal);
                     }
                     break;
+            }
+        }
+
+        private void SetEntitySprite(Sprite sprite, bool showCropCluster)
+        {
+            if (_spriteRenderer == null) return;
+
+            if (_cropRenderers == null)
+            {
+                _cropRenderers = new SpriteRenderer[4];
+                _cropRenderers[0] = _spriteRenderer;
+                _spriteBaseLocalPosition = _spriteRenderer.transform.localPosition;
+            }
+
+            if (showCropCluster) EnsureCropRenderers();
+
+            int rendererCount = showCropCluster ? _cropRenderers.Length : 1;
+            for (int i = 0; i < _cropRenderers.Length; i++)
+            {
+                var renderer = _cropRenderers[i];
+                if (renderer == null) continue;
+
+                bool visible = i < rendererCount && sprite != null;
+                renderer.sprite = visible ? sprite : null;
+                renderer.gameObject.SetActive(visible);
+            }
+        }
+
+        private void EnsureCropRenderers()
+        {
+            if (_cropRenderers == null)
+            {
+                _cropRenderers = new SpriteRenderer[4];
+                _cropRenderers[0] = _spriteRenderer;
+                _spriteBaseLocalPosition = _spriteRenderer.transform.localPosition;
+            }
+
+            float halfHorizontal = _cropHorizontalSpacing * 0.5f;
+            float halfVertical = _cropVerticalSpacing * 0.5f;
+            Vector3[] offsets =
+            {
+                new Vector3(0f,              halfVertical, 0f), // Back
+                new Vector3(-halfHorizontal, 0f,           0f), // Left
+                new Vector3( halfHorizontal, 0f,           0f), // Right
+                new Vector3(0f,             -halfVertical, 0f)  // Front
+            };
+
+            for (int i = 0; i < _cropRenderers.Length; i++)
+            {
+                if (_cropRenderers[i] == null)
+                {
+                    _cropRenderers[i] = Instantiate(_spriteRenderer, _spriteRenderer.transform.parent);
+                    _cropRenderers[i].name = $"CropSprite_{i + 1}";
+                }
+
+                _cropRenderers[i].transform.localPosition = _spriteBaseLocalPosition + offsets[i];
+                _cropRenderers[i].transform.localRotation = Quaternion.identity;
+                _cropRenderers[i].sortingOrder = _cropSortingOrder + (i == 3 ? 1 : 0);
+            }
+        }
+
+        private void FaceCamera()
+        {
+            if (_camera == null) return;
+
+            // Match MapPreviewView: keep the visual upright on XY and only turn it
+            // horizontally toward the camera.
+            Vector3 direction = Vector3.ProjectOnPlane(-_camera.transform.forward, Vector3.up);
+            if (direction.sqrMagnitude > Mathf.Epsilon)
+            {
+                transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
             }
         }
     }

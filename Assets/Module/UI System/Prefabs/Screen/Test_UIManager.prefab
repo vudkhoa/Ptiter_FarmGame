@@ -168,6 +168,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Test
   _windowsManager: {fileID: 1124413198685414678}
   _choosenWindow: {fileID: 11400000, guid: 8facc328dbe240947acff453f2a10f38, type: 2}
+  _map: {fileID: 0}
 --- !u!1 &4344938024106594198
 GameObject:
   m_ObjectHideFlags: 0
