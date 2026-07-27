@@ -422,9 +422,36 @@ namespace Core.Module.Farm.Tests
             var harvestedEvent = _harvestedPub.Published[0];
             Assert.AreEqual("wheat", harvestedEvent.EntityId);
             Assert.AreEqual(cell, harvestedEvent.Cell);
-            Assert.AreEqual("wheat_grain", harvestedEvent.ProductItemId);
-            Assert.AreEqual(2, harvestedEvent.Amount);
+            Assert.AreEqual(1, harvestedEvent.Outputs.Length);
+            Assert.AreEqual("wheat_grain", harvestedEvent.Outputs[0].item.ItemId);
+            Assert.AreEqual(2, harvestedEvent.Outputs[0].amount);
             Assert.AreEqual(FarmEntityType.Crop, harvestedEvent.EntityType);
+        }
+
+        [Test]
+        public void Test_Harvest_Event_Contains_AllOutputs()
+        {
+            var bonusItem = ScriptableObject.CreateInstance<ItemDataSO>();
+            bonusItem.name = "straw";
+            _sampleCrop.outputs = new[]
+            {
+                new OutputReward { item = _wheatGrainItem, amount = 2 },
+                new OutputReward { item = bonusItem, amount = 1 }
+            };
+
+            var service = CreateFarmService();
+            Vector3Int cell = new Vector3Int(1, 0, 1);
+            service.TryPlant(cell, "wheat");
+            SimulateClockTicks(service, 10);
+
+            Assert.IsTrue(service.TryHarvest(cell, out _, out _));
+
+            var harvestedEvent = _harvestedPub.Published[0];
+            Assert.AreEqual(2, harvestedEvent.Outputs.Length);
+            Assert.AreEqual("wheat_grain", harvestedEvent.Outputs[0].item.ItemId);
+            Assert.AreEqual(2, harvestedEvent.Outputs[0].amount);
+            Assert.AreEqual("straw", harvestedEvent.Outputs[1].item.ItemId);
+            Assert.AreEqual(1, harvestedEvent.Outputs[1].amount);
         }
 
         [Test]

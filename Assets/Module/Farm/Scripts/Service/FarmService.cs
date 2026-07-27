@@ -289,7 +289,11 @@ namespace Core.Module.Farm
 
             ApplyPostHarvestState(slot, entity);
 
-            _harvestedPub.Publish(new FarmEntityHarvestedPayload(entity.EntityId, cell, productItemId, amount, entity.entityType));
+            _harvestedPub.Publish(new FarmEntityHarvestedPayload(
+                entity.EntityId,
+                cell,
+                entity.entityType,
+                entity.outputs));
             _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
             _storageService.Save();
             return true;
