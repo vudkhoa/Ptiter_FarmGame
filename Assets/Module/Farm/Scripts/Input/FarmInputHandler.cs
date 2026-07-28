@@ -16,10 +16,6 @@ namespace Core.Module.Farm
         [SerializeField] private float _maxRayDistance = 1000f;
         [SerializeField] private bool _useMathPlane = true;
 
-        [Header("Object ID Mappings")]
-        [SerializeField] private int _soilId = 101; // ID of Soil/Ruộng from database
-        [SerializeField] private int _barnId = 102; // ID of Barn/Chuồng from database
-
         private IInputService _inputService;
         private IMapService _mapService;
         private IFarmService _farmService;
@@ -102,15 +98,20 @@ namespace Core.Module.Farm
 
                 if (_mapService.TryGetPlacementAt(clickedCell, out var placement))
                 {
-                    if (placement.ID == _soilId || placement.ID == _barnId)
+                    bool? isAnimal = placement.Kind switch
                     {
-                        // Safely resolve the pivot/origin cell coordinate for large structures (like Barns)
-                        if (placement.OcupiedPositions == null || placement.OcupiedPositions.Count == 0) return;
-                        
-                        Vector3Int originCell = placement.OcupiedPositions[0];
-                        bool isAnimal = placement.ID == _barnId;
+                        MapObjectKind.Soil => false,
+                        MapObjectKind.Barn => true,
+                        _ => null
+                    };
 
-                        ProcessInteraction(originCell, isAnimal);
+                    if (isAnimal.HasValue)
+                    {
+                        // Resolve the origin cell for multi-cell farm structures.
+                        if (placement.OcupiedPositions == null || placement.OcupiedPositions.Count == 0) return;
+
+                        Vector3Int originCell = placement.OcupiedPositions[0];
+                        ProcessInteraction(originCell, isAnimal.Value);
                     }
                 }
             }

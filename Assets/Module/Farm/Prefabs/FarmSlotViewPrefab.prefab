@@ -418,6 +418,9 @@ MonoBehaviour:
   _feedBubble: {fileID: 5442550082841017026}
   _harvestBubble: {fileID: 8231151265963674528}
   _useBillboard: 1
+  _cropXSpacing: 0.5
+  _cropZSpacing: 0.5
+  _cropSortingOrder: 1
 --- !u!1 &5442550082841017026
 GameObject:
   m_ObjectHideFlags: 0

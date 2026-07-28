@@ -13,6 +13,7 @@ namespace Core.Module.Map
         [SerializeField] private CursorIndicatorBehavior _cursor;
         [SerializeField] private Transform _spawnRoot;
         [SerializeField] private float _previewYOffset = 0.06f;
+        [SerializeField] private Camera _camera;
 
         private GameObject _ghost;
         private Material _previewMatInstance;
@@ -43,6 +44,7 @@ namespace Core.Module.Map
             _block = new MaterialPropertyBlock();
             if (_previewMaterial != null) _previewMatInstance = new Material(_previewMaterial);
             if (_cursor != null) _cursor.GameObject.SetActive(false);
+            if (_camera == null) _camera = Camera.main;
         }
 
         private void OnDestroy()
@@ -56,6 +58,7 @@ namespace Core.Module.Map
         private void OnStarted(MapPlacementStartedPayload p)
         {
             _ghost = Instantiate(p.Prefab);
+            if (p.RotationMode == MapObjectRotationMode.FaceCamera) FaceCamera(_ghost.transform);
             SwapToPreviewMaterial(_ghost);
             _cursor.transform.localScale = new Vector3(p.Size.x, 1, p.Size.y);
             _cursor.Renderer.GetPropertyBlock(_block);
@@ -78,6 +81,7 @@ namespace Core.Module.Map
         {
             var go = Instantiate(p.Prefab, _spawnRoot);
             go.transform.position = p.SnappedWorld;
+            if (p.RotationMode == MapObjectRotationMode.FaceCamera) FaceCamera(go.transform);
         }
 
         private void OnStopped(MapPlacementStoppedPayload _)
@@ -94,6 +98,17 @@ namespace Core.Module.Map
                 var mats = rends[i].materials;
                 for (int j = 0; j < mats.Length; j++) mats[j] = _previewMatInstance;
                 rends[i].materials = mats;
+            }
+        }
+
+        private void FaceCamera(Transform target)
+        {
+            if (_camera == null) return;
+
+            var direction = Vector3.ProjectOnPlane(-_camera.transform.forward, Vector3.up);
+            if (direction.sqrMagnitude > Mathf.Epsilon)
+            {
+                target.rotation = Quaternion.LookRotation(direction, Vector3.up);
             }
         }
         #endregion
