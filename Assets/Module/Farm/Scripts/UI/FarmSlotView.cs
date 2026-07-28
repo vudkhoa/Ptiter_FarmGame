@@ -13,8 +13,8 @@ namespace Core.Module.Farm
         [SerializeField] private GameObject _feedBubble;      // Needs Food bubble
         [SerializeField] private GameObject _harvestBubble;   // Ready to Harvest bubble
         [SerializeField] private bool _useBillboard = true;
-        [SerializeField, Min(0f)] private float _cropHorizontalSpacing = 0.4f;
-        [SerializeField, Min(0f)] private float _cropVerticalSpacing = 0.22f;
+        [SerializeField, Min(0f)] private float _cropXSpacing = 0.4f;
+        [SerializeField, Min(0f)] private float _cropZSpacing = 0.4f;
         [SerializeField] private int _cropSortingOrder = 1;
 
         private SpriteRenderer[] _cropRenderers;
@@ -31,7 +31,7 @@ namespace Core.Module.Farm
             }
 
             _camera = Camera.main;
-            if (_useBillboard) FaceCamera();
+            if (_useBillboard && _spriteRenderer != null) FaceCamera(_spriteRenderer.transform);
         }
 
         public void UpdateView(FarmSlotSaveData slot, FarmDatabaseSO database)
@@ -184,14 +184,14 @@ namespace Core.Module.Farm
                 _spriteBaseLocalPosition = _spriteRenderer.transform.localPosition;
             }
 
-            float halfHorizontal = _cropHorizontalSpacing * 0.5f;
-            float halfVertical = _cropVerticalSpacing * 0.5f;
+            float halfX = _cropXSpacing * 0.5f;
+            float halfZ = _cropZSpacing * 0.5f;
             Vector3[] offsets =
             {
-                new Vector3(0f,              halfVertical, 0f), // Back
-                new Vector3(-halfHorizontal, 0f,           0f), // Left
-                new Vector3( halfHorizontal, 0f,           0f), // Right
-                new Vector3(0f,             -halfVertical, 0f)  // Front
+                new Vector3(-halfX, 0f, -halfZ),
+                new Vector3( halfX, 0f, -halfZ),
+                new Vector3(-halfX, 0f,  halfZ),
+                new Vector3( halfX, 0f,  halfZ)
             };
 
             for (int i = 0; i < _cropRenderers.Length; i++)
@@ -203,21 +203,20 @@ namespace Core.Module.Farm
                 }
 
                 _cropRenderers[i].transform.localPosition = _spriteBaseLocalPosition + offsets[i];
-                _cropRenderers[i].transform.localRotation = Quaternion.identity;
-                _cropRenderers[i].sortingOrder = _cropSortingOrder + (i == 3 ? 1 : 0);
+                if (_useBillboard) FaceCamera(_cropRenderers[i].transform);
+                _cropRenderers[i].sortingOrder = _cropSortingOrder;
             }
         }
 
-        private void FaceCamera()
+        private void FaceCamera(Transform target)
         {
-            if (_camera == null) return;
+            if (_camera == null || target == null) return;
 
-            // Match MapPreviewView: keep the visual upright on XY and only turn it
-            // horizontally toward the camera.
+            // Positions stay on XZ; only the sprite visual turns toward the camera.
             Vector3 direction = Vector3.ProjectOnPlane(-_camera.transform.forward, Vector3.up);
             if (direction.sqrMagnitude > Mathf.Epsilon)
             {
-                transform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+                target.rotation = Quaternion.LookRotation(direction, Vector3.up);
             }
         }
     }

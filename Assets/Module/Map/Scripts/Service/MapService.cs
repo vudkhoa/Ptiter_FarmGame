@@ -95,24 +95,12 @@ namespace Core.Module.Map
         {
             if (HasActivePlacement) StopPlacement();
 
-            int idx = -1;
-            for (int i = 0; i < _database.Objects.Count; ++i)
-            {
-                var obj = _database.Objects[i];
-                if (obj.ID == objectId)
-                {
-                    idx = i;
-                    break;
-                }
-            }
-
-            if (idx < 0)
+            if (!_database.TryGetById(objectId, out ObjectData data, out int index))
             {
                 Debug.LogError($"ObjectId {objectId} not found");
                 return;
             }
 
-            var data = _database.Objects[idx];
             if (!_catalog.TryGet(data.ID, out var prefab))
             {
                 Debug.LogError($"[MapService] Prefab ID {data.ID} is not preloaded in the catalog.");
@@ -120,10 +108,14 @@ namespace Core.Module.Map
             }
 
             _currentObjectId = data.ID;
-            _currentDbIndex = idx;
+            _currentDbIndex = index;
             _lastCell = new Vector3Int(int.MinValue, 0, 0);
 
-            _pubStart.Publish(new MapPlacementStartedPayload(data.ID, prefab, data.Size));
+            _pubStart.Publish(new MapPlacementStartedPayload(
+                data.ID,
+                prefab,
+                data.Size,
+                data.RotationMode));
         }
 
         public void StopPlacement()
@@ -165,11 +157,17 @@ namespace Core.Module.Map
                 return false;
             }
 
-            _grid.AddObjectAt(cell, data.Size, data.ID, _changeCount);
+            _grid.AddObjectAt(cell, data.Size, data.ID, data.Kind, _changeCount);
             _changeCount++;
 
             var snapped = CellToWorld(cell);
-            _pubAdded.Publish(new MapFurnitureAddedPayload(data.ID, prefab, snapped, cell, _changeCount));
+            _pubAdded.Publish(new MapFurnitureAddedPayload(
+                data.ID,
+                prefab,
+                snapped,
+                cell,
+                _changeCount,
+                data.RotationMode));
 
             return true;
         }

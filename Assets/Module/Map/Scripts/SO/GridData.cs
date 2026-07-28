@@ -9,10 +9,15 @@ namespace Core.Module.Map
         private readonly Dictionary<Vector3Int, PlacementData> _placementObjects = new();
 
         #region Logic
-        public void AddObjectAt(Vector3Int gridPosition, Vector2Int objectSize, int id, int placedObjectIndex)
+        public void AddObjectAt(
+            Vector3Int gridPosition,
+            Vector2Int objectSize,
+            int id,
+            MapObjectKind kind,
+            int placedObjectIndex)
         {
             List<Vector3Int> positionToOccupy = CalculatePositions(gridPosition, objectSize);
-            PlacementData data = new PlacementData(positionToOccupy, id, placedObjectIndex);
+            PlacementData data = new PlacementData(positionToOccupy, id, kind, placedObjectIndex);
 
             foreach (var pos in positionToOccupy)
             {
@@ -61,12 +66,18 @@ namespace Core.Module.Map
     {
         public List<Vector3Int> OcupiedPositions;
         public int ID;
+        public MapObjectKind Kind;
         public int PlacedObjectIndex;
 
-        public PlacementData(List<Vector3Int> ocupiedPositions, int id, int placedObjectIndex)
+        public PlacementData(
+            List<Vector3Int> ocupiedPositions,
+            int id,
+            MapObjectKind kind,
+            int placedObjectIndex)
         {
             this.OcupiedPositions = ocupiedPositions;
             this.ID = id;
+            this.Kind = kind;
             this.PlacedObjectIndex = placedObjectIndex;
         }
     }

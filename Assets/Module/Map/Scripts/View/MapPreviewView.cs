@@ -58,7 +58,7 @@ namespace Core.Module.Map
         private void OnStarted(MapPlacementStartedPayload p)
         {
             _ghost = Instantiate(p.Prefab);
-            FaceCamera(_ghost.transform);
+            if (p.RotationMode == MapObjectRotationMode.FaceCamera) FaceCamera(_ghost.transform);
             SwapToPreviewMaterial(_ghost);
             _cursor.transform.localScale = new Vector3(p.Size.x, 1, p.Size.y);
             _cursor.Renderer.GetPropertyBlock(_block);
@@ -81,7 +81,7 @@ namespace Core.Module.Map
         {
             var go = Instantiate(p.Prefab, _spawnRoot);
             go.transform.position = p.SnappedWorld;
-            FaceCamera(go.transform);
+            if (p.RotationMode == MapObjectRotationMode.FaceCamera) FaceCamera(go.transform);
         }
 
         private void OnStopped(MapPlacementStoppedPayload _)

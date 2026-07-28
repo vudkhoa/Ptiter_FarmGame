@@ -15,7 +15,6 @@ namespace Core.Module.Farm
         [SerializeField] private FarmSlotView _slotViewPrefab;
 
         [Header("Grid Layout Settings")]
-        [SerializeField] private float _cellSize = 1f;
         // Must match Soil.prefab/Visual local position so crops share the same XY plane.
         [SerializeField] private Vector3 _offset = new Vector3(0f, 0.6f, 0f);
 

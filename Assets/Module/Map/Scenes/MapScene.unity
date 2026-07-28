@@ -995,8 +995,6 @@ MonoBehaviour:
     m_Bits: 8
   _maxRayDistance: 1000
   _useMathPlane: 1
-  _soilId: 101
-  _barnId: 102
 --- !u!114 &945751120
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4881,7 +4879,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmVisualizer
   _slotViewPrefab: {fileID: 313763533857048325, guid: 00958c8747edcf945aba4b2df5241309, type: 3}
-  _cellSize: 1
   _offset: {x: 0, y: 0.6, z: 0}
 --- !u!4 &1359646557
 Transform:
