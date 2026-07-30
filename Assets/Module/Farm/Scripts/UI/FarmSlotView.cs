@@ -12,10 +12,12 @@ namespace Core.Module.Farm
         [SerializeField] private Slider _progressBar;
         [SerializeField] private GameObject _feedBubble;      // Needs Food bubble
         [SerializeField] private GameObject _harvestBubble;   // Ready to Harvest bubble
+        [SerializeField] private Transform _uiRoot;
         [SerializeField] private bool _useBillboard = true;
         [SerializeField, Min(0f)] private float _cropXSpacing = 0.4f;
         [SerializeField, Min(0f)] private float _cropZSpacing = 0.4f;
         [SerializeField] private int _cropSortingOrder = 1;
+        [SerializeField] private int _animalSortingOrder = 1;
 
         private SpriteRenderer[] _cropRenderers;
         private Vector3 _spriteBaseLocalPosition;
@@ -31,8 +33,11 @@ namespace Core.Module.Farm
             }
 
             _camera = Camera.main;
-            if (_useBillboard && _spriteRenderer != null)
-                MatchCameraRotation(_spriteRenderer.transform);
+            if (_useBillboard)
+            {
+                if (_spriteRenderer != null) MatchCameraRotation(_spriteRenderer.transform);
+                if (_uiRoot != null) MatchCameraRotation(_uiRoot);
+            }
         }
 
         public void UpdateView(FarmSlotSaveData slot, FarmDatabaseSO database)
@@ -57,14 +62,17 @@ namespace Core.Module.Farm
             switch (slot.state)
             {
                 case FarmSlotState.Empty:
-                    // If it is an adult animal, keep displaying the adult sprite instead of null
-                    if (isAnimal && slot.isAdult)
+                    // A purchased animal remains visible while it is hungry/waiting to be fed.
+                    if (isAnimal && entity.growthSprites != null && entity.growthSprites.Length > 0)
                     {
-                        if (entity.growthSprites != null && entity.growthSprites.Length > 0)
-                        {
-                            int lastIdx = entity.growthSprites.Length - 1;
-                            SetEntitySprite(entity.growthSprites[lastIdx], false);
-                        }
+                        int spriteIndex = slot.isAdult
+                            ? Mathf.Max(0, entity.growthSprites.Length - 2)
+                            : 0;
+
+                        if (_spriteRenderer != null)
+                            _spriteRenderer.sortingOrder = _animalSortingOrder;
+
+                        SetEntitySprite(entity.growthSprites[spriteIndex], false);
                     }
                     else
                     {
@@ -104,7 +112,7 @@ namespace Core.Module.Farm
                             if (isAnimal && slot.isAdult)
                             {
                                 // Keep displaying the adult sprite for grown-up animals
-                                spriteIndex = growthSprites.Length - 1;
+                                spriteIndex = Mathf.Max(0, growthSprites.Length - 2);
                             }
                             else
                             {
@@ -119,6 +127,7 @@ namespace Core.Module.Farm
                                 }
                             }
 
+                            if (isAnimal) _spriteRenderer.sortingOrder = _animalSortingOrder;
                             SetEntitySprite(growthSprites[spriteIndex], !isAnimal);
                         }
                     }
@@ -145,6 +154,7 @@ namespace Core.Module.Farm
 
                     if (_spriteRenderer != null && ripeSprite != null)
                     {
+                        if (isAnimal) _spriteRenderer.sortingOrder = _animalSortingOrder;
                         SetEntitySprite(ripeSprite, !isAnimal);
                     }
                     break;

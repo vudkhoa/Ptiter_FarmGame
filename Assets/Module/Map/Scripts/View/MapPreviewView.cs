@@ -19,6 +19,7 @@ namespace Core.Module.Map
         private Material _previewMatInstance;
         private MaterialPropertyBlock _block;
         private IDisposable _subscriptions;
+        private IMapObjectInstanceRegistry _instanceRegistry;
 
         #region DI - Constructor
         [Inject]
@@ -26,8 +27,10 @@ namespace Core.Module.Map
             ISubscriber<MapPlacementStartedPayload> startSub,
             ISubscriber<MapPreviewMovedPayload> moveSub,
             ISubscriber<MapFurnitureAddedPayload> addedSub,
-            ISubscriber<MapPlacementStoppedPayload> stopSub)
+            ISubscriber<MapPlacementStoppedPayload> stopSub,
+            IMapObjectInstanceRegistry instanceRegistry)
         {
+            _instanceRegistry = instanceRegistry;
             var bag = DisposableBag.CreateBuilder();
             startSub.Subscribe(OnStarted).AddTo(bag);
             moveSub.Subscribe(OnMoved).AddTo(bag);
@@ -84,6 +87,7 @@ namespace Core.Module.Map
             go.transform.position = p.SnappedWorld;
             if (p.RotationMode == MapObjectRotationMode.MatchCameraRotation)
                 MatchCameraRotation(go.transform);
+            _instanceRegistry.Register(p.Cell, go);
         }
 
         private void OnStopped(MapPlacementStoppedPayload _)
