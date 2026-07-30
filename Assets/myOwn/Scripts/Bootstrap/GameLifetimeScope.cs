@@ -1,5 +1,6 @@
 using Core.Module.Map;
 using Core.Module.Farm;
+using Core.Module.Quest;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -7,8 +8,8 @@ using VContainer.Unity;
 namespace MyOwn.ServiceHarness
 {
     /// <summary>
-    /// Per-scene container. Auto-find RootLifetimeScope làm parent → inherit registrations.
-    /// Pitfall: chạy thẳng scene Game → warning, Singletons từ Root không resolve được.
+    /// Per-scene container that parents itself to RootLifetimeScope to inherit its registrations.
+    /// Built manually by MapSceneBootstrap, so autoRun must stay off in the Inspector.
     /// </summary>
     public sealed class GameLifetimeScope : LifetimeScope
     {
@@ -17,18 +18,21 @@ namespace MyOwn.ServiceHarness
             if (parentReference.Object == null)
             {
                 parentReference.Object = FindAnyObjectByType<RootLifetimeScope>();
+
                 if (parentReference.Object == null)
-                    Debug.LogWarning("[GameLifetimeScope] RootLifetimeScope không tìm thấy. Start từ Preloading.");
+                    Debug.LogWarning("[GameLifetimeScope] No RootLifetimeScope found - global services will not resolve. Start the game from the Preloading scene.");
             }
+
             base.Awake();
         }
 
         protected override void Configure(IContainerBuilder builder)
         {
-            // Component sống theo scene — mỗi module tự khai trong {Module}ModuleInstaller.cs.
-            // Broker + service global đã đăng ký ở RootLifetimeScope, scope này kế thừa hết.
+            // Scene-scoped components only; global brokers are inherited from RootLifetimeScope.
+            // FarmDatabaseSO + QuestCatalogSO are enqueued by MapSceneBootstrap right before Build() is called.
             builder.RegisterMapSceneComponents()
-                   .RegisterFarmSceneComponents();
+                   .RegisterFarmGameplay()
+                   .RegisterQuestGameplay();
         }
     }
 }

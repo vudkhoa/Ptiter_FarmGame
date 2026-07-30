@@ -6,17 +6,19 @@ namespace Core.Module.Farm
     {
         public readonly string EntityId;
         public readonly Vector3Int Cell;
-        public readonly string ProductItemId;
-        public readonly int Amount;
         public readonly FarmEntityType EntityType;
+        public readonly OutputReward[] Outputs;
 
-        public FarmEntityHarvestedPayload(string entityId, Vector3Int cell, string productItemId, int amount, FarmEntityType entityType)
+        public FarmEntityHarvestedPayload(
+            string entityId,
+            Vector3Int cell,
+            FarmEntityType entityType,
+            OutputReward[] outputs)
         {
             EntityId = entityId;
             Cell = cell;
-            ProductItemId = productItemId;
-            Amount = amount;
             EntityType = entityType;
+            Outputs = outputs;
         }
     }
 }

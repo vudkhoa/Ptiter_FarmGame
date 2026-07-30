@@ -15,8 +15,8 @@ namespace Core.Module.Farm
         [SerializeField] private FarmSlotView _slotViewPrefab;
 
         [Header("Grid Layout Settings")]
-        [SerializeField] private float _cellSize = 1f;
-        [SerializeField] private Vector3 _offset = new Vector3(0.5f, 0.1f, 0.5f); // Centers the sprite on the cell and offsets height
+        // Must match Soil.prefab/Visual local position so crops share the same XY plane.
+        [SerializeField] private Vector3 _offset = new Vector3(0f, 0.6f, 0f);
 
         private IFarmService _farmService;
         private FarmDatabaseSO _database;
