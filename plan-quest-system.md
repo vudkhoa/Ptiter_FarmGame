@@ -28,8 +28,20 @@ Các quyết định sản phẩm đã chốt:
 - Thời gian chuẩn tiếp tục dùng `WorldTimeAPI` qua `IServerTimeProvider`.
 - Khi chưa đồng bộ được server time, tab Daily bị khóa.
 - Múi giờ nghiệp vụ là UTC+7; reset lúc 00:00 giờ Việt Nam.
-- Danh sách không cuộn; mỗi page hiển thị tối đa 3 task và đổi page bằng hai nút.
+- Danh sách không cuộn; mỗi page hiển thị tối đa 2 task và đổi page bằng hai nút.
 - Có cả objective đếm số lần thu hoạch và objective đếm số lượng vật phẩm thu hoạch.
+- Daily v1 chỉ đếm hành động chủ động của người chơi: trồng, chăm sóc/cho ăn và thu hoạch. `Ripe`/`StageReached` chưa dùng cho Daily v1.
+- Có 3 Daily Set mẫu, mỗi set 4 task; mặc định 25 điểm/task, 100 coin/task và milestone thưởng 100/300/500 coin.
+- Daily dùng UI động ghép từ texture rời. Progress và Food chỉ là panel mockup tĩnh; tab chuyển được nhưng chưa có logic runtime.
+- Reward task phải được xử lý ngay trong phiên hiện tại. Reconcile khi khởi động chỉ là lớp an toàn nếu game bị crash giữa transaction.
+
+### 1.1. Constraint ownership đã chốt
+
+- Không sửa hoặc xóa broker registration hiện có trong `RootLifetimeScope`.
+- Không sửa code thuộc Farm module, gồm payload, `FarmService` và `FarmModuleInstaller`.
+- Quest chỉ subscribe các Farm payload hiện có và thích nghi ở `FarmQuestEventBridge`.
+- Được phép mở rộng `PlayerData`, `PlayerDataHolder`, `PlayerDataSaveLoad` và `IStorageService`, nhưng phải giữ nguyên behavior mà Farm đang sử dụng.
+- Broker registration trùng của module khác được ghi nhận là technical debt ngoài phạm vi Quest; không thêm đăng ký trùng mới.
 
 ---
 
@@ -68,10 +80,13 @@ Farm đã có các domain event rõ nghĩa:
 
 Đây là nguồn sự kiện production phù hợp cho Quest; không tiếp tục suy diễn hành động từ `FarmSlotChangedPayload`.
 
-Hai điểm kỹ thuật cần chỉnh:
+Tình trạng đã trace:
 
-1. `FarmModuleInstaller` hiện mới đăng ký broker cũ, trong khi `RootLifetimeScope` đăng ký lại broker Farm bằng tay. Cần chuyển toàn bộ broker Farm về installer và xóa đăng ký trùng ở Root.
-2. `FarmEntityHarvestedPayload` hiện chỉ chứa output đầu tiên dù `FarmService` có thể trao nhiều output. Cần truyền đầy đủ output để objective đếm vật phẩm không bị thiếu.
+- `FarmEntityHarvestedPayload` đã chứa `OutputReward[] Outputs` và test Farm đã kiểm tra multi-output.
+- `Planted`, `Cared` và `Harvested` chưa có `EventId`.
+- `Outputs` hiện dùng type cấu hình Farm có reference tới `ItemDataSO`; bridge phải map sang `ItemId` và `amount`, đồng thời bỏ entry null/invalid.
+- `FarmModuleInstaller` đã đăng ký các Farm broker, nhưng Root vẫn đăng ký lại. Theo constraint ownership, Quest không sửa hai vị trí này.
+- Vì không được sửa Farm payload, Quest không thể có idempotency key bền vững từ producer. Bridge chỉ có thể chống callback trùng trong cùng frame bằng fingerprint tạm thời; đây là giới hạn đã chấp nhận của Daily v1.
 
 ### 2.3. Time và Storage
 
@@ -81,13 +96,33 @@ Hai điểm kỹ thuật cần chỉnh:
 - `PlayerDataHolder` đang là implementation của `IStorageService`.
 - Coin hiện được sửa trực tiếp qua property, chưa có reward transaction ID và chưa phát currency event.
 - Save local dùng JSON atomic write nhưng chưa có Daily state và reward ledger.
+- Save throttled hiện đưa cùng object `PlayerData` mutable sang thread pool; `SaveImmediate()` và `PlayerDataSaveLoad.Save()` chưa trả kết quả.
+- Quest cần một single-writer gate để throttled save và immediate save không ghi file đồng thời, đồng thời cần snapshot ổn định khi ghi.
+
+### 2.4. Loading, Addressables và DI scope
+
+- `QuestCatalogSO` được `QuestCatalogProvider : IBootPreloader` load qua Addressables trong Preloading scene.
+- `MapSceneBootstrap` lấy catalog từ Root, enqueue vào `GameLifetimeScope`, sau đó mới build Quest gameplay services và mở `_gameplayRoot`.
+- Quest brokers và catalog provider sống ở Root scope; `QuestService`, rules, Daily service và Farm bridge sống ở Game scope.
+- `PlayerDataHolder` và `ServerTimeService` khởi động ở Root nên tín hiệu ready có thể đã xảy ra trước khi Game scope tồn tại.
+- Daily bootstrap bắt buộc dùng pattern **check-current-state-or-wait**; repository cung cấp `IsLoaded/WaitUntilLoadedAsync`, còn time dùng `IsSynced/ServerTimeSyncedPayload`.
+- Quest assembly không reference `PlayerDataLoadedPayload` của MyOwn để tránh dependency cycle `Quest -> MyOwn -> Quest`.
+- `DailyQuestScheduleSO` sẽ được reference từ `QuestCatalogSO`, nhờ đó đi theo dependency graph Addressables hiện có mà không thêm hard reference mới vào Root.
 
 ---
 
 ## 3. Kiến trúc tổng thể
 
 ```text
-Gameplay Modules
+Preloading scene / Root scope
+    |-- PlayerDataHolder
+    |-- ServerTimeService
+    |-- QuestCatalogProvider -> Addressables QuestCatalogSO
+    `-- Quest-owned MessagePipe brokers
+             |
+             | MapSceneBootstrap enqueue QuestCatalogSO
+             v
+Game scope / Gameplay Modules
     |
     | Domain events: planted, cared, harvested...
     v
@@ -115,7 +150,10 @@ Daily Quest Service
 Repository + PlayerData + Reward Ledger
              |
              v
-Daily Presenter -> Daily View
+Daily Presenter -> QuestWindow
+                    |-- Daily dynamic panel
+                    |-- Progress static placeholder
+                    `-- Food static placeholder
 ```
 
 ### Pattern sử dụng
@@ -127,7 +165,7 @@ Daily Presenter -> Daily View
 - **Application Service / Coordinator**: `DailyQuestService` điều phối lịch, reset, reward và milestones.
 - **Idempotency Key Pattern**: mọi reward có transaction ID ổn định để không trao hai lần.
 - **Presenter Pattern**: presenter chuyển state thành view model; MonoBehaviour View không chứa nghiệp vụ.
-- **Module Installer Pattern**: mỗi module sở hữu broker và đăng ký DI của chính nó.
+- **Module Installer Pattern**: Quest sở hữu broker/DI của Quest. Broker trùng ở module khác là constraint ngoài phạm vi và không được Quest sửa.
 
 ---
 
@@ -143,8 +181,7 @@ Thêm `QuestEventType`:
 - `FarmCared`
 - `FarmHarvestAction`
 - `FarmHarvestItem`
-- `FarmRipe`
-- `FarmStageReached`
+- Dự phòng, chưa dùng trong Daily v1: `FarmRipe`, `FarmStageReached`.
 - Dự phòng cho Progress: `InventoryChanged`, `CurrencyChanged`, `FeatureUnlocked`.
 
 `QuestObjectiveType` gồm:
@@ -223,7 +260,7 @@ Nhờ đó cùng một Quest Definition có thể xuất hiện lại ở ngày 
 
 - `ActivateQuest(runtimeId, definitionId, snapshot = null)`
 - `DeactivateQuest(runtimeId)`
-- `DeactivateByPrefix(prefix)`
+- `DeactivateQuests(IEnumerable<string> runtimeIds)`
 - `ReportEvent(progressEvent)`
 - `GetQuestState(runtimeId)`
 - `GetActiveQuests()`
@@ -234,8 +271,10 @@ Behavior:
 - Activate mới tạo state rỗng.
 - Activate với snapshot restore objective progress.
 - Activate trùng runtime ID là idempotent, không reset state.
+- Restore snapshot Completed giữ state để Daily tính điểm nhưng không đưa quest trở lại event-processing list và không phát completed lần nữa.
 - Deactivate chỉ bỏ theo dõi; không trao thưởng và không xóa save.
 - Quest Core chỉ phát completed; không quyết định reward.
+- Quest Core không biết convention prefix của Daily; Daily giữ chính xác danh sách RuntimeId cần deactivate.
 
 ### 4.6. Objective rules
 
@@ -319,6 +358,7 @@ Không giới hạn cứng số task, nhưng:
 `DailyQuestScheduleSO`:
 
 - `string cycleStartDate`, định dạng `yyyy-MM-dd`, hiểu theo UTC+7.
+- `int contentVersion`.
 - Danh sách `DailyQuestSetSO` có thứ tự.
 
 Chọn set:
@@ -337,6 +377,49 @@ Nếu `setId` đã lưu không còn tồn tại:
 - Đánh dấu config error.
 - Khóa Daily.
 - Không tự thay bằng set khác giữa cùng một ngày.
+
+Quy tắc content update:
+
+- `setId` và `questId` đã phát hành là ID bất biến.
+- Không xóa hoặc đổi nghĩa set đang có thể được người chơi restore trong ngày hiện tại.
+- Daily v1 chưa hỗ trợ hot-swap set giữa ngày.
+- Thay đổi thứ tự chỉ ảnh hưởng lần chọn set ở ngày mới; save cùng ngày tiếp tục dùng `setId` đã lưu.
+
+### 5.6. Tích hợp với Quest Catalog và content mẫu
+
+Mở rộng `QuestCatalogSO`:
+
+- Giữ danh sách `QuestDefinitionSO` hiện có.
+- Thêm reference tới `DailyQuestScheduleSO`.
+- `QuestCatalogSO` tiếp tục là Addressable root được `QuestCatalogProvider` preload.
+- Schedule, Daily Set, Quest Definition và icon là dependency của catalog; không tạo loader song song.
+
+Content v1:
+
+- Tạo 3 Daily Set mẫu.
+- Mỗi set có 4 task, tương ứng 2 page.
+- Mặc định mỗi task 25 Daily points và 100 coin.
+- Ba milestone mặc định thưởng lần lượt 100, 300 và 500 coin.
+- Designer vẫn có thể chỉnh điểm/reward từng entry miễn validator xác nhận tổng điểm set bằng 100.
+
+Content mẫu ban đầu:
+
+| Set | Task | Objective | Required | Points | Coin |
+|---|---|---|---:|---:|---:|
+| `daily_set_01` | Trồng cây | `ActionCount + FarmPlanted + category Crop` | 4 | 25 | 100 |
+|  | Cho vật nuôi ăn | `ActionCount + FarmCared + category Animal` | 2 | 25 | 100 |
+|  | Thu hoạch | `ActionCount + FarmHarvestAction + Any` | 4 | 25 | 100 |
+|  | Thu hoạch lúa | `ItemAmount + FarmHarvestItem + wheat_grain` | 8 | 25 | 100 |
+| `daily_set_02` | Trồng mía | `ActionCount + FarmPlanted + c_sugarcane` | 3 | 25 | 100 |
+|  | Chăm sóc | `ActionCount + FarmCared + Any` | 3 | 25 | 100 |
+|  | Thu hoạch cây trồng | `ActionCount + FarmHarvestAction + category Crop` | 4 | 25 | 100 |
+|  | Thu hoạch mía | `ItemAmount + FarmHarvestItem + sugarcane_raw` | 6 | 25 | 100 |
+| `daily_set_03` | Nuôi gà | `ActionCount + FarmPlanted + a_chicken` | 2 | 25 | 100 |
+|  | Cho vật nuôi ăn | `ActionCount + FarmCared + category Animal` | 4 | 25 | 100 |
+|  | Thu hoạch vật nuôi | `ActionCount + FarmHarvestAction + category Animal` | 3 | 25 | 100 |
+|  | Thu hoạch trứng | `ItemAmount + FarmHarvestItem + egg` | 3 | 25 | 100 |
+
+Required amount là content tuning ban đầu, không hard-code trong service.
 
 ---
 
@@ -358,6 +441,10 @@ Validator kiểm tra:
 - Tổng điểm set đúng 100.
 - Mốc đúng 20/60/100 và không trùng.
 - Schedule có cycle start date hợp lệ và ít nhất một set.
+- Schedule được reference từ `QuestCatalogSO` đang preload.
+- `contentVersion` hợp lệ và ID đã phát hành không bị trùng.
+- Exact target/item ID tồn tại trong `FarmDatabaseSO` hiện tại khi có thể validate chéo.
+- Daily v1 không dùng `FarmRipe`/`FarmStageReached`.
 - Không có null reference.
 
 Build development phải log lỗi rõ set/quest/objective nào sai. Production không tự chạy với content invalid.
@@ -366,48 +453,49 @@ Build development phải log lỗi rõ set/quest/objective nào sai. Production 
 
 ## 7. Tích hợp Farm với Quest
 
-### 7.1. Broker ownership
+### 7.1. Boundary và broker ownership
 
-`FarmModuleInstaller.RegisterFarmEvents()` phải đăng ký toàn bộ:
+Quest không thay đổi `FarmModuleInstaller`, `RootLifetimeScope`, Farm payload hoặc `FarmService`.
 
-- `FarmSlotChangedPayload`
-- `OpenFarmSelectorUIPayload`
-- `FarmEntityPlantedPayload`
-- `FarmEntityCaredPayload`
-- `FarmEntityStageChangedPayload`
-- `FarmEntityRipePayload`
-- `FarmEntityHarvestedPayload`
+Quy tắc tích hợp:
 
-`RootLifetimeScope` chỉ gọi `RegisterFarmModule(options)`; xóa toàn bộ đăng ký broker Farm/Time/Storage/Quest bị lặp bằng tay.
+- Dùng đúng broker Farm đang tồn tại trong Root/Game composition.
+- Không đăng ký lại Farm broker trong Quest installer.
+- Không subscribe `FarmSlotChangedPayload` để suy diễn hành động.
+- Chỉ `FarmQuestEventBridge` thuộc Quest module được phép hiểu và chuyển đổi Farm payload.
+- Duplicate registration hiện có được ghi nhận là technical debt ngoài phạm vi, không phải acceptance criterion của Quest.
 
-### 7.2. Harvest payload
+### 7.2. Harvest output adapter
 
-Thay output đơn bằng danh sách:
+`FarmEntityHarvestedPayload` hiện đã có `OutputReward[] Outputs`.
 
-`FarmHarvestOutput`:
+Bridge map mỗi output hợp lệ sang event Quest:
 
-- `ItemId`
-- `Amount`
+- `TargetId = output.item.ItemId`.
+- `Amount = output.amount`.
+- Bỏ qua output có `item == null` hoặc `amount <= 0`.
+- Một harvested payload luôn tạo tối đa một `FarmHarvestAction`, sau đó tạo một `FarmHarvestItem` cho mỗi output hợp lệ.
 
-`FarmEntityHarvestedPayload`:
+Không thêm `FarmHarvestOutput` vào Farm module trong Daily v1.
 
-- `EventId`
-- `EntityId`
-- `Cell`
-- `EntityType`
-- `IReadOnlyList<FarmHarvestOutput> Outputs`
+### 7.3. Progress key khi producer không có EventId
 
-`FarmService.TryHarvest()`:
+Vì Farm payload hiện không có `EventId`, bridge tạo fingerprint runtime từ:
 
-- Tạo một `EventId` cho lần thu hoạch thành công.
-- Thu thập toàn bộ output đã thực sự đưa vào kho.
-- Publish đúng một harvested payload sau khi cập nhật kho và state.
+```text
+bridgeSessionId + Time.frameCount + farmEventType + entityId + cell + itemId(optional)
+```
 
-### 7.3. Event ID
+Bridge giữ cache fingerprint của frame hiện tại:
 
-Các payload hành động `Planted`, `Cared`, `Harvested` cần `EventId` duy nhất.
+- `bridgeSessionId` là GUID tạo một lần khi bridge được construct, tránh collision progress key giữa hai lần mở game.
+- Callback trùng cùng payload trong cùng frame chỉ được report một lần.
+- Hai hành động hợp lệ ở hai frame khác nhau được tính độc lập.
+- Fingerprint sau đó được dùng làm `ProgressKey` cho Quest Core.
+- Cache chỉ là runtime dedupe, không persist.
+- Không cam kết chống được producer replay cùng hành động ở frame khác; muốn bảo đảm mức đó phải thay Farm contract, hiện ngoài phạm vi.
 
-Event ID chỉ được tạo khi hành động thành công. Failed action không publish event.
+Failed Farm action hiện không publish domain payload nên không tạo Quest progress.
 
 ### 7.4. Farm Quest Event Bridge
 
@@ -415,21 +503,27 @@ Event ID chỉ được tạo khi hành động thành công. Failed action khô
 
 | Farm payload | Quest event | Amount | Progress key |
 |---|---|---:|---|
-| Planted | FarmPlanted | 1 | `{eventId}:plant` |
-| Cared | FarmCared | 1 | `{eventId}:care` |
-| Harvested | FarmHarvestAction | 1 | `{eventId}:harvest` |
-| Harvested output | FarmHarvestItem | output amount | `{eventId}:item:{itemId}` |
-| Ripe | FarmRipe | 1 | event-specific key |
-| StageChanged | FarmStageReached | 1 | event-specific key |
+| Planted | FarmPlanted | 1 | bridge fingerprint |
+| Cared | FarmCared | 1 | bridge fingerprint |
+| Harvested | FarmHarvestAction | 1 | bridge fingerprint |
+| Harvested output hợp lệ | FarmHarvestItem | output amount | bridge fingerprint + itemId |
+
+Mapping target:
+
+- Plant/Care/HarvestAction: `TargetId = payload.EntityId`.
+- `TargetCategory = payload.EntityType.ToString()` cho `Crop`/`Animal`.
+- HarvestItem: `TargetId = output.item.ItemId`, đồng thời event vẫn mang category của entity nguồn.
 
 Ví dụ:
 
 - “Thu hoạch 10 lần cây trồng”: `ActionCount + FarmHarvestAction + category Crop`.
 - “Thu hoạch 10 lúa”: `ItemAmount + FarmHarvestItem + exact target wheat_grain`.
-- “Thu hoạch 5 sữa”: `ItemAmount + FarmHarvestItem + exact target milk`.
+- “Thu hoạch 5 trứng”: `ItemAmount + FarmHarvestItem + exact target egg`.
 - “Cho 10 con vật ăn”: `ActionCount + FarmCared + category Animal`.
 
 `FarmQuestTestFlow` không còn tự accept catalog. Thay bằng bridge production; phần debug chỉ được phép tạo quest test khi người dùng chủ động bật.
+
+`FarmRipe` và `FarmStageReached` không được bridge report trong Daily v1 để tránh phụ thuộc thứ tự offline initialization của Farm.
 
 ---
 
@@ -439,6 +533,7 @@ Ví dụ:
 
 `DailyAvailabilityState`:
 
+- `WaitingForPlayerData`
 - `WaitingForServerTime`
 - `Ready`
 - `ConfigurationError`
@@ -453,12 +548,20 @@ Daily chỉ initialize khi:
 - `IServerTimeProvider.IsSynced == true`.
 - Schedule hợp lệ.
 
+`DailyQuestBootstrapper` phải xử lý cả hai thứ tự khởi tạo:
+
+1. Khi Game scope start, kiểm tra ngay `IDailyQuestRepository.IsLoaded` và `IServerTimeProvider.IsSynced`.
+2. Nếu cả hai đã ready, initialize ngay; không chờ payload đã phát trong Preloading scene.
+3. Nếu data chưa ready, await `IDailyQuestRepository.WaitUntilLoadedAsync(ct)`; nếu time chưa ready, subscribe `ServerTimeSyncedPayload`.
+4. Mỗi lần server resync vẫn kiểm tra lại day key.
+5. `TryInitialize()` idempotent; nhiều tín hiệu ready không được activate quest hai lần.
+
 Flow:
 
 ```text
-PlayerData loaded
+Check repository.IsLoaded hoặc await WaitUntilLoadedAsync
         +
-ServerTime synced
+Check time.IsSynced hoặc chờ ServerTimeSyncedPayload
         |
         v
 Tính dayKey UTC+7
@@ -474,7 +577,7 @@ Chọn Daily Set theo vòng lặp
 Activate tất cả quest với RuntimeId của ngày
         |
         v
-Reconcile reward còn pending
+Khôi phục pending reward nếu lần trước bị crash
         |
         v
 Daily Ready
@@ -501,7 +604,7 @@ Khi `ServerTimeSyncedPayload` đến sau resync:
 Khi sang ngày mới:
 
 1. Khóa tạm Daily UI.
-2. Deactivate tất cả runtime có prefix của ngày cũ.
+2. Deactivate chính xác danh sách RuntimeId của ngày cũ.
 3. Bỏ task progress và milestone state cũ.
 4. Không tự trao milestone chưa nhận.
 5. Chọn set mới.
@@ -513,10 +616,7 @@ Khi sang ngày mới:
 
 Daily task state lưu:
 
-- `runtimeId`
-- `questDefinitionId`
-- `status`
-- Objective snapshots
+- Một `QuestRuntimeSnapshot` duy nhất chứa RuntimeId, DefinitionId, status và objective progress.
 
 Daily points không được tăng mù. Giá trị chuẩn luôn được tính lại:
 
@@ -548,32 +648,54 @@ daily:{dayKey}:milestone:{requiredPoints}
 
 Thêm `IRewardService`:
 
-- `GrantCoins(transactionId, amount, source)`
+- `GrantCoinsAsync(transactionId, amount, source, cancellationToken)`
 - Trả `Granted`, `AlreadyGranted` hoặc `Failed`.
 
-`PlayerData` thêm danh sách transaction ID đã grant.
+`PlayerData` thêm reward ledger và durable pending-reward outbox.
 
 `PlayerDataHolder`:
 
 - Kiểm tra transaction ID.
 - Nếu đã có: trả AlreadyGranted, không cộng coin.
-- Nếu chưa có: cộng coin, thêm transaction ID, save immediate.
+- Nếu chưa có: cộng coin, thêm transaction ID và xóa pending record tương ứng.
+- Commit coin + ledger + pending removal bằng immediate atomic write dưới single-writer gate.
 - Sau khi save thành công mới publish reward/currency event.
+- Nếu save thất bại, không publish popup hoặc báo Granted; reward được đưa vào hàng retry trong phiên hiện tại.
 
 Đổi `SaveImmediate()` trả kết quả thành công/thất bại để caller không đánh dấu reward đã xử lý khi ghi file lỗi.
+
+Single-writer behavior:
+
+- Throttled save và immediate save dùng chung một async lock/gate.
+- Trước khi ghi, tạo JSON/snapshot ổn định; không serialize object đang bị gameplay mutate trên thread khác.
+- Immediate save cancel pending debounce và chờ writer đang chạy kết thúc trước khi ghi.
+- `PlayerDataSaveLoad.Save()` trả `bool` hoặc result có error thay vì nuốt lỗi rồi trả `void`.
+- Reward mutation phải idempotent theo transaction ID trong mọi lần retry.
+- Nếu commit coin/ledger thất bại, rollback mutation coin/ledger trong RAM nhưng giữ pending record; lần retry sau vẫn đi qua nhánh `Granted` và phát popup đúng một lần.
+
+Retry trong cùng phiên:
+
+- Lần grant đầu tiên chạy ngay khi task hoàn thành hoặc milestone được claim.
+- Trước khi grant, task/milestone state và `PendingRewardSaveData` được commit immediate để tạo durable outbox.
+- Chỉ gọi `GrantCoinsAsync` sau khi commit durable outbox thành công; nếu bước này lỗi thì retry bước staging trước, không trao coin trên state chưa bền vững.
+- Nếu local IO lỗi, `DailyQuestService` giữ reward ở trạng thái Pending và retry bất đồng bộ với backoff 1s, 2s, sau đó tối đa 5s giữa các lần.
+- Retry tiếp tục khi game còn chạy và dừng khi transaction trả `Granted`/`AlreadyGranted`.
+- Popup chỉ enqueue sau commit thành công.
+- Reconcile ở lần mở game sau chỉ là fail-safe nếu app bị kill/crash trước khi retry thành công, không phải normal flow.
 
 ### 9.3. Hoàn thành task
 
 ```text
 QuestCompletedPayload
 -> Daily kiểm tra runtime có thuộc ngày hiện tại không
--> Persist task Completed
+-> Stage task Completed + PendingRewardSaveData
 -> Tính lại totalPoints
--> Save Daily state
--> GrantCoins với transaction ID ổn định
+-> Immediate commit durable pending state
+-> Gọi GrantCoinsAsync ngay trong cùng phiên
+-> Immediate commit coin + ledger + xóa pending record
 -> Nếu Granted: publish popup event
--> Nếu AlreadyGranted: không popup lại
--> Nếu Failed: giữ task Completed; reconcile ở lần save/init tiếp theo
+-> Nếu AlreadyGranted: xóa pending nếu còn, persist và không popup lại
+-> Nếu Failed: giữ pending trong RAM và retry ngay trong phiên
 ```
 
 ### 9.4. Nhận milestone
@@ -583,9 +705,11 @@ Người chơi bấm mốc
 -> Kiểm tra Daily Ready
 -> Kiểm tra totalPoints >= requiredPoints
 -> Kiểm tra milestone chưa Claimed
--> GrantCoins(transaction ID milestone)
--> Granted hoặc AlreadyGranted: đánh dấu Claimed và save
--> Failed: giữ Claimable
+-> Stage ClaimPending + PendingRewardSaveData và commit immediate
+-> Gọi GrantCoinsAsync ngay trong cùng phiên
+-> Immediate commit Claimed + coin + ledger + xóa pending record
+-> Granted hoặc AlreadyGranted: giữ Claimed và persist
+-> Failed: giữ Pending, khóa spam click và retry trong phiên
 ```
 
 Mốc sau không phụ thuộc trạng thái claimed của mốc trước.
@@ -606,10 +730,7 @@ Mốc sau không phụ thuộc trạng thái claimed của mốc trước.
 
 `DailyQuestTaskSaveData`:
 
-- `runtimeId`
-- `questDefinitionId`
-- `status`
-- `List<QuestObjectiveProgressSnapshot>`
+- `QuestRuntimeSnapshot runtime`
 
 `QuestObjectiveProgressSnapshot`:
 
@@ -623,26 +744,41 @@ Mốc sau không phụ thuộc trạng thái claimed của mốc trước.
 - `requiredPoints`
 - `claimed`
 
+`DailyMilestoneStatus` là runtime/UI state `Locked`, `Claimable`, `ClaimPending`, `Claimed`; `Locked/Claimable` được tính lại từ total points, còn `ClaimPending` được suy ra từ pending-reward outbox để tránh persist state dẫn xuất bị stale.
+
 `PlayerData` thêm:
 
 - `DailyQuestSaveData DailyQuest`
 - `List<string> GrantedRewardTransactionIds`
+- `List<PendingRewardSaveData> PendingRewards`
+
+`PendingRewardSaveData`:
+
+- `transactionId`
+- `amount`
+- `source`
+- `createdDayKey`
+
+Outbox bảo đảm task/milestone đã hoàn thành không thể mất reward nếu app bị kill giữa hai atomic write. Normal flow vẫn grant ngay trong cùng callback/session; startup chỉ xử lý record thật sự còn pending sau crash.
 
 ### 10.2. Repository
 
 `IDailyQuestRepository` thuộc Quest assembly:
 
 - `bool IsLoaded`
+- `UniTask WaitUntilLoadedAsync(CancellationToken ct)`
 - `DailyQuestSaveData Load()`
-- `bool Save(DailyQuestSaveData data, bool immediate)`
+- `UniTask<SaveResult> SaveAsync(DailyQuestSaveData data, SaveMode mode, CancellationToken ct)`
 - `void Clear()`
 
-`PlayerDataDailyQuestRepository` thuộc MyOwn assembly:
+`PlayerDataHolder` triển khai thêm `IDailyQuestRepository` và `IRewardService`:
 
 - Map repository sang `PlayerDataHolder.Data`.
 - Không chứa rule chọn set/reset/reward.
-- Save immediate cho completion, reset và claim.
+- Cùng reward service tham gia single-writer transaction trên một `PlayerData`.
+- Save immediate cho completion + reward, reset và claim + reward.
 - Save throttled cho progress tăng nhưng chưa hoàn thành.
+- Registration hiện tại đã dùng `.AsImplementedInterfaces()`, vì vậy các interface mới được expose mà không cần sửa `RootLifetimeScope`.
 
 ### 10.3. Migration
 
@@ -651,6 +787,7 @@ Mốc sau không phụ thuộc trạng thái claimed của mốc trước.
 - Inventory, coin và FarmSlots cũ được giữ nguyên.
 - Không cố migrate state từ Quest debug hiện tại vì state đó chưa được lưu.
 - Danh sách reward transaction khởi tạo rỗng.
+- Pending reward outbox khởi tạo rỗng và mọi list null từ save cũ được normalize trước khi expose Data.
 
 ---
 
@@ -683,25 +820,46 @@ QuestWindow
 
 Progress và Food giai đoạn đầu là placeholder panel, không chứa logic giả.
 
+Asset strategy:
+
+- `quest hàng ngày 1.png` chỉ là mockup tham chiếu, không dùng nguyên tấm cho Daily runtime.
+- `quest hàng ngày_nền 2.png` làm nền chung của Quest window/Daily.
+- Tab, gift, coin, lock, progress bar, task icon và reward badge dùng các PNG rời trong `Assets/Module/Quest/Texture`.
+- Text tên tab, mô tả task, tiến độ, coin và countdown dùng TMP để cập nhật động.
+- `quest tiến độ 3.png` dùng nguyên tấm cho Progress placeholder.
+- `quest thực đơn 3.png` dùng nguyên tấm cho Food placeholder.
+- Nội dung/nút được vẽ sẵn trong hai placeholder không có hit target và không chạy logic.
+- Ba `TabButton` thật là hit target trong suốt đặt đúng lên vùng tab của artwork; khi hiện placeholder không vẽ thêm tab art lần hai.
+- Dùng font TMP gần nhất đang có trong project; thay font đúng artwork là polish task về sau.
+- Import texture runtime dưới dạng Sprite (2D and UI), giữ alpha và cấu hình compression phù hợp target build.
+
 ### 11.2. Phân trang
 
-- `ItemsPerPage = 3`.
-- `pageCount = ceil(taskCount / 3)`.
+- `ItemsPerPage = 2`.
+- `pageCount = ceil(taskCount / 2)`.
 - Page index bắt đầu từ 0 trong code, hiển thị từ 1 trên UI.
 - Page đầu disable nút Previous.
 - Page cuối disable nút Next.
 - Khi reset sang set có ít page hơn, clamp về page hợp lệ; mặc định reset về page đầu.
-- Không instantiate lại toàn bộ list mỗi lần đổi page; dùng pool cố định 3 item view và bind lại.
+- Không instantiate lại toàn bộ list mỗi lần đổi page; dùng pool cố định 2 item view và bind lại.
 
 ### 11.3. Presenter
 
 `DailyQuestPresenter`:
 
 - Đọc snapshot từ `IDailyQuestService`.
-- Tạo view model cho ba task của page hiện tại.
+- Tạo view model cho tối đa hai task của page hiện tại.
 - Bind point bar, milestone, countdown và button states.
 - Subscribe Daily state changed payload.
 - Không trao coin, cộng điểm hoặc reset state.
+
+Task reward UI:
+
+- Reward task được tự động trao, không có thao tác claim task.
+- Asset “nút nhận thưởng” được dùng như reward badge/trạng thái hiển thị số coin, không phải Button nhận thưởng.
+- Khi task chưa complete, badge dùng trạng thái chưa hoàn thành.
+- Khi transaction đang retry, view hiển thị trạng thái pending và không phát popup sớm.
+- Khi commit thành công, badge chuyển Completed và popup được enqueue.
 
 ### 11.4. Reward popup
 
@@ -711,12 +869,13 @@ Progress và Food giai đoạn đầu là placeholder panel, không chứa logic
 - Nếu nhiều task hoàn thành từ cùng một event, xếp popup vào queue.
 - Popup đầu hiển thị ngay; các popup sau hiển thị tuần tự.
 - Popup không điều khiển reward; reward đã commit trước khi popup được enqueue.
+- Reward được khôi phục sau crash không phát lại popup; popup chỉ dành cho commit thành công trong phiên hiện tại.
 
 ### 11.5. Window lifecycle
 
 `QuestWindowController` kế thừa `WindowController`:
 
-- `IOnBeforeWindowOpen`: bind presenter và mở tab mặc định/last selected.
+- `IOnBeforeWindowOpen`: bind presenter và luôn mở tab Daily mặc định.
 - `IOnWindowClosed`: unbind listener UI.
 - Nút close gọi `Close()`.
 
@@ -725,19 +884,31 @@ Progress và Food giai đoạn đầu là placeholder panel, không chứa logic
 - Nhận Button, `WindowsManager`, `UIWindow`.
 - Mở window qua UIManager.
 - Lấy instance và inject bằng VContainer theo pattern đang dùng ở `FarmUIBridge`.
+- Launcher gắn với một nút Quest trên HUD; nếu scene chưa có nút thì editor setup tạo placeholder button để designer đặt lại vị trí.
+
+Countdown dùng TMP text trong Daily panel:
+
+```text
+Làm mới sau 05:32:10
+```
+
+Reference layout dùng tỷ lệ artwork 1800x1200 và anchor theo panel để scale cùng Canvas; không hard-code tọa độ màn hình.
 
 ### 11.6. Editor setup tool
 
-Cập nhật `QuestUiSetupTool`:
+Tạo mới `QuestUiSetupTool`:
 
 - Tạo đúng hierarchy ba tab và Daily panel.
-- Tạo 3 task item slot cố định.
+- Tạo 2 task item slot cố định.
 - Tạo 3 milestone view.
 - Tạo nút page và label.
+- Gắn đúng sprite rời cho Daily và sprite full-panel cho hai placeholder.
+- Tạo `UIWindow`/Quest prefab, HUD launcher placeholder và close button dùng icon/button UI gần nhất hiện có.
+- Thiết lập Canvas anchors/reference layout theo artwork 1800x1200.
 - Không tạo dữ liệu runtime mẫu trong production hierarchy.
 - Không ghi đè object có sẵn; báo rõ nếu hierarchy đã tồn tại.
 
-Artwork, font, sprite và màu vẫn được designer gán trong prefab/Inspector.
+Tool chỉ tự động hóa hierarchy/wiring có thể xác định; designer vẫn có thể tinh chỉnh font, màu, spacing và vị trí HUD trong prefab/Inspector.
 
 ---
 
@@ -768,6 +939,7 @@ Artwork, font, sprite và màu vẫn được designer gán trong prefab/Inspect
 - `DailyMilestoneDefinition.cs`: threshold và coin reward.
 - `DailyQuestSetSO.cs`: một bộ Daily có số task linh hoạt.
 - `DailyQuestScheduleSO.cs`: anchor date và ordered cycle.
+- `QuestCatalogSO.cs`: giữ quest definitions và reference tới Daily schedule để preload qua Addressables.
 - `DailyQuestSaveData.cs`: root save model Daily.
 - `IDailyQuestRepository.cs`: persistence abstraction.
 - `IDailyQuestService.cs`: API initialize/query/claim/page-independent.
@@ -775,32 +947,27 @@ Artwork, font, sprite và màu vẫn được designer gán trong prefab/Inspect
 - `DailyQuestScheduleResolver.cs`: tính set index từ server day.
 - `DailyQuestValidator.cs`: validation runtime dùng chung.
 - `DailyQuestStateChangedPayload.cs`: yêu cầu UI refresh.
-- `DailyQuestRewardGrantedPayload.cs`: dữ liệu popup.
 - `DailyAvailabilityChangedPayload.cs`: lock/ready/config error.
 
 ### Integration
 
 - `FarmQuestEventBridge.cs`: chuyển payload Farm thành QuestProgressEvent.
-- `DailyQuestBootstrapper.cs`: chờ PlayerData + server time rồi initialize Daily.
-- `PlayerDataDailyQuestRepository.cs`: adapter từ Daily repository sang PlayerData.
+- `DailyQuestBootstrapper.cs`: check repository/time hiện tại, await repository readiness hoặc chờ server-time event rồi initialize idempotent.
 
-### Storage và app data
+### Reward contract và app data
 
-- `IRewardService.cs`: contract grant idempotent bằng transaction ID.
+- `IRewardService.cs`: contract thuộc Quest assembly, grant idempotent bằng transaction ID.
 - `RewardGrantResult.cs`: Granted/AlreadyGranted/Failed.
-- `CurrencyChangedPayload.cs`: cập nhật UI coin.
-- `RewardGrantedPayload.cs`: event reward tổng quát.
+- `RewardGrantedPayload.cs`: Quest-owned broker cho popup và consumer cập nhật hiển thị coin sau commit.
 - `PlayerData.cs`: thêm Daily save và reward transaction ledger.
-- `PlayerDataHolder.cs`: implement reward service và save result.
+- `PlayerDataHolder.cs`: implement reward service, snapshot và single-writer save gate.
 - `PlayerDataSaveLoad.cs`: giữ atomic write, trả success/failure.
 
 ### Farm
 
-- `FarmEntityHarvestedPayload.cs`: chứa EventId và toàn bộ outputs.
-- `FarmEntityPlantedPayload.cs`: thêm EventId.
-- `FarmEntityCaredPayload.cs`: thêm EventId.
-- `FarmService.cs`: tạo event ID và publish payload sau action thành công.
-- `FarmModuleInstaller.cs`: sở hữu toàn bộ Farm brokers.
+- Không sửa file Farm trong Daily v1.
+- `FarmQuestEventBridge` đọc contract hiện tại: Planted/Cared/Harvested và `OutputReward[]`.
+- EventId từ producer và thay đổi broker ownership được để ngoài phạm vi.
 
 ### UI
 
@@ -812,12 +979,16 @@ Artwork, font, sprite và màu vẫn được designer gán trong prefab/Inspect
 - `DailyMilestoneView.cs`: render/click một milestone.
 - `DailyRewardPopupQueue.cs`: hiển thị popup tuần tự.
 - `QuestUiSetupTool.cs`: tạo hierarchy static trong Editor.
+- `ProgressQuestPlaceholderView.cs`: hiển thị `quest tiến độ 3.png`, không có logic.
+- `FoodPlaceholderView.cs`: hiển thị `quest thực đơn 3.png`, không có logic.
 
 ### Bootstrap
 
-- `QuestModuleInstaller.cs`: đăng ký Quest Core, Daily, rules, bridge và brokers.
-- `RootLifetimeScope.cs`: chỉ compose module installers và app adapters, không đăng ký broker module trùng.
-- `GameLifetimeScope.cs`: đăng ký UI scene components nếu chúng nằm trong scene.
+- `Quest.asmdef`: reference trực tiếp Farm, Loading và Clock/Time; không reference MyOwn.
+- `QuestModuleInstaller.RegisterQuestModule()`: Root scope, đăng ký Quest/Daily/Reward-owned brokers và `QuestCatalogProvider`.
+- `QuestModuleInstaller.RegisterQuestGameplay()`: Game scope, đăng ký Quest Core, Daily service, bridge và presenter-related services.
+- `RootLifetimeScope.cs`: không sửa; registration `PlayerDataHolder.AsImplementedInterfaces()` hiện có tự expose repository/reward interface mới.
+- `GameLifetimeScope.cs`: tiếp tục gọi `RegisterQuestGameplay()`; Quest window launcher nằm dưới UI root được auto-inject hoặc được đăng ký scene component.
 
 ---
 
@@ -845,72 +1016,74 @@ Payload state changed chỉ báo “state đã đổi”; UI query snapshot mớ
 
 ## 14. Trình tự triển khai
 
-### Giai đoạn 1: Làm sạch module wiring
+### Giai đoạn 1: Khóa boundary và refactor Quest Core
 
-1. Di chuyển broker ownership về đúng module installer.
-2. Xóa broker registrations bị trùng trong Root.
-3. Cập nhật Farm harvested payload để giữ toàn bộ outputs.
-4. Bổ sung EventId và test Farm events.
+1. Ghi guardrail: không sửa Root broker registrations hoặc Farm module.
+2. Tách event type khỏi objective type.
+3. Thêm target matching.
+4. Thêm ActionCount và ItemAmount rule.
+5. Chuyển runtime identity sang RuntimeId.
+6. Thêm snapshot/restore/deactivate.
+7. Cập nhật payload Quest mang RuntimeId và DefinitionId.
+8. Tạo save DTO/repository/reward contracts thuộc Quest assembly.
+9. Cập nhật `Quest.asmdef` để dùng Clock/Time trực tiếp nhưng không tạo reference sang MyOwn.
+10. Giữ toàn bộ test cũ dưới behavior tương đương.
 
-### Giai đoạn 2: Refactor Quest Core
+### Giai đoạn 2: Persistence và durable reward outbox
 
-1. Tách event type khỏi objective type.
-2. Thêm target matching.
-3. Thêm ActionCount và ItemAmount rule.
-4. Chuyển runtime identity sang RuntimeId.
-5. Thêm snapshot/restore/deactivate.
-6. Cập nhật payload Quest mang RuntimeId và DefinitionId.
-7. Giữ toàn bộ test cũ dưới behavior tương đương.
+1. Mở rộng `PlayerData` với Daily save, reward ledger và pending outbox.
+2. Cho `PlayerDataHolder` implement repository/reward interfaces qua registration `.AsImplementedInterfaces()` hiện có.
+3. Thêm single-writer gate, stable snapshot và result cho immediate save.
+4. Implement rollback in-memory khi reward commit thất bại.
+5. Bump save version, migration và regression test Farm save hiện tại.
 
-### Giai đoạn 3: Farm bridge
-
-1. Subscribe domain events mới.
-2. Map action-count và item-amount events.
-3. Dedupe bằng EventId.
-4. Xóa auto-accept production khỏi test flow.
-
-### Giai đoạn 4: Daily data và schedule
+### Giai đoạn 3: Daily data và Addressables
 
 1. Tạo Entry/Set/Schedule SO.
-2. Tạo resolver vòng lặp theo UTC+7.
-3. Tạo validator.
-4. Tạo content mẫu đủ tổng 100 điểm.
+2. Reference Schedule từ `QuestCatalogSO` đang preload.
+3. Tạo resolver vòng lặp theo UTC+7.
+4. Tạo validator runtime/editor.
+5. Tạo 3 set mẫu, mỗi set 4 task, tổng 100 điểm.
+6. Xác nhận dependency content được load qua `QuestCatalogProvider`.
 
-### Giai đoạn 5: Persistence và reward
+### Giai đoạn 4: Farm bridge không sửa producer
 
-1. Thêm Daily save schema.
-2. Thêm repository adapter.
-3. Thêm idempotent reward ledger.
-4. Bump save version và migration.
-5. Kiểm thử crash/reload bằng các điểm ngắt flow.
+1. Subscribe Planted/Cared/Harvested hiện có.
+2. Map action-count và item-amount từ `OutputReward[]`.
+3. Thêm fingerprint/cache chống callback trùng cùng frame.
+4. Không report Ripe/StageReached trong Daily v1.
+5. Bỏ auto-accept khỏi `FarmQuestTestFlow`; debug chỉ chạy khi chủ động bật.
 
-### Giai đoạn 6: Daily application service
+### Giai đoạn 5: Daily application service và reward
 
-1. Chờ data/time readiness.
+1. Implement check-state-or-wait-event cho data/time readiness.
 2. Initialize/restore/reset.
 3. Activate task tự động.
-4. Xử lý completion và reward.
+4. Xử lý completion bằng durable pending outbox rồi grant ngay trong cùng phiên.
 5. Tính points từ completed states.
-6. Claim milestone.
-7. Reconcile pending reward.
+6. Claim milestone bằng transaction idempotent.
+7. Retry reward failure ngay trong phiên với backoff.
+8. Giữ startup reconcile làm crash fail-safe.
 
-### Giai đoạn 7: UI
+### Giai đoạn 6: UI và texture
 
 1. Tạo Quest window bằng UIManager.
-2. Tạo Daily tab và ba item view.
-3. Bind point bar/milestone/countdown.
-4. Implement pagination.
-5. Implement locked state.
-6. Implement reward popup queue.
-7. Cập nhật editor setup tool.
+2. Tạo Daily tab động từ nền và asset rời.
+3. Tạo pool 2 task item, point bar, milestone và countdown TMP.
+4. Implement pagination 2 task/page.
+5. Dùng reward asset như badge, không phải task-claim button.
+6. Gắn Progress/Food full mockup làm placeholder không tương tác.
+7. Tạo HUD launcher, close button và reward popup queue.
+8. Tạo mới editor setup tool và dùng font TMP gần nhất.
 
-### Giai đoạn 8: Content và nghiệm thu
+### Giai đoạn 7: Content và nghiệm thu
 
-1. Designer tạo nhiều Daily Set.
-2. Validate toàn bộ content.
-3. Chạy EditMode tests.
-4. Chạy PlayMode integration tests.
-5. Test trên build với WorldTimeAPI thật.
+1. Validate 3 Daily Set mẫu và toàn bộ target ID.
+2. Chạy EditMode tests.
+3. Chạy PlayMode integration tests.
+4. Test IO failure/retry trong cùng session.
+5. Test trên build với WorldTimeAPI thật và trường hợp mất mạng.
+6. Visual QA Quest window ở các aspect ratio target.
 
 ---
 
@@ -940,6 +1113,9 @@ Payload state changed chỉ báo “state đã đổi”; UI query snapshot mớ
 
 ### Daily Service
 
+- Repository/time đã ready trước khi Game scope start => initialize ngay.
+- Repository/time ready sau khi Game scope start => initialize qua wait/event.
+- Ready event lặp => không activate task hai lần.
 - Chưa sync time => WaitingForServerTime.
 - Sync thành công => Ready.
 - Save cùng ngày => restore.
@@ -958,9 +1134,15 @@ Payload state changed chỉ báo “state đã đổi”; UI query snapshot mớ
 - Milestone reward grant đúng một lần.
 - Spam button không nhân coin.
 - Reload sau grant không grant lại.
-- Completed save trước, reward fail => reconcile grant sau.
+- Completion/claim + pending reward được commit trước, sau đó coin + ledger + pending removal được commit ngay trong cùng session.
+- Save lỗi => không popup/không báo Granted và tự retry trong cùng session.
+- Retry thành công => coin cập nhật và popup xuất hiện ngay trong session.
+- App bị kill trước retry thành công => startup reconcile là fail-safe.
+- Pending outbox còn sau crash => grant đúng một lần rồi được xóa.
 - AlreadyGranted không hiện popup lại.
 - Save failure không báo Claimed giả.
+- Throttled save và immediate save không ghi file đồng thời.
+- Snapshot đang serialize không bị gameplay mutate từ thread khác.
 
 ### Farm bridge
 
@@ -969,26 +1151,37 @@ Payload state changed chỉ báo “state đã đổi”; UI query snapshot mớ
 - Harvest action tăng 1 dù output amount lớn.
 - Harvest item tăng theo amount.
 - Multi-output tạo một action event và nhiều item event.
+- Output null/amount không hợp lệ bị bỏ qua.
+- Callback giống nhau trong cùng frame chỉ tăng một lần.
+- Cùng frame/signature ở hai game session khác nhau không collision progress key.
+- Cùng hành động signature ở frame khác vẫn được tính độc lập.
 - Failed Farm action không tạo quest progress.
+- Ripe/StageChanged không tạo Daily progress.
 
 ### UI PlayMode
 
-- 1–3 task => một page.
-- 4–6 task => hai page.
-- 7 task trở lên => số page động.
+- 1–2 task => một page.
+- 3–4 task => hai page.
+- 5 task trở lên => số page động.
 - Previous/Next disable đúng.
 - Reset về page đầu.
 - Locked overlay chặn claim/page interaction cần chặn.
 - Popup nhiều reward chạy tuần tự.
 - Đóng/mở window không đăng ký listener trùng.
+- Daily text/progress/reward bind động; không dùng mockup Daily nguyên tấm.
+- Progress/Food tab hiển thị đúng full-panel placeholder và không có hit target giả.
+- Mở window luôn về Daily; HUD launcher và close button hoạt động.
+- Countdown hiển thị và cập nhật đúng.
 
 ### Regression
 
 - Farm planting/feeding/harvesting vẫn hoạt động.
 - Farm visual vẫn dùng FarmSlotChangedPayload.
-- Save cũ load được.
+- Save cũ load được; Daily/reward/pending lists được normalize đúng.
 - Clock/Farm offline progress không bị ảnh hưởng.
 - Quest debug tests cũ được cập nhật và vẫn pass.
+- Không có source file Farm nào bị sửa.
+- Không xóa/thay đổi broker registration hiện có trong Root.
 
 ---
 
@@ -1005,9 +1198,11 @@ Daily v1 được xem là hoàn thành khi:
 - Progress persist qua scene/restart.
 - Reset đúng ngày và mất milestone chưa nhận.
 - Task reward tự động, popup ngay và không grant trùng.
+- Nếu local save lỗi, reward retry ngay trong phiên và popup chỉ xuất hiện sau commit.
 - Milestone claim thủ công, thứ tự tự do và không grant trùng.
-- UI hiển thị tối đa 3 task/page, không scroll.
-- Module installer không đăng ký broker trùng.
+- UI hiển thị tối đa 2 task/page, không scroll.
+- Daily được ghép động từ asset rời; Progress/Food là placeholder đúng mockup đã chốt.
+- Quest không thêm broker registration trùng và không sửa broker/module thuộc dev khác.
 - EditMode và PlayMode tests liên quan đều pass.
 
 ---
@@ -1018,6 +1213,9 @@ Không triển khai trong Daily v1:
 
 - Progress quest chain và Progress milestones.
 - Food unlock/catalog runtime.
+- Farm Ripe/StageReached objective trong Daily.
+- Thêm producer EventId hoặc sửa Farm payload/FarmService.
+- Dọn broker registration trùng trong Root/Farm module.
 - Random Daily.
 - Reroll Daily.
 - Cloud save Daily.

@@ -1,4 +1,4 @@
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if QUEST_DEBUG_FLOW
 using System;
 using Core.Module.Farm;
 using MessagePipe;

@@ -4,6 +4,7 @@ using System.Threading;
 using Core.Module.Farm;
 using Core.Module.Time;
 using Core.Module.Storage;
+using Core.Module.Quest;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
 using UnityEngine;
@@ -16,7 +17,14 @@ namespace MyOwn.ServiceHarness
     /// Owns the runtime PlayerData instance and exposes Load/Save/Reset.
     /// Loads itself in StartAsync when the container builds; serves as the single storage contract.
     /// </summary>
-    public sealed class PlayerDataHolder : IService, IAsyncStartable, IStorageService, IFarmSaveSource
+    public sealed class PlayerDataHolder :
+        IService,
+        IAsyncStartable,
+        IStorageService,
+        IFarmSaveSource,
+        IDailyQuestRepository,
+        IQuestRewardService,
+        IDisposable
     {
         private readonly IPublisher<PlayerDataLoadedPayload> _loadedPublisher;
         private readonly IServerTimeProvider _timeProvider;
@@ -25,6 +33,7 @@ namespace MyOwn.ServiceHarness
         private PlayerData _data;
 
         public PlayerData Data => _data;
+        public bool IsLoaded => _data != null;
 
         /// <summary>IFarmSaveSource: FarmService reads this itself when it is constructed.</summary>
         public List<FarmSlotSaveData> FarmSlots => _data?.FarmSlots;
@@ -122,6 +131,118 @@ namespace MyOwn.ServiceHarness
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(IsNewlyCreated));
         }
 
+        public UniTask WaitUntilLoadedAsync(CancellationToken cancellationToken)
+        {
+            return UniTask.WaitUntil(() => IsLoaded, cancellationToken: cancellationToken);
+        }
+
+        public DailyQuestSaveData LoadDailyQuest()
+        {
+            return Clone(_data?.DailyQuest);
+        }
+
+        public IReadOnlyList<PendingQuestRewardSaveData> LoadPendingQuestRewards()
+        {
+            var result = new List<PendingQuestRewardSaveData>();
+            if (_data?.PendingQuestRewards == null) return result;
+            for (int i = 0; i < _data.PendingQuestRewards.Count; i++)
+                result.Add(Clone(_data.PendingQuestRewards[i]));
+            return result;
+        }
+
+        public UniTask<bool> SaveDailyQuestAsync(
+            DailyQuestSaveData data,
+            bool immediate,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_data == null) return UniTask.FromResult(false);
+
+            _data.DailyQuest = Clone(data);
+            if (!immediate)
+            {
+                Save();
+                return UniTask.FromResult(true);
+            }
+
+            return UniTask.FromResult(SaveImmediate());
+        }
+
+        public UniTask<bool> StageQuestRewardAsync(
+            DailyQuestSaveData data,
+            PendingQuestRewardSaveData pendingReward,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_data == null || pendingReward == null ||
+                string.IsNullOrWhiteSpace(pendingReward.transactionId))
+                return UniTask.FromResult(false);
+
+            _data.DailyQuest = Clone(data);
+            _data.PendingQuestRewards ??= new List<PendingQuestRewardSaveData>();
+            bool exists = _data.PendingQuestRewards.Exists(
+                reward => reward != null &&
+                          reward.transactionId == pendingReward.transactionId);
+            if (!exists)
+                _data.PendingQuestRewards.Add(Clone(pendingReward));
+
+            return UniTask.FromResult(SaveImmediate());
+        }
+
+        public UniTask<QuestRewardGrantResult> GrantPendingCoinsAsync(
+            string transactionId,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_data == null || string.IsNullOrWhiteSpace(transactionId))
+                return UniTask.FromResult(new QuestRewardGrantResult(
+                    false, false, 0, "PlayerData is not ready."));
+
+            _data.PendingQuestRewards ??= new List<PendingQuestRewardSaveData>();
+            _data.GrantedQuestRewardTransactions ??= new List<string>();
+
+            int pendingIndex = _data.PendingQuestRewards.FindIndex(
+                reward => reward != null && reward.transactionId == transactionId);
+            bool alreadyGranted = _data.GrantedQuestRewardTransactions.Contains(transactionId);
+            if (pendingIndex < 0)
+            {
+                return UniTask.FromResult(new QuestRewardGrantResult(
+                    alreadyGranted,
+                    alreadyGranted,
+                    0,
+                    alreadyGranted ? null : "Pending reward was not found."));
+            }
+
+            PendingQuestRewardSaveData pending = _data.PendingQuestRewards[pendingIndex];
+            int previousCoins = _data.Coins;
+            if (!alreadyGranted)
+            {
+                _data.Coins += Math.Max(0, pending.coins);
+                _data.GrantedQuestRewardTransactions.Add(transactionId);
+            }
+            _data.PendingQuestRewards.RemoveAt(pendingIndex);
+
+            if (SaveImmediate())
+            {
+                return UniTask.FromResult(new QuestRewardGrantResult(
+                    true, alreadyGranted, pending.coins, null));
+            }
+
+            _data.Coins = previousCoins;
+            _data.PendingQuestRewards.Insert(pendingIndex, pending);
+            if (!alreadyGranted)
+                _data.GrantedQuestRewardTransactions.Remove(transactionId);
+            return UniTask.FromResult(new QuestRewardGrantResult(
+                false, false, 0, "Failed to persist reward transaction."));
+        }
+
+        private static T Clone<T>(T value) where T : class
+        {
+            if (value == null) return default;
+            string json = JsonUtility.ToJson(value, prettyPrint: false);
+            return JsonUtility.FromJson<T>(json);
+        }
+
         private CancellationTokenSource _saveCts;
 
         public void Save()
@@ -136,10 +257,11 @@ namespace MyOwn.ServiceHarness
             }
 
             _saveCts = new CancellationTokenSource();
-            ThrottledSaveAsync(_saveCts.Token).Forget();
+            long revision = PlayerDataSaveLoad.ReserveSaveRevision();
+            ThrottledSaveAsync(revision, _saveCts.Token).Forget();
         }
 
-        private async UniTaskVoid ThrottledSaveAsync(CancellationToken ct)
+        private async UniTaskVoid ThrottledSaveAsync(long revision, CancellationToken ct)
         {
             try
             {
@@ -148,11 +270,11 @@ namespace MyOwn.ServiceHarness
 
                 _data.LastSaveUtcTicks = _timeProvider.UtcNow.Ticks;
 
-                // Hold the reference locally so the write can run off the main thread.
-                PlayerData saveCopy = _data;
+                // Serialize a stable snapshot on the main thread, then perform only IO off-thread.
+                string json = JsonUtility.ToJson(_data, prettyPrint: false);
                 await UniTask.RunOnThreadPool(() =>
                 {
-                    PlayerDataSaveLoad.Save(saveCopy);
+                    PlayerDataSaveLoad.SaveJson(json, revision);
                 }, cancellationToken: ct);
             }
             catch (OperationCanceledException)
@@ -168,9 +290,9 @@ namespace MyOwn.ServiceHarness
             }
         }
 
-        public void SaveImmediate()
+        public bool SaveImmediate()
         {
-            if (_data == null) return;
+            if (_data == null) return false;
 
             if (_saveCts != null)
             {
@@ -180,7 +302,10 @@ namespace MyOwn.ServiceHarness
             }
 
             _data.LastSaveUtcTicks = _timeProvider.UtcNow.Ticks;
-            PlayerDataSaveLoad.Save(_data);
+            string json = JsonUtility.ToJson(_data, prettyPrint: false);
+            return PlayerDataSaveLoad.SaveJson(
+                json,
+                PlayerDataSaveLoad.ReserveSaveRevision());
         }
 
         public void Reset()

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ef68e2496222e0479490cbb8f28eada, type: 3}
+  m_Name: DailyQuestSchedule
+  m_EditorClassIdentifier: Quest::Core.Module.Quest.DailyQuestScheduleSO
+  utcOffsetHours: 7
+  sets:
+  - {fileID: 11400000, guid: 5635278ccf9c173499761126a3b4027b, type: 2}
+  - {fileID: 11400000, guid: 034938736217bfc43979c73bc05c7379, type: 2}
+  - {fileID: 11400000, guid: 15a918b5c64af594b9086fed08330671, type: 2}
