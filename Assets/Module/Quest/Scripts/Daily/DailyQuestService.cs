@@ -16,6 +16,8 @@ namespace Core.Module.Quest
             TimeSpan.FromSeconds(2),
             TimeSpan.FromSeconds(5)
         };
+        private static readonly TimeSpan ServerTimeWaitTimeout =
+            TimeSpan.FromSeconds(8);
 
         private readonly QuestCatalogSO _catalog;
         private readonly IQuestService _questService;
@@ -70,9 +72,21 @@ namespace Core.Module.Quest
             try
             {
                 await _repository.WaitUntilLoadedAsync(cancellationToken);
-                await UniTask.WaitUntil(
-                    () => _timeProvider.IsSynced,
-                    cancellationToken: cancellationToken);
+                DateTime timeWaitDeadline =
+                    DateTime.UtcNow + ServerTimeWaitTimeout;
+                while (!_timeProvider.IsSynced &&
+                       DateTime.UtcNow < timeWaitDeadline)
+                {
+                    await UniTask.Delay(
+                        TimeSpan.FromMilliseconds(250),
+                        cancellationToken: cancellationToken);
+                }
+                if (!_timeProvider.IsSynced)
+                {
+                    Debug.LogWarning(
+                        "[DailyQuest] Server time is unavailable; " +
+                        "using the current UTC clock for this session.");
+                }
 
                 DailyQuestScheduleSO schedule = _catalog != null ? _catalog.dailySchedule : null;
                 if (schedule == null)

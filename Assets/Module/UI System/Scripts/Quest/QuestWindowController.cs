@@ -49,6 +49,7 @@ namespace MyOwn.ServiceHarness
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
         private int _pageIndex;
         private Coroutine _toastRoutine;
+        private bool _isConstructed;
 
         [Inject]
         public void Construct(
@@ -56,6 +57,8 @@ namespace MyOwn.ServiceHarness
             ISubscriber<DailyQuestStateChangedPayload> stateSubscriber,
             ISubscriber<QuestRewardGrantedPayload> rewardSubscriber)
         {
+            if (_isConstructed) return;
+            _isConstructed = true;
             _dailyQuestService = dailyQuestService;
             _subscriptions.Add(stateSubscriber.Subscribe(_ => Render()));
             _subscriptions.Add(rewardSubscriber.Subscribe(OnRewardGranted));

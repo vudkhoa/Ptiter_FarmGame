@@ -13,6 +13,9 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private TMP_Text _progress;
         [SerializeField] private Slider _progressBar;
         [SerializeField] private TMP_Text _reward;
+        [SerializeField] private Image _rewardBackground;
+        [SerializeField] private Sprite _defaultRewardSprite;
+        [SerializeField] private Sprite _completedRewardSprite;
         [SerializeField] private GameObject _completedMark;
         [SerializeField] private GameObject _pendingMark;
 
@@ -41,6 +44,11 @@ namespace MyOwn.ServiceHarness
                 _progressBar.value = data.CurrentAmount;
             }
             if (_reward != null) _reward.text = data.CoinReward.ToString();
+            if (_rewardBackground != null)
+                _rewardBackground.sprite =
+                    data.IsCompleted && _completedRewardSprite != null
+                        ? _completedRewardSprite
+                        : _defaultRewardSprite;
             if (_completedMark != null) _completedMark.SetActive(data.IsCompleted);
             if (_pendingMark != null) _pendingMark.SetActive(data.IsRewardPending);
         }

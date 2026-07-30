@@ -21,12 +21,6 @@ namespace Core.Module.Quest.Editor
         private const string WindowCollectionPath =
             "Assets/Module/UI System/package/SO/Windows/UIWindowCollection.asset";
 
-        [InitializeOnLoadMethod]
-        private static void ScheduleAutomaticSetup()
-        {
-            EditorApplication.delayCall += EnsureSetup;
-        }
-
         [MenuItem("Tools/Quest/Rebuild Quest Content & UI")]
         public static void Rebuild()
         {
@@ -39,6 +33,7 @@ namespace Core.Module.Quest.Editor
             Debug.Log("[QuestSetup] Daily content and Quest UI were rebuilt.");
         }
 
+        [MenuItem("Tools/Quest/Ensure Quest Content & UI")]
         private static void EnsureSetup()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
@@ -259,6 +254,19 @@ namespace Core.Module.Quest.Editor
 
         private static void BuildQuestWindowPrefab(bool overwrite)
         {
+            UIWindowCollection collection =
+                AssetDatabase.LoadAssetAtPath<UIWindowCollection>(
+                    WindowCollectionPath);
+            if (collection == null)
+            {
+                Debug.LogError(
+                    $"[QuestSetup] UIWindowCollection was not found at {WindowCollectionPath}.");
+                return;
+            }
+
+            PrefabUIWindow window =
+                collection.GetOrAddNew<PrefabUIWindow>("QuestWindow");
+
             if (overwrite && AssetDatabase.LoadAssetAtPath<GameObject>(
                     QuestWindowPrefabPath) != null)
                 AssetDatabase.DeleteAsset(QuestWindowPrefabPath);
@@ -292,56 +300,80 @@ namespace Core.Module.Quest.Editor
 
             TMP_FontAsset font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
                 "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
+
+            // Daily artwork is assembled from the artist's exported pieces.
+            // The other two tabs are full mock-up images for now.
             TextMeshProUGUI title = Text(
-                "Title", root.transform, "NHIỆM VỤ",
+                "Title", daily.transform, "NHIỆM VỤ",
                 new Vector2(0, 505), new Vector2(500, 90), 48, font);
             title.fontStyle = FontStyles.Bold;
             title.color = Color.white;
 
-            Button dailyTab = Button(
-                "Daily Tab", root.transform, "Hằng ngày",
-                new Vector2(-500, 330), new Vector2(420, 95), font);
-            Button progressTab = Button(
-                "Progress Tab", root.transform, "Tiến độ",
-                new Vector2(0, 330), new Vector2(420, 95), font);
-            Button foodTab = Button(
-                "Food Tab", root.transform, "Thực đơn",
-                new Vector2(500, 330), new Vector2(420, 95), font);
-            Button close = Button(
-                "Close", root.transform, "X",
-                new Vector2(770, 500), new Vector2(70, 70), font);
+            TabVisual(
+                "Daily Tab Visual", daily.transform, "Hằng ngày", true,
+                new Vector2(-480, 255), font);
+            TabVisual(
+                "Progress Tab Visual", daily.transform, "Tiến độ", false,
+                new Vector2(0, 255), font);
+            TabVisual(
+                "Food Tab Visual", daily.transform, "Thực đơn", false,
+                new Vector2(480, 255), font);
+
+            // Input sits on top of the artwork, without drawing replacement boxes.
+            Button dailyTab = TransparentButton(
+                "Daily Tab", root.transform,
+                new Vector2(-480, 255), new Vector2(430, 110));
+            Button progressTab = TransparentButton(
+                "Progress Tab", root.transform,
+                new Vector2(0, 255), new Vector2(430, 110));
+            Button foodTab = TransparentButton(
+                "Food Tab", root.transform,
+                new Vector2(480, 255), new Vector2(430, 110));
+            Button close = TransparentButton(
+                "Close On Pin", root.transform,
+                new Vector2(300, 510), new Vector2(130, 100));
 
             TextMeshProUGUI countdown = Text(
                 "Countdown", daily.transform, "00:00:00",
-                new Vector2(680, 245), new Vector2(250, 50), 28, font);
+                new Vector2(650, 170), new Vector2(250, 50), 26, font);
+            ImageObject(
+                "Milestone Track", daily.transform,
+                Sprite("quest hàng ngày_ quà tặng 1.png"),
+                new Vector2(0, 65), new Vector2(983, 214));
             TextMeshProUGUI points = Text(
                 "Total Points", daily.transform, "0",
-                new Vector2(0, 220), new Vector2(180, 50), 28, font);
+                new Vector2(0, 35), new Vector2(180, 50), 26, font);
             TextMeshProUGUI locked = Text(
                 "Locked Reason", daily.transform, "Synchronizing server time...",
-                new Vector2(0, 40), new Vector2(900, 70), 30, font);
+                new Vector2(0, -120), new Vector2(900, 70), 30, font);
 
             QuestTaskItemView[] taskSlots =
             {
-                TaskSlot("Task 1", daily.transform, new Vector2(0, 30), font),
-                TaskSlot("Task 2", daily.transform, new Vector2(0, -220), font)
+                TaskSlot("Task 1", daily.transform, new Vector2(0, -155), font),
+                TaskSlot("Task 2", daily.transform, new Vector2(0, -350), font)
             };
             QuestMilestoneView[] milestones =
             {
-                Milestone("Milestone 1", daily.transform, new Vector2(-430, 225), font),
-                Milestone("Milestone 2", daily.transform, new Vector2(0, 225), font),
-                Milestone("Milestone 3", daily.transform, new Vector2(430, 225), font)
+                Milestone("Milestone 1", daily.transform, new Vector2(-440, 125), font),
+                Milestone("Milestone 2", daily.transform, new Vector2(0, 125), font),
+                Milestone("Milestone 3", daily.transform, new Vector2(440, 125), font)
             };
 
-            Button previous = Button(
-                "Previous Page", daily.transform, "<",
-                new Vector2(-160, -495), new Vector2(90, 60), font);
+            Button previous = TransparentButton(
+                "Previous Page", daily.transform,
+                new Vector2(-160, -510), new Vector2(90, 60));
+            Text(
+                "Previous Page Label", previous.transform, "<",
+                Vector2.zero, new Vector2(90, 60), 30, font);
             TextMeshProUGUI page = Text(
                 "Page", daily.transform, "1/2",
-                new Vector2(0, -495), new Vector2(120, 60), 28, font);
-            Button next = Button(
-                "Next Page", daily.transform, ">",
-                new Vector2(160, -495), new Vector2(90, 60), font);
+                new Vector2(0, -510), new Vector2(120, 60), 28, font);
+            Button next = TransparentButton(
+                "Next Page", daily.transform,
+                new Vector2(160, -510), new Vector2(90, 60));
+            Text(
+                "Next Page Label", next.transform, ">",
+                Vector2.zero, new Vector2(90, 60), 30, font);
 
             GameObject toast = ImageObject(
                 "Reward Toast", root.transform, null,
@@ -371,18 +403,14 @@ namespace Core.Module.Quest.Editor
             SetArray(serialized, "_milestones", milestones);
             Set(serialized, "_rewardToast", toast);
             Set(serialized, "_rewardToastText", toastText);
+            SetWindowReference(serialized, window, collection);
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(
                 root, QuestWindowPrefabPath);
             UnityEngine.Object.DestroyImmediate(root);
 
-            UIWindowCollection collection =
-                AssetDatabase.LoadAssetAtPath<UIWindowCollection>(
-                    WindowCollectionPath);
-            if (collection == null || prefab == null) return;
-            PrefabUIWindow window =
-                collection.GetOrAddNew<PrefabUIWindow>("QuestWindow");
+            if (prefab == null) return;
             SerializedObject windowSerialized = new SerializedObject(window);
             windowSerialized.FindProperty("windowControllerPrefab").objectReferenceValue =
                 prefab.GetComponent<QuestWindowController>();
@@ -395,38 +423,85 @@ namespace Core.Module.Quest.Editor
             EditorUtility.SetDirty(collection);
         }
 
+        private static void SetWindowReference(
+            SerializedObject controller,
+            PrefabUIWindow window,
+            UIWindowCollection collection)
+        {
+            SerializedProperty controllerWindow = controller.FindProperty("window");
+            SerializedObject windowAsset = new SerializedObject(window);
+            SerializedProperty itemGuid = windowAsset.FindProperty("guid");
+            SerializedProperty collectionGuid =
+                windowAsset.FindProperty("collectionGUID");
+
+            if (controllerWindow == null || itemGuid == null ||
+                collectionGuid == null)
+                throw new InvalidOperationException(
+                    "UIManager GUID fields could not be resolved.");
+
+            CopyLong(itemGuid, "value1", controllerWindow,
+                "collectionItemGUIDValueA");
+            CopyLong(itemGuid, "value2", controllerWindow,
+                "collectionItemGUIDValueB");
+            CopyLong(collectionGuid, "value1", controllerWindow,
+                "collectionGUIDValueA");
+            CopyLong(collectionGuid, "value2", controllerWindow,
+                "collectionGUIDValueB");
+            controllerWindow.FindPropertyRelative("itemLastKnownName").stringValue =
+                window.name;
+            controllerWindow.FindPropertyRelative(
+                "collectionLastKnownName").stringValue = collection.name;
+        }
+
+        private static void CopyLong(
+            SerializedProperty source,
+            string sourceName,
+            SerializedProperty destination,
+            string destinationName)
+        {
+            destination.FindPropertyRelative(destinationName).longValue =
+                source.FindPropertyRelative(sourceName).longValue;
+        }
+
         private static QuestTaskItemView TaskSlot(
             string name, Transform parent, Vector2 position, TMP_FontAsset font)
         {
-            GameObject root = ImageObject(
-                name, parent, null, position, new Vector2(1350, 215));
-            root.GetComponent<Image>().color = new Color(1f, 0.87f, 0.58f, 0.88f);
+            GameObject root = new GameObject(name, typeof(RectTransform));
+            Rect(root, parent, position, new Vector2(1350, 180));
             QuestTaskItemView view = root.AddComponent<QuestTaskItemView>();
             Image icon = ImageObject(
                 "Icon", root.transform, Sprite("quest thu hoạch 1.png"),
-                new Vector2(-570, 0), new Vector2(130, 120)).GetComponent<Image>();
+                new Vector2(-570, 0), new Vector2(125, 110)).GetComponent<Image>();
             TextMeshProUGUI title = Text(
                 "Title", root.transform, "Nhiệm vụ",
-                new Vector2(-300, 50), new Vector2(430, 55), 30, font);
+                new Vector2(-230, 42), new Vector2(560, 55), 30, font);
             title.alignment = TextAlignmentOptions.Left;
             TextMeshProUGUI description = Text(
                 "Description", root.transform, "Mô tả",
-                new Vector2(-250, 5), new Vector2(530, 45), 22, font);
+                new Vector2(-230, 5), new Vector2(560, 40), 20, font);
             description.alignment = TextAlignmentOptions.Left;
             Slider slider = SliderObject(
-                root.transform, new Vector2(-120, -60), new Vector2(700, 28));
+                root.transform, new Vector2(-145, -55), new Vector2(700, 61));
             TextMeshProUGUI progress = Text(
                 "Progress", root.transform, "0/1",
-                new Vector2(280, -60), new Vector2(120, 45), 22, font);
+                new Vector2(250, -55), new Vector2(120, 45), 22, font);
+            Image rewardBackground = ImageObject(
+                "Reward Frame", root.transform,
+                Sprite("quest hàng ngày_nút nhận thưởng 3.png"),
+                new Vector2(545, 0), new Vector2(250, 102)).GetComponent<Image>();
+            ImageObject(
+                "Coin", rewardBackground.transform,
+                Sprite("quest hàng ngày_tiền 1.png"),
+                new Vector2(-65, 0), new Vector2(48, 46));
             TextMeshProUGUI reward = Text(
-                "Reward", root.transform, "100",
-                new Vector2(555, 0), new Vector2(160, 70), 30, font);
+                "Reward", rewardBackground.transform, "100",
+                new Vector2(25, 0), new Vector2(110, 70), 30, font);
             GameObject complete = Text(
-                "Completed", root.transform, "✓",
-                new Vector2(630, 70), new Vector2(60, 60), 38, font).gameObject;
+                "Completed", root.transform, "DONE",
+                new Vector2(545, 68), new Vector2(130, 45), 20, font).gameObject;
             GameObject pending = Text(
                 "Pending", root.transform, "...",
-                new Vector2(630, -70), new Vector2(70, 50), 25, font).gameObject;
+                new Vector2(545, -65), new Vector2(70, 45), 24, font).gameObject;
 
             SerializedObject serialized = new SerializedObject(view);
             Set(serialized, "_icon", icon);
@@ -435,6 +510,11 @@ namespace Core.Module.Quest.Editor
             Set(serialized, "_progress", progress);
             Set(serialized, "_progressBar", slider);
             Set(serialized, "_reward", reward);
+            Set(serialized, "_rewardBackground", rewardBackground);
+            Set(serialized, "_defaultRewardSprite",
+                Sprite("quest hàng ngày_nút nhận thưởng 3.png"));
+            Set(serialized, "_completedRewardSprite",
+                Sprite("quest hàng ngày_nút nhận thưởng2 1.png"));
             Set(serialized, "_completedMark", complete);
             Set(serialized, "_pendingMark", pending);
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -445,26 +525,26 @@ namespace Core.Module.Quest.Editor
             string name, Transform parent, Vector2 position, TMP_FontAsset font)
         {
             GameObject root = new GameObject(name, typeof(RectTransform));
-            Rect(root, parent, position, new Vector2(260, 100));
+            Rect(root, parent, position, new Vector2(180, 160));
             QuestMilestoneView view = root.AddComponent<QuestMilestoneView>();
-            Button claim = Button(
-                "Claim", root.transform, "NHẬN",
-                Vector2.zero, new Vector2(230, 90), font);
+            Button claim = TransparentButton(
+                "Claim Gift", root.transform,
+                new Vector2(0, 20), new Vector2(145, 120));
             TextMeshProUGUI points = Text(
                 "Points", root.transform, "25",
-                new Vector2(-75, 0), new Vector2(70, 45), 22, font);
+                new Vector2(-35, -65), new Vector2(80, 35), 18, font);
             TextMeshProUGUI reward = Text(
                 "Reward", root.transform, "100",
-                new Vector2(65, 0), new Vector2(90, 45), 22, font);
-            GameObject locked = Text(
-                "Locked", root.transform, "🔒",
-                new Vector2(0, -45), new Vector2(60, 40), 20, font).gameObject;
+                new Vector2(45, -65), new Vector2(90, 35), 18, font);
+            GameObject locked = ImageObject(
+                "Locked", root.transform, Sprite("quest khóa 1.png"),
+                new Vector2(0, 10), new Vector2(65, 75));
             GameObject claimed = Text(
-                "Claimed", root.transform, "✓",
-                new Vector2(0, -45), new Vector2(60, 40), 25, font).gameObject;
+                "Claimed", root.transform, "CLAIMED",
+                new Vector2(0, 10), new Vector2(120, 40), 16, font).gameObject;
             GameObject pending = Text(
                 "Pending", root.transform, "...",
-                new Vector2(0, -45), new Vector2(70, 40), 22, font).gameObject;
+                new Vector2(0, 10), new Vector2(70, 40), 22, font).gameObject;
 
             SerializedObject serialized = new SerializedObject(view);
             Set(serialized, "_points", points);
@@ -480,13 +560,17 @@ namespace Core.Module.Quest.Editor
         private static Slider SliderObject(
             Transform parent, Vector2 position, Vector2 size)
         {
-            GameObject root = ImageObject("Progress Bar", parent, null, position, size);
+            GameObject root = ImageObject(
+                "Progress Bar", parent,
+                Sprite("quest thanh tiến trình 1.png"), position, size);
             Image background = root.GetComponent<Image>();
-            background.color = new Color(0.18f, 0.42f, 0.12f, 0.45f);
+            background.color = Color.white;
             Slider slider = root.AddComponent<Slider>();
             GameObject fill = ImageObject(
-                "Fill", root.transform, null, Vector2.zero, size);
-            fill.GetComponent<Image>().color = new Color(0.1f, 0.55f, 0.12f, 1f);
+                "Fill", root.transform, null, Vector2.zero,
+                new Vector2(size.x - 55, 13));
+            fill.GetComponent<Image>().color =
+                new Color(0.62f, 0.88f, 0.3f, 0.75f);
             RectTransform fillRect = fill.GetComponent<RectTransform>();
             fillRect.anchorMin = new Vector2(0, 0);
             fillRect.anchorMax = new Vector2(1, 1);
@@ -495,6 +579,44 @@ namespace Core.Module.Quest.Editor
             slider.targetGraphic = fill.GetComponent<Image>();
             slider.interactable = false;
             return slider;
+        }
+
+        private static void TabVisual(
+            string name,
+            Transform parent,
+            string label,
+            bool selected,
+            Vector2 position,
+            TMP_FontAsset font)
+        {
+            GameObject visual = ImageObject(
+                name, parent,
+                Sprite(selected
+                    ? "quest hàng ngày_nút1 1.png"
+                    : "quest hàng ngày_nút 2.png"),
+                position, new Vector2(430, 106));
+            TextMeshProUGUI text = Text(
+                name + " Label", visual.transform, label,
+                Vector2.zero, new Vector2(390, 90), 30, font);
+            text.fontStyle = FontStyles.Bold;
+            text.color = selected
+                ? Color.white
+                : new Color(0.48f, 0.29f, 0.24f);
+        }
+
+        private static Button TransparentButton(
+            string name,
+            Transform parent,
+            Vector2 position,
+            Vector2 size)
+        {
+            GameObject gameObject = ImageObject(
+                name, parent, null, position, size);
+            Image image = gameObject.GetComponent<Image>();
+            image.color = Color.clear;
+            Button button = gameObject.AddComponent<Button>();
+            button.targetGraphic = image;
+            return button;
         }
 
         private static GameObject ImageObject(

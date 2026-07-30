@@ -11,6 +11,7 @@ namespace MyOwn.ServiceHarness
     /// </summary>
     public static class PlayerDataSaveLoad
     {
+        private const int CURRENT_SAVE_VERSION = 2;
         private const string FILE_NAME = "playerdata.json";
         private const string TEMP_SUFFIX = ".tmp";
 
@@ -54,6 +55,7 @@ namespace MyOwn.ServiceHarness
                 var json = File.ReadAllText(FilePath);
                 if (string.IsNullOrWhiteSpace(json)) return null;
                 var data = JsonUtility.FromJson<PlayerData>(json);
+                NormalizeLoadedData(data);
                 return data;
             }
             catch (Exception e)
@@ -61,6 +63,25 @@ namespace MyOwn.ServiceHarness
                 Debug.LogWarning($"[PlayerDataSaveLoad] Load failed: {e.Message}. Returning null.");
                 return null;
             }
+        }
+
+        private static void NormalizeLoadedData(PlayerData data)
+        {
+            if (data == null) return;
+
+            // JsonUtility leaves fields added in a newer schema null when reading
+            // an older save. Keep existing progress and only initialize missing data.
+            data.Inventory ??= new System.Collections.Generic.List<InventoryEntry>();
+            data.FarmSlots ??=
+                new System.Collections.Generic.List<Core.Module.Farm.FarmSlotSaveData>();
+            data.PendingQuestRewards ??=
+                new System.Collections.Generic.List<
+                    Core.Module.Quest.PendingQuestRewardSaveData>();
+            data.GrantedQuestRewardTransactions ??=
+                new System.Collections.Generic.List<string>();
+
+            if (data.SaveVersion < CURRENT_SAVE_VERSION)
+                data.SaveVersion = CURRENT_SAVE_VERSION;
         }
 
         /// <summary>Atomic save: write temp file → rename. Tránh corrupt nếu crash giữa chừng.</summary>
