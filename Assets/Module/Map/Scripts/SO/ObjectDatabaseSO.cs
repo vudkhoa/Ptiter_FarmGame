@@ -15,7 +15,7 @@ namespace Core.Module.Map
     public enum MapObjectRotationMode
     {
         KeepPrefabRotation = 0,
-        FaceCamera = 1
+        MatchCameraRotation = 1
     }
 
     [CreateAssetMenu(fileName = "Objects", menuName = "Data/Map/Objects")]

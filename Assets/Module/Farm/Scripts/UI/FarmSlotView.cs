@@ -31,7 +31,8 @@ namespace Core.Module.Farm
             }
 
             _camera = Camera.main;
-            if (_useBillboard && _spriteRenderer != null) FaceCamera(_spriteRenderer.transform);
+            if (_useBillboard && _spriteRenderer != null)
+                MatchCameraRotation(_spriteRenderer.transform);
         }
 
         public void UpdateView(FarmSlotSaveData slot, FarmDatabaseSO database)
@@ -203,21 +204,15 @@ namespace Core.Module.Farm
                 }
 
                 _cropRenderers[i].transform.localPosition = _spriteBaseLocalPosition + offsets[i];
-                if (_useBillboard) FaceCamera(_cropRenderers[i].transform);
+                if (_useBillboard) MatchCameraRotation(_cropRenderers[i].transform);
                 _cropRenderers[i].sortingOrder = _cropSortingOrder;
             }
         }
 
-        private void FaceCamera(Transform target)
+        private void MatchCameraRotation(Transform target)
         {
             if (_camera == null || target == null) return;
-
-            // Positions stay on XZ; only the sprite visual turns toward the camera.
-            Vector3 direction = Vector3.ProjectOnPlane(-_camera.transform.forward, Vector3.up);
-            if (direction.sqrMagnitude > Mathf.Epsilon)
-            {
-                target.rotation = Quaternion.LookRotation(direction, Vector3.up);
-            }
+            target.rotation = _camera.transform.rotation;
         }
     }
 }
