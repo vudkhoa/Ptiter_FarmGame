@@ -148,7 +148,7 @@ namespace MyOwn.ServiceHarness
             if (_countdown != null)
                 _countdown.text = FormatCountdown(state.TimeUntilReset);
             if (_totalPoints != null)
-                _totalPoints.text = state.TotalPoints.ToString();
+                _totalPoints.text = $"{state.TotalPoints} ĐIỂM";
 
             for (int slot = 0; slot < (_taskSlots?.Length ?? 0); slot++)
             {

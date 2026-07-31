@@ -12,8 +12,8 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private TMP_Text _reward;
         [SerializeField] private Button _claimButton;
         [SerializeField] private GameObject _locked;
-        [SerializeField] private GameObject _claimed;
-        [SerializeField] private GameObject _pending;
+        [SerializeField] private Image _statusBackground;
+        [SerializeField] private TMP_Text _status;
 
         private string _milestoneId;
         private Action<string> _claim;
@@ -31,8 +31,8 @@ namespace MyOwn.ServiceHarness
             }
 
             gameObject.SetActive(true);
-            if (_points != null) _points.text = data.RequiredPoints.ToString();
-            if (_reward != null) _reward.text = data.CoinReward.ToString();
+            if (_points != null) _points.text = $"MỐC {data.RequiredPoints}";
+            if (_reward != null) _reward.text = $"+{data.CoinReward}";
             bool claimable = data.ClaimState == DailyMilestoneClaimState.Claimable;
             if (_claimButton != null)
             {
@@ -41,10 +41,35 @@ namespace MyOwn.ServiceHarness
             }
             if (_locked != null)
                 _locked.SetActive(data.ClaimState == DailyMilestoneClaimState.Locked);
-            if (_claimed != null)
-                _claimed.SetActive(data.ClaimState == DailyMilestoneClaimState.Claimed);
-            if (_pending != null)
-                _pending.SetActive(data.ClaimState == DailyMilestoneClaimState.ClaimPending);
+            UpdateStatus(data.ClaimState);
+        }
+
+        private void UpdateStatus(DailyMilestoneClaimState state)
+        {
+            string label;
+            Color color;
+            switch (state)
+            {
+                case DailyMilestoneClaimState.Claimable:
+                    label = "NHẬN";
+                    color = new Color(0.20f, 0.52f, 0.20f, 0.96f);
+                    break;
+                case DailyMilestoneClaimState.ClaimPending:
+                    label = "ĐANG NHẬN";
+                    color = new Color(0.78f, 0.49f, 0.12f, 0.96f);
+                    break;
+                case DailyMilestoneClaimState.Claimed:
+                    label = "ĐÃ NHẬN";
+                    color = new Color(0.28f, 0.42f, 0.20f, 0.96f);
+                    break;
+                default:
+                    label = "CHƯA ĐỦ";
+                    color = new Color(0.45f, 0.38f, 0.29f, 0.92f);
+                    break;
+            }
+
+            if (_status != null) _status.text = label;
+            if (_statusBackground != null) _statusBackground.color = color;
         }
 
         private void OnClaimClicked()

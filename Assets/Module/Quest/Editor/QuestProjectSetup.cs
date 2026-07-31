@@ -342,8 +342,9 @@ namespace Core.Module.Quest.Editor
                 Sprite("quest hàng ngày_ quà tặng 1.png"),
                 new Vector2(0, 65), new Vector2(983, 214));
             TextMeshProUGUI points = Text(
-                "Total Points", daily.transform, "0",
-                new Vector2(0, 35), new Vector2(180, 50), 26, font);
+                "Total Points", daily.transform, "0 ĐIỂM",
+                new Vector2(0, 35), new Vector2(220, 50), 24, font);
+            points.fontStyle = FontStyles.Bold;
             TextMeshProUGUI locked = Text(
                 "Locked Reason", daily.transform, "Synchronizing server time...",
                 new Vector2(0, -120), new Vector2(900, 70), 30, font);
@@ -360,21 +361,18 @@ namespace Core.Module.Quest.Editor
                 Milestone("Milestone 3", daily.transform, new Vector2(440, 125), font)
             };
 
-            Button previous = TransparentButton(
+            Button previous = ArtworkButton(
                 "Previous Page", daily.transform,
-                new Vector2(-160, -510), new Vector2(90, 60));
-            Text(
-                "Previous Page Label", previous.transform, "<",
-                Vector2.zero, new Vector2(90, 60), 30, font);
+                Sprite("quest hàng ngày_nút nhận thưởng 3.png"), "TRƯỚC",
+                new Vector2(-170, -490), new Vector2(130, 55), 18, font);
             TextMeshProUGUI page = Text(
                 "Page", daily.transform, "1/2",
-                new Vector2(0, -510), new Vector2(120, 60), 28, font);
-            Button next = TransparentButton(
+                new Vector2(0, -490), new Vector2(120, 55), 28, font);
+            page.fontStyle = FontStyles.Bold;
+            Button next = ArtworkButton(
                 "Next Page", daily.transform,
-                new Vector2(160, -510), new Vector2(90, 60));
-            Text(
-                "Next Page Label", next.transform, ">",
-                Vector2.zero, new Vector2(90, 60), 30, font);
+                Sprite("quest hàng ngày_nút nhận thưởng 3.png"), "SAU",
+                new Vector2(170, -490), new Vector2(130, 55), 18, font);
 
             GameObject toast = ImageObject(
                 "Reward Toast", root.transform, null,
@@ -526,34 +524,46 @@ namespace Core.Module.Quest.Editor
             string name, Transform parent, Vector2 position, TMP_FontAsset font)
         {
             GameObject root = new GameObject(name, typeof(RectTransform));
-            Rect(root, parent, position, new Vector2(180, 160));
+            Rect(root, parent, position, new Vector2(210, 190));
             QuestMilestoneView view = root.AddComponent<QuestMilestoneView>();
             Button claim = TransparentButton(
                 "Claim Gift", root.transform,
-                new Vector2(0, 20), new Vector2(145, 120));
+                new Vector2(0, 25), new Vector2(150, 115));
             TextMeshProUGUI points = Text(
-                "Points", root.transform, "25",
-                new Vector2(-35, -65), new Vector2(80, 35), 18, font);
+                "Points", root.transform, "MỐC 25",
+                new Vector2(0, -82), new Vector2(150, 32), 17, font);
+            points.fontStyle = FontStyles.Bold;
+            Image coin = ImageObject(
+                "Reward Coin", root.transform,
+                Sprite("quest hàng ngày_tiền 1.png"),
+                new Vector2(-36, -49), new Vector2(28, 28)).GetComponent<Image>();
+            coin.raycastTarget = false;
             TextMeshProUGUI reward = Text(
-                "Reward", root.transform, "100",
-                new Vector2(45, -65), new Vector2(90, 35), 18, font);
+                "Reward", root.transform, "+100",
+                new Vector2(23, -49), new Vector2(85, 34), 20, font);
+            reward.fontStyle = FontStyles.Bold;
             GameObject locked = ImageObject(
                 "Locked", root.transform, Sprite("quest khóa 1.png"),
-                new Vector2(0, 10), new Vector2(65, 75));
-            GameObject claimed = Text(
-                "Claimed", root.transform, "CLAIMED",
-                new Vector2(0, 10), new Vector2(120, 40), 16, font).gameObject;
-            GameObject pending = Text(
-                "Pending", root.transform, "...",
-                new Vector2(0, 10), new Vector2(70, 40), 22, font).gameObject;
+                new Vector2(0, 36), new Vector2(55, 64));
+            locked.GetComponent<Image>().raycastTarget = false;
+            Image statusBackground = ImageObject(
+                "Status Background", root.transform, null,
+                new Vector2(0, -12), new Vector2(138, 38)).GetComponent<Image>();
+            statusBackground.color = new Color(0.45f, 0.38f, 0.29f, 0.92f);
+            statusBackground.raycastTarget = false;
+            TextMeshProUGUI status = Text(
+                "Status", statusBackground.transform, "CHƯA ĐỦ",
+                Vector2.zero, new Vector2(132, 34), 15, font);
+            status.fontStyle = FontStyles.Bold;
+            status.color = Color.white;
 
             SerializedObject serialized = new SerializedObject(view);
             Set(serialized, "_points", points);
             Set(serialized, "_reward", reward);
             Set(serialized, "_claimButton", claim);
             Set(serialized, "_locked", locked);
-            Set(serialized, "_claimed", claimed);
-            Set(serialized, "_pending", pending);
+            Set(serialized, "_statusBackground", statusBackground);
+            Set(serialized, "_status", status);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return view;
         }
@@ -617,6 +627,29 @@ namespace Core.Module.Quest.Editor
             image.color = Color.clear;
             Button button = gameObject.AddComponent<Button>();
             button.targetGraphic = image;
+            return button;
+        }
+
+        private static Button ArtworkButton(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            string label,
+            Vector2 position,
+            Vector2 size,
+            float fontSize,
+            TMP_FontAsset font)
+        {
+            GameObject gameObject = ImageObject(
+                name, parent, sprite, position, size);
+            Image image = gameObject.GetComponent<Image>();
+            Button button = gameObject.AddComponent<Button>();
+            button.targetGraphic = image;
+            TextMeshProUGUI text = Text(
+                name + " Label", gameObject.transform, label,
+                Vector2.zero, size, fontSize, font);
+            text.fontStyle = FontStyles.Bold;
+            text.richText = false;
             return button;
         }
 
