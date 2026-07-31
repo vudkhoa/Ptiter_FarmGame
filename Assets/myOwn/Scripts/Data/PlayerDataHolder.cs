@@ -5,6 +5,7 @@ using Core.Module.Farm;
 using Core.Module.Time;
 using Core.Module.Storage;
 using Core.Module.Quest;
+using Core.Module.Currency;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
 using UnityEngine;
@@ -23,13 +24,15 @@ namespace MyOwn.ServiceHarness
         IStorageService,
         IFarmSaveSource,
         IDailyQuestRepository,
-        IQuestRewardService,
+        ICurrencyRepository,
         IDisposable
     {
         private readonly IPublisher<PlayerDataLoadedPayload> _loadedPublisher;
         private readonly IServerTimeProvider _timeProvider;
         private readonly IDisposable _cheatSubscription;
         private readonly IPublisher<InventoryChangedPayload> _inventoryChangedPublisher;
+        private readonly IPublisher<CurrencyBalanceSetRequestedPayload>
+            _currencyBalanceSetPublisher;
         private PlayerData _data;
 
         public PlayerData Data => _data;
@@ -47,7 +50,14 @@ namespace MyOwn.ServiceHarness
             get => _data != null ? _data.Coins : 0;
             set
             {
-                if (_data != null) _data.Coins = value;
+                if (_data == null) return;
+                int nextBalance = Math.Max(0, value);
+                if (_data.Coins == nextBalance) return;
+                _currencyBalanceSetPublisher.Publish(
+                    new CurrencyBalanceSetRequestedPayload(
+                        $"storage-balance:{Guid.NewGuid():N}",
+                        nextBalance,
+                        "legacy-storage"));
             }
         }
 
@@ -89,11 +99,14 @@ namespace MyOwn.ServiceHarness
             IPublisher<PlayerDataLoadedPayload> loadedPublisher,
             IServerTimeProvider timeProvider,
             ISubscriber<ClockManipulationDetectedPayload> cheatSub,
-            IPublisher<InventoryChangedPayload> inventoryChangedPublisher)
+            IPublisher<InventoryChangedPayload> inventoryChangedPublisher,
+            IPublisher<CurrencyBalanceSetRequestedPayload>
+                currencyBalanceSetPublisher)
         {
             _loadedPublisher = loadedPublisher;
             _timeProvider = timeProvider;
             _inventoryChangedPublisher = inventoryChangedPublisher;
+            _currencyBalanceSetPublisher = currencyBalanceSetPublisher;
 
             // Listen for clock tampering so production can be locked down.
             _cheatSubscription = cheatSub.Subscribe(OnCheatDetected);
@@ -129,6 +142,7 @@ namespace MyOwn.ServiceHarness
             _data = loaded ?? new PlayerData();
 
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(IsNewlyCreated));
+            NotifyCurrencyReloaded("player-data-loaded");
         }
 
         public UniTask WaitUntilLoadedAsync(CancellationToken cancellationToken)
@@ -189,52 +203,141 @@ namespace MyOwn.ServiceHarness
             return UniTask.FromResult(SaveImmediate());
         }
 
-        public UniTask<QuestRewardGrantResult> GrantPendingCoinsAsync(
+        public UniTask<bool> CompletePendingQuestRewardAsync(
             string transactionId,
             CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (_data == null || string.IsNullOrWhiteSpace(transactionId))
-                return UniTask.FromResult(new QuestRewardGrantResult(
-                    false, false, 0, "PlayerData is not ready."));
+                return UniTask.FromResult(false);
 
             _data.PendingQuestRewards ??= new List<PendingQuestRewardSaveData>();
-            _data.GrantedQuestRewardTransactions ??= new List<string>();
-
             int pendingIndex = _data.PendingQuestRewards.FindIndex(
                 reward => reward != null && reward.transactionId == transactionId);
-            bool alreadyGranted = _data.GrantedQuestRewardTransactions.Contains(transactionId);
             if (pendingIndex < 0)
+                return UniTask.FromResult(
+                    _data.GrantedQuestRewardTransactions != null &&
+                    _data.GrantedQuestRewardTransactions.Contains(transactionId));
+
+            PendingQuestRewardSaveData pending =
+                _data.PendingQuestRewards[pendingIndex];
+            _data.PendingQuestRewards.RemoveAt(pendingIndex);
+
+            if (SaveImmediate()) return UniTask.FromResult(true);
+            _data.PendingQuestRewards.Insert(pendingIndex, pending);
+            return UniTask.FromResult(false);
+        }
+
+        #region ICurrencyRepository
+        public int Balance => _data != null ? _data.Coins : 0;
+
+        public CurrencyRepositoryMutationResult ApplyDelta(
+            string transactionId,
+            int delta,
+            bool trackTransaction)
+        {
+            if (_data == null)
             {
-                return UniTask.FromResult(new QuestRewardGrantResult(
-                    alreadyGranted,
-                    alreadyGranted,
-                    0,
-                    alreadyGranted ? null : "Pending reward was not found."));
+                return new CurrencyRepositoryMutationResult(
+                    false, false, 0, 0, "PlayerData is not ready.");
             }
 
-            PendingQuestRewardSaveData pending = _data.PendingQuestRewards[pendingIndex];
-            int previousCoins = _data.Coins;
-            if (!alreadyGranted)
+            _data.GrantedQuestRewardTransactions ??= new List<string>();
+            bool alreadyApplied =
+                trackTransaction &&
+                !string.IsNullOrWhiteSpace(transactionId) &&
+                _data.GrantedQuestRewardTransactions.Contains(transactionId);
+            int previousBalance = _data.Coins;
+            if (alreadyApplied)
             {
-                _data.Coins += Math.Max(0, pending.coins);
-                _data.GrantedQuestRewardTransactions.Add(transactionId);
+                return new CurrencyRepositoryMutationResult(
+                    true,
+                    true,
+                    previousBalance,
+                    previousBalance,
+                    null);
             }
-            _data.PendingQuestRewards.RemoveAt(pendingIndex);
+
+            long candidate = (long)previousBalance + delta;
+            if (candidate < 0)
+            {
+                return new CurrencyRepositoryMutationResult(
+                    false,
+                    false,
+                    previousBalance,
+                    previousBalance,
+                    "Insufficient coins.");
+            }
+            if (candidate > int.MaxValue)
+            {
+                return new CurrencyRepositoryMutationResult(
+                    false,
+                    false,
+                    previousBalance,
+                    previousBalance,
+                    "Coin balance exceeds the supported range.");
+            }
+
+            _data.Coins = (int)candidate;
+            bool addedTransaction =
+                trackTransaction &&
+                !string.IsNullOrWhiteSpace(transactionId);
+            if (addedTransaction)
+                _data.GrantedQuestRewardTransactions.Add(transactionId);
 
             if (SaveImmediate())
             {
-                return UniTask.FromResult(new QuestRewardGrantResult(
-                    true, alreadyGranted, pending.coins, null));
+                return new CurrencyRepositoryMutationResult(
+                    true,
+                    false,
+                    previousBalance,
+                    _data.Coins,
+                    null);
             }
 
-            _data.Coins = previousCoins;
-            _data.PendingQuestRewards.Insert(pendingIndex, pending);
-            if (!alreadyGranted)
+            _data.Coins = previousBalance;
+            if (addedTransaction)
                 _data.GrantedQuestRewardTransactions.Remove(transactionId);
-            return UniTask.FromResult(new QuestRewardGrantResult(
-                false, false, 0, "Failed to persist reward transaction."));
+            return new CurrencyRepositoryMutationResult(
+                false,
+                false,
+                previousBalance,
+                previousBalance,
+                "Failed to persist currency transaction.");
         }
+
+        public CurrencyRepositoryMutationResult SetBalance(int balance)
+        {
+            if (_data == null)
+            {
+                return new CurrencyRepositoryMutationResult(
+                    false, false, 0, 0, "PlayerData is not ready.");
+            }
+
+            int previousBalance = _data.Coins;
+            int nextBalance = Math.Max(0, balance);
+            if (previousBalance == nextBalance)
+            {
+                return new CurrencyRepositoryMutationResult(
+                    true, false, previousBalance, nextBalance, null);
+            }
+
+            _data.Coins = nextBalance;
+            if (SaveImmediate())
+            {
+                return new CurrencyRepositoryMutationResult(
+                    true, false, previousBalance, nextBalance, null);
+            }
+
+            _data.Coins = previousBalance;
+            return new CurrencyRepositoryMutationResult(
+                false,
+                false,
+                previousBalance,
+                previousBalance,
+                "Failed to persist the new coin balance.");
+        }
+        #endregion
 
         private static T Clone<T>(T value) where T : class
         {
@@ -314,6 +417,17 @@ namespace MyOwn.ServiceHarness
             // Wiping an account must hit disk right away, not through the throttle.
             SaveImmediate();
             _loadedPublisher.Publish(new PlayerDataLoadedPayload(true));
+            NotifyCurrencyReloaded("player-data-reset");
+        }
+
+        private void NotifyCurrencyReloaded(string reason)
+        {
+            if (_data == null) return;
+            _currencyBalanceSetPublisher.Publish(
+                new CurrencyBalanceSetRequestedPayload(
+                    $"currency-reload:{Guid.NewGuid():N}",
+                    _data.Coins,
+                    reason));
         }
 
         public void Dispose()

@@ -18,6 +18,9 @@ namespace Core.Module.Quest
             DailyQuestSaveData data,
             PendingQuestRewardSaveData pendingReward,
             CancellationToken cancellationToken);
+        UniTask<bool> CompletePendingQuestRewardAsync(
+            string transactionId,
+            CancellationToken cancellationToken);
     }
 
     public interface IQuestRewardService
