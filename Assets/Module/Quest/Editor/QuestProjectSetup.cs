@@ -329,9 +329,10 @@ namespace Core.Module.Quest.Editor
             Button foodTab = TransparentButton(
                 "Food Tab", root.transform,
                 new Vector2(480, 255), new Vector2(430, 110));
-            Button close = TransparentButton(
-                "Close On Pin", root.transform,
-                new Vector2(300, 510), new Vector2(130, 100));
+            // Temporary visible close button until the artist exports a dedicated asset.
+            Button close = Button(
+                "Temporary Close", root.transform, "X",
+                new Vector2(760, 470), new Vector2(72, 72), font);
 
             TextMeshProUGUI countdown = Text(
                 "Countdown", daily.transform, "00:00:00",
