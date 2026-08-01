@@ -417,10 +417,12 @@ MonoBehaviour:
   _progressBar: {fileID: 6568832510329397282}
   _feedBubble: {fileID: 5442550082841017026}
   _harvestBubble: {fileID: 8231151265963674528}
+  _uiRoot: {fileID: 8266575830965686013}
   _useBillboard: 1
   _cropXSpacing: 0.5
   _cropZSpacing: 0.5
   _cropSortingOrder: 1
+  _animalSortingOrder: 1
 --- !u!1 &5442550082841017026
 GameObject:
   m_ObjectHideFlags: 0
@@ -456,7 +458,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 25, y: 25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &892714952329572384
 CanvasRenderer:
@@ -558,7 +560,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_TargetDisplay: 0
 --- !u!114 &580732072871274148
 MonoBehaviour:
@@ -671,7 +673,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 25, y: 25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4738583230921465668
 CanvasRenderer:
