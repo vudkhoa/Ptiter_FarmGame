@@ -1,3 +1,4 @@
+using Core.Module.Cutscene;
 using Core.Module.Map;
 using Core.Module.Farm;
 using Core.Module.Quest;
@@ -32,7 +33,8 @@ namespace MyOwn.ServiceHarness
             // FarmDatabaseSO + QuestCatalogSO are enqueued by MapSceneBootstrap right before Build() is called.
             builder.RegisterMapSceneComponents()
                    .RegisterFarmGameplay()
-                   .RegisterQuestGameplay();
+                   .RegisterQuestGameplay()
+                   .RegisterCutsceneGameplay();
         }
     }
 }

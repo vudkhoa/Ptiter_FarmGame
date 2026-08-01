@@ -1,4 +1,5 @@
 using UnityEngine;
+using Core.Module.Cutscene;
 using Core.Module.Input;
 using Core.Module.Map;
 using Core.Module.Farm;
@@ -22,6 +23,7 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private ObjectDatabaseSO _objectDatabase;
         [SerializeField] private FarmDatabaseReference _farmDatabaseRef;
         [SerializeField] private QuestCatalogReference _questCatalogRef;
+        [SerializeField] private CutsceneCatalogReference _cutsceneCatalogRef;
 
         protected override void Awake()
         {
@@ -44,12 +46,14 @@ namespace MyOwn.ServiceHarness
                    .RegisterStorageModule(options)
                    .RegisterFarmModule(options)
                    .RegisterQuestModule(options)
+                   .RegisterCutsceneModule(options)
                    .RegisterLoadingModule(options);
 
             // Boot data + Addressable refs cấp cho preloader (nạp trong RunBootSequenceAsync).
             builder.RegisterInstance(_objectDatabase);
             builder.RegisterInstance(_farmDatabaseRef);
             builder.RegisterInstance(_questCatalogRef);
+            builder.RegisterInstance(_cutsceneCatalogRef);
 
             // Objects sống trong scene Preloading → đăng ký để được inject.
             builder.RegisterComponentInHierarchy<PreloadingFlow>();
