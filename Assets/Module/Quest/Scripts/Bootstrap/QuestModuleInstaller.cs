@@ -1,9 +1,6 @@
 using MessagePipe;
 using VContainer;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-using Core.Module.Quest.Utils;
 using VContainer.Unity;
-#endif
 
 namespace Core.Module.Quest
 {
@@ -21,6 +18,8 @@ namespace Core.Module.Quest
             builder.RegisterMessageBroker<QuestAcceptedPayload>(options);
             builder.RegisterMessageBroker<QuestProgressChangedPayload>(options);
             builder.RegisterMessageBroker<QuestCompletedPayload>(options);
+            builder.RegisterMessageBroker<DailyQuestStateChangedPayload>(options);
+            builder.RegisterMessageBroker<QuestRewardGrantedPayload>(options);
             return builder;
         }
 
@@ -50,6 +49,12 @@ namespace Core.Module.Quest
             builder.Register<StateReachedObjectiveRule>(Lifetime.Singleton)
                    .AsImplementedInterfaces()
                    .AsSelf();
+            builder.Register<ActionCountObjectiveRule>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()
+                   .AsSelf();
+            builder.Register<ItemAmountObjectiveRule>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()
+                   .AsSelf();
             builder.Register<QuestObjectiveRuleRegistry>(Lifetime.Singleton)
                    .AsSelf();
             builder.Register<QuestCompletionEvaluator>(Lifetime.Singleton)
@@ -57,11 +62,11 @@ namespace Core.Module.Quest
             builder.Register<QuestService>(Lifetime.Singleton)
                    .AsImplementedInterfaces()
                    .AsSelf();
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            builder.RegisterEntryPoint<FarmQuestTestFlow>();
-            builder.RegisterEntryPoint<QuestTestPanelBootstrap>();
-#endif
+            builder.Register<DailyQuestService>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()
+                   .AsSelf();
+            builder.RegisterEntryPoint<DailyQuestBootstrapper>();
+            builder.RegisterEntryPoint<FarmQuestEventBridge>();
 
             return builder;
         }

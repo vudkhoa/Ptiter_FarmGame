@@ -9,11 +9,22 @@ namespace Core.Module.Quest
         public string objectiveId;
         public int currentAmount;
         public bool isCompleted;
-        public HashSet<string> countedProgressKeys = new HashSet<string>();
+
+        [NonSerialized]
+        private HashSet<string> _countedProgressKeys = new HashSet<string>();
+
+        public HashSet<string> CountedProgressKeys => _countedProgressKeys ??= new HashSet<string>();
 
         public QuestObjectiveProgress(string objectiveId)
         {
             this.objectiveId = objectiveId;
+        }
+
+        public void RestoreProgressKeys(IEnumerable<string> keys)
+        {
+            _countedProgressKeys = keys == null
+                ? new HashSet<string>()
+                : new HashSet<string>(keys);
         }
     }
 }

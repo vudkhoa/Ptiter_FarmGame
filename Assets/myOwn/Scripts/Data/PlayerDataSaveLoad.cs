@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using UnityEngine;
 
 namespace MyOwn.ServiceHarness
@@ -10,11 +11,15 @@ namespace MyOwn.ServiceHarness
     /// </summary>
     public static class PlayerDataSaveLoad
     {
+        private const int CURRENT_SAVE_VERSION = 3;
         private const string FILE_NAME = "playerdata.json";
         private const string TEMP_SUFFIX = ".tmp";
 
         private static string _filePath;
         private static string _tempPath;
+        private static readonly object SaveGate = new object();
+        private static long _nextSaveRevision;
+        private static long _latestCommittedRevision;
 
         private static string FilePath
         {
@@ -50,6 +55,7 @@ namespace MyOwn.ServiceHarness
                 var json = File.ReadAllText(FilePath);
                 if (string.IsNullOrWhiteSpace(json)) return null;
                 var data = JsonUtility.FromJson<PlayerData>(json);
+                NormalizeLoadedData(data);
                 return data;
             }
             catch (Exception e)
@@ -59,20 +65,63 @@ namespace MyOwn.ServiceHarness
             }
         }
 
-        /// <summary>Atomic save: write temp file → rename. Tránh corrupt nếu crash giữa chừng.</summary>
-        public static void Save(PlayerData data)
+        private static void NormalizeLoadedData(PlayerData data)
         {
             if (data == null) return;
+
+            // JsonUtility leaves fields added in a newer schema null when reading
+            // an older save. Keep existing progress and only initialize missing data.
+            data.Inventory ??= new System.Collections.Generic.List<InventoryEntry>();
+            data.FarmSlots ??=
+                new System.Collections.Generic.List<Core.Module.Farm.FarmSlotSaveData>();
+            data.MapPlacements ??=
+                new System.Collections.Generic.List<Core.Module.Map.MapPlacementSaveData>();
+            data.PendingQuestRewards ??=
+                new System.Collections.Generic.List<
+                    Core.Module.Quest.PendingQuestRewardSaveData>();
+            data.GrantedQuestRewardTransactions ??=
+                new System.Collections.Generic.List<string>();
+
+            if (data.SaveVersion < CURRENT_SAVE_VERSION)
+                data.SaveVersion = CURRENT_SAVE_VERSION;
+        }
+
+        /// <summary>Atomic save: write temp file → rename. Tránh corrupt nếu crash giữa chừng.</summary>
+        public static bool Save(PlayerData data)
+        {
+            if (data == null) return false;
+            return SaveJson(
+                JsonUtility.ToJson(data, prettyPrint: false),
+                ReserveSaveRevision());
+        }
+
+        public static long ReserveSaveRevision()
+        {
+            return Interlocked.Increment(ref _nextSaveRevision);
+        }
+
+        public static bool SaveJson(string json, long revision)
+        {
+            if (string.IsNullOrWhiteSpace(json)) return false;
             try
             {
-                var json = JsonUtility.ToJson(data, prettyPrint: false);
-                File.WriteAllText(TempPath, json);
-                if (File.Exists(FilePath)) File.Delete(FilePath);
-                File.Move(TempPath, FilePath);
+                lock (SaveGate)
+                {
+                    // A canceled throttled writer may finish after an immediate save.
+                    // Never let that older snapshot overwrite the newer transaction.
+                    if (revision < _latestCommittedRevision)
+                        return true;
+                    File.WriteAllText(TempPath, json);
+                    if (File.Exists(FilePath)) File.Delete(FilePath);
+                    File.Move(TempPath, FilePath);
+                    _latestCommittedRevision = revision;
+                }
+                return true;
             }
             catch (Exception e)
             {
                 Debug.LogError($"[PlayerDataSaveLoad] Save failed: {e.Message}");
+                return false;
             }
         }
 

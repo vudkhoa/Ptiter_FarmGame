@@ -7,8 +7,10 @@ namespace Core.Module.Quest
     public sealed class QuestDefinitionSO : ScriptableObject
     {
         public string questId;
+        public QuestCategory category = QuestCategory.Daily;
         public string questName;
         [TextArea] public string description;
+        public Sprite icon;
         public List<QuestObjectiveData> objectives = new List<QuestObjectiveData>();
     }
 }

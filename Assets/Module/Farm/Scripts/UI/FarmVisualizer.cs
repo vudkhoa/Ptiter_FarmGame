@@ -15,15 +15,17 @@ namespace Core.Module.Farm
         [SerializeField] private FarmSlotView _slotViewPrefab;
 
         [Header("Grid Layout Settings")]
-        [SerializeField] private float _cellSize = 1f;
-        [SerializeField] private Vector3 _offset = new Vector3(0.5f, 0.1f, 0.5f); // Centers the sprite on the cell and offsets height
+        // Must match Soil.prefab/Visual local position so crops share the same XY plane.
+        [SerializeField] private Vector3 _offset = new Vector3(0f, 0.6f, 0f);
 
         private IFarmService _farmService;
         private FarmDatabaseSO _database;
         private IMapService _mapService;
+        private IMapObjectInstanceRegistry _mapObjectRegistry;
         private IDisposable _subscription;
 
         private readonly Dictionary<Vector3Int, FarmSlotView> _spawnedViews = new Dictionary<Vector3Int, FarmSlotView>();
+        private readonly Dictionary<Vector3Int, FarmAnimalAnchor> _animalAnchors = new Dictionary<Vector3Int, FarmAnimalAnchor>();
 
         #region DI - Constructor
         [Inject]
@@ -31,11 +33,13 @@ namespace Core.Module.Farm
             IFarmService farmService,
             FarmDatabaseSO database,
             IMapService mapService,
+            IMapObjectInstanceRegistry mapObjectRegistry,
             ISubscriber<FarmSlotChangedPayload> slotChangedSub)
         {
             _farmService = farmService;
             _database = database;
             _mapService = mapService;
+            _mapObjectRegistry = mapObjectRegistry;
 
             // Subscribe to state change events
             _subscription = slotChangedSub.Subscribe(OnSlotChanged);
@@ -50,6 +54,7 @@ namespace Core.Module.Farm
             {
                 foreach (var slot in _farmService.ActiveSlots)
                 {
+                    EnsurePlacementForSavedSlot(slot);
                     UpdateVisualSlot(slot);
                 }
             }
@@ -88,13 +93,54 @@ namespace Core.Module.Farm
             // 2. Otherwise, spawn the visual slot prefab if not already present
             if (!_spawnedViews.TryGetValue(cell, out var spawnedView) || spawnedView == null)
             {
-                Vector3 worldPos = _mapService.CellToWorld(cell) + _offset;
+                Vector3 worldPos = ResolveVisualPosition(cell);
                 spawnedView = Instantiate(_slotViewPrefab, worldPos, Quaternion.identity, transform);
                 _spawnedViews[cell] = spawnedView;
+            }
+            else
+            {
+                spawnedView.transform.position = ResolveVisualPosition(cell);
             }
 
             // 3. Update the visual states (morphing sprites, sliders, bubbles)
             spawnedView.UpdateView(slot, _database);
+        }
+
+        private void EnsurePlacementForSavedSlot(FarmSlotSaveData slot)
+        {
+            if (slot == null || string.IsNullOrEmpty(slot.entityId)) return;
+
+            FarmEntityData entity = _database.GetEntityById(slot.entityId);
+            if (entity == null) return;
+
+            var cell = new Vector3Int(slot.cellX, slot.cellY, slot.cellZ);
+            MapObjectKind kind = entity.entityType == FarmEntityType.Animal
+                ? MapObjectKind.Barn
+                : MapObjectKind.Soil;
+            _mapService.EnsureFarmPlacement(cell, kind);
+        }
+
+        private Vector3 ResolveVisualPosition(Vector3Int cell)
+        {
+            if (_animalAnchors.TryGetValue(cell, out var cachedAnchor))
+            {
+                if (cachedAnchor != null) return cachedAnchor.transform.position;
+                _animalAnchors.Remove(cell);
+            }
+
+            if (_mapService.TryGetPlacementAt(cell, out var placement) &&
+                placement.Kind == MapObjectKind.Barn &&
+                _mapObjectRegistry.TryGetAtOrigin(cell, out var barnInstance))
+            {
+                var anchor = barnInstance.GetComponentInChildren<FarmAnimalAnchor>(true);
+                if (anchor != null)
+                {
+                    _animalAnchors[cell] = anchor;
+                    return anchor.transform.position;
+                }
+            }
+
+            return _mapService.CellToWorld(cell) + _offset;
         }
         #endregion
     }

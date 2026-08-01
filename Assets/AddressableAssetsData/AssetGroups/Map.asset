@@ -30,6 +30,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a3f534c1c5f309249aeff6196ffa60f8
+    m_Address: Pig Barn
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ae52bbda48f03314fbe0c9838ac8a276
     m_Address: Bonsai
     m_ReadOnly: 0

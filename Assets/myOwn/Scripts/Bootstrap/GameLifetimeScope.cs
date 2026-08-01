@@ -2,6 +2,7 @@ using Core.Module.Cutscene;
 using Core.Module.Map;
 using Core.Module.Farm;
 using Core.Module.Quest;
+using Core.Common;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -31,6 +32,8 @@ namespace MyOwn.ServiceHarness
         {
             // Scene-scoped components only; global brokers are inherited from RootLifetimeScope.
             // FarmDatabaseSO + QuestCatalogSO are enqueued by MapSceneBootstrap right before Build() is called.
+            builder.RegisterComponentInHierarchy<CameraPanZoom>();
+
             builder.RegisterMapSceneComponents()
                    .RegisterFarmGameplay()
                    .RegisterQuestGameplay()

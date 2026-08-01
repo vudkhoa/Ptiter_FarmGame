@@ -7,6 +7,7 @@ namespace Core.Module.Quest
     public sealed class QuestCatalogSO : ScriptableObject
     {
         public List<QuestDefinitionSO> quests = new List<QuestDefinitionSO>();
+        public DailyQuestScheduleSO dailySchedule;
 
         public QuestDefinitionSO GetQuestById(string questId)
         {

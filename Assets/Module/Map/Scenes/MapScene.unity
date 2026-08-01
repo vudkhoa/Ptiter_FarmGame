@@ -400,18 +400,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapSceneBoostrap
   _scope: {fileID: 123408506}
-  _farmDataRef:
-    m_AssetGUID: c30bb595dab6e3142b47365b4173b001
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_SubObjectGUID: 
-    m_EditorAssetChanged: 0
-  _questCatalogRef:
-    m_AssetGUID: 9b0df97cebb54a9d8c50cfbb7616c2bf
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_SubObjectGUID: 
-    m_EditorAssetChanged: 0
   _gameplayRoot: {fileID: 1870457101}
 --- !u!1 &480779547
 GameObject:
@@ -966,7 +954,6 @@ GameObject:
   - component: {fileID: 945751118}
   - component: {fileID: 945751119}
   - component: {fileID: 945751121}
-  - component: {fileID: 945751120}
   m_Layer: 0
   m_Name: FarmInput
   m_TagString: Untagged
@@ -1007,20 +994,6 @@ MonoBehaviour:
     m_Bits: 8
   _maxRayDistance: 1000
   _useMathPlane: 1
-  _soilId: 101
-  _barnId: 102
---- !u!114 &945751120
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 945751117}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca7fa3d3ed5539840a4c8258ee552e40, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmTestHelper
 --- !u!114 &945751121
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4893,8 +4866,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmVisualizer
   _slotViewPrefab: {fileID: 313763533857048325, guid: 00958c8747edcf945aba4b2df5241309, type: 3}
-  _cellSize: 1
-  _offset: {x: 0.5, y: 0.1, z: 0.5}
+  _offset: {x: 0, y: 0.6, z: 0}
 --- !u!4 &1359646557
 Transform:
   m_ObjectHideFlags: 0
@@ -5002,6 +4974,7 @@ MonoBehaviour:
   _cursor: {fileID: 1946227937}
   _spawnRoot: {fileID: 1606044949}
   _previewYOffset: 0.06
+  _camera: {fileID: 0}
 --- !u!1 &1870457101
 GameObject:
   m_ObjectHideFlags: 0
@@ -5226,7 +5199,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21f1da41371d5ab428ae15a80295f1ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Map::Core.Module.Map.MapService
-  _database: {fileID: 11400000, guid: 624a09aeb2823524291970cd28f5d4b1, type: 2}
   _cellSize: 1
   _unityGrid: {fileID: 576651264}
   _buildableTilemaps:

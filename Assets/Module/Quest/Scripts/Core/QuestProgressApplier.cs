@@ -11,17 +11,17 @@ namespace Core.Module.Quest
             string progressKey)
         {
             if (progress == null || progress.isCompleted) return false;
+            if (amount <= 0) return false;
 
             if (!string.IsNullOrWhiteSpace(progressKey)
-                && progress.countedProgressKeys.Contains(progressKey))
+                && progress.CountedProgressKeys.Contains(progressKey))
                 return false;
 
             if (!string.IsNullOrWhiteSpace(progressKey))
-                progress.countedProgressKeys.Add(progressKey);
+                progress.CountedProgressKeys.Add(progressKey);
 
             int safeRequired = Math.Max(1, requiredAmount);
-            int safeAmount = Math.Max(1, amount);
-            progress.currentAmount = Math.Min(safeRequired, progress.currentAmount + safeAmount);
+            progress.currentAmount = Math.Min(safeRequired, progress.currentAmount + amount);
             progress.isCompleted = progress.currentAmount >= safeRequired;
             return true;
         }
