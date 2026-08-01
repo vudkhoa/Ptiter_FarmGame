@@ -11,7 +11,7 @@ namespace MyOwn.ServiceHarness
     /// </summary>
     public static class PlayerDataSaveLoad
     {
-        private const int CURRENT_SAVE_VERSION = 2;
+        private const int CURRENT_SAVE_VERSION = 3;
         private const string FILE_NAME = "playerdata.json";
         private const string TEMP_SUFFIX = ".tmp";
 
@@ -74,6 +74,8 @@ namespace MyOwn.ServiceHarness
             data.Inventory ??= new System.Collections.Generic.List<InventoryEntry>();
             data.FarmSlots ??=
                 new System.Collections.Generic.List<Core.Module.Farm.FarmSlotSaveData>();
+            data.MapPlacements ??=
+                new System.Collections.Generic.List<Core.Module.Map.MapPlacementSaveData>();
             data.PendingQuestRewards ??=
                 new System.Collections.Generic.List<
                     Core.Module.Quest.PendingQuestRewardSaveData>();
