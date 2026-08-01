@@ -54,6 +54,7 @@ namespace Core.Module.Farm
             {
                 foreach (var slot in _farmService.ActiveSlots)
                 {
+                    EnsurePlacementForSavedSlot(slot);
                     UpdateVisualSlot(slot);
                 }
             }
@@ -103,6 +104,20 @@ namespace Core.Module.Farm
 
             // 3. Update the visual states (morphing sprites, sliders, bubbles)
             spawnedView.UpdateView(slot, _database);
+        }
+
+        private void EnsurePlacementForSavedSlot(FarmSlotSaveData slot)
+        {
+            if (slot == null || string.IsNullOrEmpty(slot.entityId)) return;
+
+            FarmEntityData entity = _database.GetEntityById(slot.entityId);
+            if (entity == null) return;
+
+            var cell = new Vector3Int(slot.cellX, slot.cellY, slot.cellZ);
+            MapObjectKind kind = entity.entityType == FarmEntityType.Animal
+                ? MapObjectKind.Barn
+                : MapObjectKind.Soil;
+            _mapService.EnsureFarmPlacement(cell, kind);
         }
 
         private Vector3 ResolveVisualPosition(Vector3Int cell)
