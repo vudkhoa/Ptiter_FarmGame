@@ -24,6 +24,7 @@ namespace Core.Module.Map
         private IMapService _map;
         private IInputService _input;
         private Vector2 _lastScreen;
+        private bool _isPrimaryPressed;
         private IDisposable _subscriptions;
 
         #region DI - Constructor
@@ -32,7 +33,8 @@ namespace Core.Module.Map
            IMapService map,
            IInputService input,
            ISubscriber<PointerScreenPayload> screenSub,
-           ISubscriber<PointerButtonDownPayload> btnSub,
+           ISubscriber<PointerButtonDownPayload> btnDownSub,
+           ISubscriber<PointerButtonUpPayload> btnUpSub,
            ISubscriber<KeyDownPayload> keySub)
         {
             _map = map;
@@ -40,7 +42,8 @@ namespace Core.Module.Map
 
             var bag = DisposableBag.CreateBuilder();
             screenSub.Subscribe(OnScreen).AddTo(bag);
-            btnSub.Subscribe(OnButton).AddTo(bag);
+            btnDownSub.Subscribe(OnButtonDown).AddTo(bag);
+            btnUpSub.Subscribe(OnButtonUp).AddTo(bag);
             keySub.Subscribe(OnKey).AddTo(bag);
             _subscriptions = bag.Build();
         }
@@ -58,13 +61,40 @@ namespace Core.Module.Map
         {
             _lastScreen = p.ScreenPosition;
             if (!_map.HasActivePlacement) return;
-            if (TryRaycast(_lastScreen, out var world))
-                _map.UpdatePreview(world);
+            if (!TryRaycast(_lastScreen, out var world)) return;
+
+            _map.UpdatePreview(world);
+
+            if (_isPrimaryPressed
+                && _map.CurrentPlacementInputMode == PlacementInputMode.Continuous
+                && !_input.IsPointerOverUI())
+            {
+                _map.AddFurniture(world);
+            }
         }
 
-        private void OnButton(PointerButtonDownPayload p)
+        private void OnButtonDown(PointerButtonDownPayload p)
         {
             if (p.Button != 0 || !_map.HasActivePlacement) return;
+            if (_input.IsPointerOverUI()) return;
+
+            _isPrimaryPressed = true;
+            if (!TryRaycast(_lastScreen, out var world)) return;
+
+            _map.UpdatePreview(world);
+            if (_map.CurrentPlacementInputMode == PlacementInputMode.Continuous)
+                _map.AddFurniture(world);
+        }
+
+        private void OnButtonUp(PointerButtonUpPayload p)
+        {
+            if (p.Button != 0) return;
+
+            bool wasPressed = _isPrimaryPressed;
+            _isPrimaryPressed = false;
+
+            if (!wasPressed || !_map.HasActivePlacement) return;
+            if (_map.CurrentPlacementInputMode != PlacementInputMode.Single) return;
             if (_input.IsPointerOverUI()) return;
             if (TryRaycast(_lastScreen, out var world))
                 _map.AddFurniture(world);

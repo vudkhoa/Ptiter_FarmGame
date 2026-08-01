@@ -51,6 +51,7 @@ namespace Core.Module.Map
 
             builder.RegisterComponentInHierarchy<MapPointerBridge>();
             builder.RegisterComponentInHierarchy<MapPreviewView>();
+            builder.RegisterComponentInHierarchy<MapPlacementCancelButton>();
 
             return builder;
         }

@@ -18,6 +18,12 @@ namespace Core.Module.Map
         MatchCameraRotation = 1
     }
 
+    public enum PlacementInputMode
+    {
+        Single = 0,
+        Continuous = 1
+    }
+
     [CreateAssetMenu(fileName = "Objects", menuName = "Data/Map/Objects")]
     public class ObjectDatabaseSO : ScriptableObject
     {
@@ -67,6 +73,7 @@ namespace Core.Module.Map
         public int ID;
         public Vector2Int Size;
         public MapObjectKind Kind;
+        public PlacementInputMode PlacementInputMode;
         public MapObjectRotationMode RotationMode;
         public AssetReferenceGameObject Prefab;
     }
