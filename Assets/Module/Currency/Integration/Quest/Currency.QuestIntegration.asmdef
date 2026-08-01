@@ -1,0 +1,20 @@
+{
+    "name": "Currency.QuestIntegration",
+    "rootNamespace": "Core.Module.Currency.Integration.Quest",
+    "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
+        "GUID:08b38f39e2d9e594389b7a4cf4c2c338",
+        "GUID:a6f4c92062d14d2489bcf657ab537f21",
+        "GUID:3d46b71941e44b04aa6dbbe3bc1a92d1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -19,24 +19,20 @@ namespace Core.Module.Quest
             QuestProgressEvent progressEvent)
         {
             if (objective == null || progress == null) return false;
-            if (progressEvent.EventType != ObjectiveType) return false;
-
-            bool targetMatches = string.Equals(
-                objective.targetId,
-                progressEvent.TargetId,
-                StringComparison.Ordinal);
+            if (progressEvent.EventType != objective.eventType) return false;
+            if (!QuestTargetMatcher.Matches(objective, progressEvent)) return false;
 
             bool stateMatches = string.Equals(
                 objective.targetState,
                 progressEvent.State,
                 StringComparison.Ordinal);
 
-            if (!targetMatches || !stateMatches) return false;
+            if (!stateMatches) return false;
 
             return _progressApplier.TryAddProgress(
                 progress,
                 objective.requiredAmount,
-                progressEvent.Amount,
+                Math.Max(1, progressEvent.Amount),
                 progressEvent.ProgressKey);
         }
     }

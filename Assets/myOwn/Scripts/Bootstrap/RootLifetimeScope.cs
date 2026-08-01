@@ -9,6 +9,8 @@ using VContainer.Unity;
 using Core.Module.Time;
 using Core.Module.Quest;
 using Core.Module.Loading;
+using Core.Module.Currency;
+using Core.Module.Currency.Integration.Quest;
 using myOwn.Firebase;
 
 namespace MyOwn.ServiceHarness
@@ -42,8 +44,10 @@ namespace MyOwn.ServiceHarness
                    .RegisterMapModule(options)
                    .RegisterTimeModule(options)
                    .RegisterStorageModule(options)
+                   .RegisterCurrencyModule(options)
                    .RegisterFarmModule(options)
                    .RegisterQuestModule(options)
+                   .RegisterCurrencyQuestIntegration()
                    .RegisterLoadingModule(options);
 
             // Boot data + Addressable refs cấp cho preloader (nạp trong RunBootSequenceAsync).

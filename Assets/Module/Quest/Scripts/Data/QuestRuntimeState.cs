@@ -6,15 +6,17 @@ namespace Core.Module.Quest
     {
         private readonly Dictionary<string, QuestObjectiveProgress> _progressByObjectiveId;
 
-        public string QuestId { get; }
+        public string RuntimeId { get; }
+        public string QuestDefinitionId { get; }
         public QuestStatus Status { get; set; }
         public IReadOnlyList<QuestObjectiveProgress> ObjectiveProgress => _objectiveProgress;
 
         private readonly List<QuestObjectiveProgress> _objectiveProgress;
 
-        public QuestRuntimeState(QuestDefinitionSO definition)
+        public QuestRuntimeState(string runtimeId, QuestDefinitionSO definition)
         {
-            QuestId = definition.questId;
+            RuntimeId = runtimeId;
+            QuestDefinitionId = definition.questId;
             Status = QuestStatus.Active;
             _objectiveProgress = new List<QuestObjectiveProgress>();
             _progressByObjectiveId = new Dictionary<string, QuestObjectiveProgress>();
@@ -41,6 +43,49 @@ namespace Core.Module.Quest
             }
 
             return _progressByObjectiveId.TryGetValue(objectiveId, out progress);
+        }
+
+        public QuestRuntimeSnapshot CreateSnapshot()
+        {
+            var snapshot = new QuestRuntimeSnapshot
+            {
+                runtimeId = RuntimeId,
+                questDefinitionId = QuestDefinitionId,
+                status = Status,
+                objectives = new List<QuestObjectiveProgressSnapshot>()
+            };
+
+            for (int i = 0; i < _objectiveProgress.Count; i++)
+            {
+                QuestObjectiveProgress progress = _objectiveProgress[i];
+                snapshot.objectives.Add(new QuestObjectiveProgressSnapshot
+                {
+                    objectiveId = progress.objectiveId,
+                    currentAmount = progress.currentAmount,
+                    isCompleted = progress.isCompleted,
+                    countedProgressKeys = new List<string>(progress.CountedProgressKeys)
+                });
+            }
+
+            return snapshot;
+        }
+
+        public void Restore(QuestRuntimeSnapshot snapshot)
+        {
+            if (snapshot == null) return;
+            Status = snapshot.status;
+            if (snapshot.objectives == null) return;
+
+            for (int i = 0; i < snapshot.objectives.Count; i++)
+            {
+                QuestObjectiveProgressSnapshot saved = snapshot.objectives[i];
+                if (saved == null || !TryGetProgress(saved.objectiveId, out QuestObjectiveProgress progress))
+                    continue;
+
+                progress.currentAmount = saved.currentAmount;
+                progress.isCompleted = saved.isCompleted;
+                progress.RestoreProgressKeys(saved.countedProgressKeys);
+            }
         }
     }
 }

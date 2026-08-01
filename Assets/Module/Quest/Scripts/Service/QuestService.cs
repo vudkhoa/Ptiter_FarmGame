@@ -13,7 +13,7 @@ namespace Core.Module.Quest
         private readonly IPublisher<QuestProgressChangedPayload> _progressPublisher;
         private readonly IPublisher<QuestCompletedPayload> _completedPublisher;
 
-        private readonly Dictionary<string, QuestRuntimeState> _statesByQuestId = new Dictionary<string, QuestRuntimeState>();
+        private readonly Dictionary<string, QuestRuntimeState> _statesByRuntimeId = new Dictionary<string, QuestRuntimeState>();
         private readonly List<QuestRuntimeState> _activeQuests = new List<QuestRuntimeState>();
 
         public IReadOnlyList<QuestRuntimeState> ActiveQuests => _activeQuests;
@@ -34,20 +34,58 @@ namespace Core.Module.Quest
             _completedPublisher = completedPublisher;
         }
 
-        public bool AcceptQuest(string questId)
+        public bool ActivateQuest(
+            string runtimeId,
+            string questDefinitionId,
+            QuestRuntimeSnapshot snapshot = null)
         {
-            if (string.IsNullOrWhiteSpace(questId)) return false;
-            if (_statesByQuestId.ContainsKey(questId)) return false;
+            if (string.IsNullOrWhiteSpace(runtimeId) ||
+                string.IsNullOrWhiteSpace(questDefinitionId) ||
+                _statesByRuntimeId.ContainsKey(runtimeId))
+                return false;
 
-            var definition = _catalog != null ? _catalog.GetQuestById(questId) : null;
+            var definition = _catalog != null ? _catalog.GetQuestById(questDefinitionId) : null;
             if (definition == null) return false;
 
-            var state = new QuestRuntimeState(definition);
-            _statesByQuestId.Add(questId, state);
-            _activeQuests.Add(state);
+            var state = new QuestRuntimeState(runtimeId, definition);
+            state.Restore(snapshot);
+            if (state.Status == QuestStatus.Active &&
+                _completionEvaluator.IsComplete(definition, state))
+                state.Status = QuestStatus.Completed;
+            _statesByRuntimeId.Add(runtimeId, state);
+            if (state.Status == QuestStatus.Active)
+                _activeQuests.Add(state);
 
-            _acceptedPublisher?.Publish(new QuestAcceptedPayload(questId));
+            _acceptedPublisher?.Publish(new QuestAcceptedPayload(runtimeId, questDefinitionId));
             return true;
+        }
+
+        public bool AcceptQuest(string questDefinitionId)
+        {
+            return ActivateQuest(questDefinitionId, questDefinitionId);
+        }
+
+        public bool DeactivateQuest(string runtimeId)
+        {
+            if (string.IsNullOrWhiteSpace(runtimeId) ||
+                !_statesByRuntimeId.TryGetValue(runtimeId, out QuestRuntimeState state))
+                return false;
+
+            _activeQuests.Remove(state);
+            _statesByRuntimeId.Remove(runtimeId);
+            return true;
+        }
+
+        public int DeactivateQuests(IEnumerable<string> runtimeIds)
+        {
+            if (runtimeIds == null) return 0;
+            int count = 0;
+            foreach (string runtimeId in runtimeIds)
+            {
+                if (DeactivateQuest(runtimeId))
+                    count++;
+            }
+            return count;
         }
 
         public bool ReportEvent(QuestProgressEvent progressEvent)
@@ -59,7 +97,7 @@ namespace Core.Module.Quest
                 var state = _activeQuests[questIndex];
                 if (state == null || state.Status != QuestStatus.Active) continue;
 
-                var definition = _catalog != null ? _catalog.GetQuestById(state.QuestId) : null;
+                var definition = _catalog != null ? _catalog.GetQuestById(state.QuestDefinitionId) : null;
                 if (definition == null || definition.objectives == null) continue;
 
                 bool questChanged = false;
@@ -77,7 +115,8 @@ namespace Core.Module.Quest
                     questChanged = true;
                     anyChanged = true;
                     _progressPublisher?.Publish(new QuestProgressChangedPayload(
-                        state.QuestId,
+                        state.RuntimeId,
+                        state.QuestDefinitionId,
                         objective.objectiveId,
                         progress.currentAmount,
                         Math.Max(1, objective.requiredAmount),
@@ -88,17 +127,25 @@ namespace Core.Module.Quest
                 {
                     state.Status = QuestStatus.Completed;
                     _activeQuests.RemoveAt(questIndex);
-                    _completedPublisher?.Publish(new QuestCompletedPayload(state.QuestId));
+                    _completedPublisher?.Publish(new QuestCompletedPayload(
+                        state.RuntimeId,
+                        state.QuestDefinitionId));
                 }
             }
 
             return anyChanged;
         }
 
-        public QuestRuntimeState GetQuestState(string questId)
+        public QuestRuntimeState GetQuestState(string runtimeId)
         {
-            if (string.IsNullOrWhiteSpace(questId)) return null;
-            return _statesByQuestId.TryGetValue(questId, out var state) ? state : null;
+            if (string.IsNullOrWhiteSpace(runtimeId)) return null;
+            return _statesByRuntimeId.TryGetValue(runtimeId, out var state) ? state : null;
+        }
+
+        public QuestRuntimeSnapshot CreateSnapshot(string runtimeId)
+        {
+            QuestRuntimeState state = GetQuestState(runtimeId);
+            return state?.CreateSnapshot();
         }
     }
 }
