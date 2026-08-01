@@ -954,7 +954,6 @@ GameObject:
   - component: {fileID: 945751118}
   - component: {fileID: 945751119}
   - component: {fileID: 945751121}
-  - component: {fileID: 945751120}
   m_Layer: 0
   m_Name: FarmInput
   m_TagString: Untagged
@@ -995,18 +994,6 @@ MonoBehaviour:
     m_Bits: 8
   _maxRayDistance: 1000
   _useMathPlane: 1
---- !u!114 &945751120
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 945751117}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca7fa3d3ed5539840a4c8258ee552e40, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmTestHelper
 --- !u!114 &945751121
 MonoBehaviour:
   m_ObjectHideFlags: 0
