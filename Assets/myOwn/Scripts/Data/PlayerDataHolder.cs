@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Core.Module.Farm;
+using Core.Module.Map;
 using Core.Module.Time;
 using Core.Module.Storage;
 using Core.Module.Quest;
@@ -23,6 +24,7 @@ namespace MyOwn.ServiceHarness
         IAsyncStartable,
         IStorageService,
         IFarmSaveSource,
+        IMapSaveSource,
         IDailyQuestRepository,
         ICurrencyRepository,
         IDisposable
@@ -40,6 +42,11 @@ namespace MyOwn.ServiceHarness
 
         /// <summary>IFarmSaveSource: FarmService reads this itself when it is constructed.</summary>
         public List<FarmSlotSaveData> FarmSlots => _data?.FarmSlots;
+
+        /// <summary>IMapSaveSource: MapService mutates this list and IStorageService persists it.</summary>
+        public List<MapPlacementSaveData> MapPlacements => _data?.MapPlacements;
+
+        public void SaveMap() => Save();
 
         /// <summary>True when Load() found no save file and fell back to a default PlayerData.</summary>
         public bool IsNewlyCreated { get; private set; }

@@ -19,6 +19,9 @@ namespace Core.Module.Map
         void UpdatePreview(Vector3 worldHit);
         bool AddFurniture(Vector3 worldHit);
 
+        // Legacy-save compatibility: rebuild a missing Soil/Barn underneath a persisted farm slot.
+        bool EnsureFarmPlacement(Vector3Int originCell, MapObjectKind kind);
+
         // Grid queries & coordinate conversion
         bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data);
         Vector3Int WorldToCell(Vector3 worldPosition);

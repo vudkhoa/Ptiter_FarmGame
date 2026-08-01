@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Core.Module.Farm;
+using Core.Module.Map;
 using Core.Module.Quest;
 
 namespace MyOwn.ServiceHarness
@@ -13,12 +14,13 @@ namespace MyOwn.ServiceHarness
     public class PlayerData
     {
         public string PlayerId;
-        public int SaveVersion = 2;
+        public int SaveVersion = 3;
         public long LastSaveUtcTicks;
 
         public int Coins = 1000;
         public List<InventoryEntry> Inventory = new List<InventoryEntry>();
         public List<FarmSlotSaveData> FarmSlots = new List<FarmSlotSaveData>();
+        public List<MapPlacementSaveData> MapPlacements = new List<MapPlacementSaveData>();
         public DailyQuestSaveData DailyQuest;
         public List<PendingQuestRewardSaveData> PendingQuestRewards =
             new List<PendingQuestRewardSaveData>();

@@ -7,6 +7,7 @@ using VContainer;
 namespace Core.Module.Map
 {
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-100)]
     public sealed class MapService : MonoBehaviour, IMapService
     {
         // Injected from root container (registered once in RootLifetimeScope).
@@ -33,6 +34,8 @@ namespace Core.Module.Map
         private Vector3Int _lastCell = new(int.MinValue, 0, 0);
 
         private IObjectCatalog _catalog;
+        private IMapSaveSource _saveSource;
+        private List<MapPlacementSaveData> _persistedPlacements;
 
         #region DI - Constructor
         [Inject]
@@ -42,7 +45,8 @@ namespace Core.Module.Map
             IPublisher<MapFurnitureAddedPayload> pubAdded,
             IPublisher<MapPlacementStoppedPayload> pubStop,
             IObjectCatalog catalog,
-            ObjectDatabaseSO database)
+            ObjectDatabaseSO database,
+            IMapSaveSource saveSource)
         {
             _pubStart = pubStart;
             _pubMove = pubMove;
@@ -50,6 +54,8 @@ namespace Core.Module.Map
             _pubStop = pubStop;
             _catalog = catalog;
             _database = database;
+            _saveSource = saveSource;
+            _persistedPlacements = saveSource?.MapPlacements;
         }
         #endregion
 
@@ -72,6 +78,11 @@ namespace Core.Module.Map
 
             _grid = new GridData();
             _mapId = 0;
+        }
+
+        private void Start()
+        {
+            RestoreSavedPlacements();
         }
         #endregion
 
@@ -173,7 +184,90 @@ namespace Core.Module.Map
                 _changeCount,
                 data.RotationMode));
 
+            _persistedPlacements?.Add(new MapPlacementSaveData
+            {
+                objectId = data.ID,
+                cellX = cell.x,
+                cellY = cell.y,
+                cellZ = cell.z
+            });
+            _saveSource?.SaveMap();
+
             return true;
+        }
+
+        public bool EnsureFarmPlacement(Vector3Int originCell, MapObjectKind kind)
+        {
+            if (kind != MapObjectKind.Soil && kind != MapObjectKind.Barn) return false;
+
+            if (_grid.TryGetPlacementAt(originCell, out var existing))
+                return existing.Kind == kind;
+
+            if (!_database.TryGetFirstByKind(kind, out ObjectData data) ||
+                !_catalog.TryGet(data.ID, out var prefab) ||
+                !_grid.CanPlaceObjectAt(originCell, data.Size))
+            {
+                Debug.LogWarning($"[MapService] Could not rebuild missing {kind} at {originCell}.");
+                return false;
+            }
+
+            _grid.AddObjectAt(originCell, data.Size, data.ID, data.Kind, _changeCount);
+            _changeCount++;
+            _persistedPlacements?.Add(new MapPlacementSaveData
+            {
+                objectId = data.ID,
+                cellX = originCell.x,
+                cellY = originCell.y,
+                cellZ = originCell.z
+            });
+
+            _pubAdded.Publish(new MapFurnitureAddedPayload(
+                data.ID,
+                prefab,
+                CellToWorld(originCell),
+                originCell,
+                _changeCount,
+                data.RotationMode));
+            _saveSource?.SaveMap();
+            return true;
+        }
+
+        private void RestoreSavedPlacements()
+        {
+            if (_persistedPlacements == null)
+            {
+                Debug.LogError("[MapService] No saved map placements are available. Player data may not be loaded yet.");
+                return;
+            }
+
+            for (int i = 0; i < _persistedPlacements.Count; i++)
+            {
+                MapPlacementSaveData saved = _persistedPlacements[i];
+                if (saved == null ||
+                    !_database.TryGetById(saved.objectId, out ObjectData data, out _) ||
+                    !_catalog.TryGet(saved.objectId, out var prefab))
+                {
+                    Debug.LogWarning($"[MapService] Skipped invalid saved placement at index {i}.");
+                    continue;
+                }
+
+                var cell = new Vector3Int(saved.cellX, saved.cellY, saved.cellZ);
+                if (!_grid.CanPlaceObjectAt(cell, data.Size))
+                {
+                    Debug.LogWarning($"[MapService] Skipped overlapping saved object {saved.objectId} at {cell}.");
+                    continue;
+                }
+
+                _grid.AddObjectAt(cell, data.Size, data.ID, data.Kind, _changeCount);
+                _changeCount++;
+                _pubAdded.Publish(new MapFurnitureAddedPayload(
+                    data.ID,
+                    prefab,
+                    CellToWorld(cell),
+                    cell,
+                    _changeCount,
+                    data.RotationMode));
+            }
         }
 
         private bool IsTilemapPlacementValid(Vector3Int cell, Vector2Int size)
