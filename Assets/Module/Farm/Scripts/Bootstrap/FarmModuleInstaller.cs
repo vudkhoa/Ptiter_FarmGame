@@ -55,7 +55,6 @@ namespace Core.Module.Farm
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             builder.RegisterComponentInHierarchy<FarmDebugLogger>();
-            builder.RegisterComponentInHierarchy<FarmTestHelper>();
 #endif
             return builder;
         }

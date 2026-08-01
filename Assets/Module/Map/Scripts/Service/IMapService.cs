@@ -9,6 +9,7 @@ namespace Core.Module.Map
         int ChangeCount { get; }
         int CurrentObjectId { get; }
         bool HasActivePlacement { get; }
+        PlacementInputMode CurrentPlacementInputMode { get; }
 
         // State machine
         void StartPlacement(int objectId);

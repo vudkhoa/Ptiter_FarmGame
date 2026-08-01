@@ -13,7 +13,8 @@ namespace Core.Module.Input
         [SerializeField] private InputConfigSO _config;
 
         private IPublisher<PointerScreenPayload> _pubScreen;
-        private IPublisher<PointerButtonDownPayload> _pubButton;
+        private IPublisher<PointerButtonDownPayload> _pubButtonDown;
+        private IPublisher<PointerButtonUpPayload> _pubButtonUp;
         private IPublisher<KeyDownPayload> _pubKey;
 
         private Vector2 _lastPointerScreen;
@@ -24,11 +25,13 @@ namespace Core.Module.Input
         [Inject]
         public void Construct(
             IPublisher<PointerScreenPayload> pubScreen,
-            IPublisher<PointerButtonDownPayload> pubButton,
+            IPublisher<PointerButtonDownPayload> pubButtonDown,
+            IPublisher<PointerButtonUpPayload> pubButtonUp,
             IPublisher<KeyDownPayload> pubKey)
         {
             _pubScreen = pubScreen;
-            _pubButton = pubButton;
+            _pubButtonDown = pubButtonDown;
+            _pubButtonUp = pubButtonUp;
             _pubKey = pubKey;
         }
         #endregion
@@ -105,7 +108,10 @@ namespace Core.Module.Input
             for (int i = 0; i < _heldButtons.Length; i++)
             {
                 if (UInput.GetMouseButtonDown(i))
-                    _pubButton.Publish(new PointerButtonDownPayload(i));
+                    _pubButtonDown.Publish(new PointerButtonDownPayload(i));
+
+                if (UInput.GetMouseButtonUp(i))
+                    _pubButtonUp.Publish(new PointerButtonUpPayload(i));
 
                 _heldButtons[i] = UInput.GetMouseButton(i);
             }

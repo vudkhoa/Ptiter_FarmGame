@@ -95,6 +95,10 @@ namespace Core.Module.Map
 
         public bool HasActivePlacement => _currentDbIndex >= 0;
 
+        public PlacementInputMode CurrentPlacementInputMode => HasActivePlacement
+            ? _database.Objects[_currentDbIndex].PlacementInputMode
+            : PlacementInputMode.Single;
+
         public bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data)
         {
             return _grid.TryGetPlacementAt(gridPosition, out data);
