@@ -2,11 +2,14 @@ namespace Core.Module.Quest
 {
     public readonly struct QuestCompletedPayload
     {
-        public readonly string QuestId;
+        public readonly string RuntimeId;
+        public readonly string QuestDefinitionId;
+        public string QuestId => QuestDefinitionId;
 
-        public QuestCompletedPayload(string questId)
+        public QuestCompletedPayload(string runtimeId, string questDefinitionId)
         {
-            QuestId = questId;
+            RuntimeId = runtimeId;
+            QuestDefinitionId = questDefinitionId;
         }
     }
 }
