@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Core.Module.Cutscene
 {
     /// <summary>
-    /// Vòng lặp thực thi cutscene. Pure logic, không đụng Unity API để unit-test được.
+    /// Pure Logic, Full CutScene Algorithms. 
     /// </summary>
     public sealed class CutsceneRunner
     {
