@@ -228,6 +228,12 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  _cutsceneCatalogRef:
+    m_AssetGUID: ff3400e41d94521489da76c376e804a1
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
 --- !u!1 &542634137
 GameObject:
   m_ObjectHideFlags: 0
