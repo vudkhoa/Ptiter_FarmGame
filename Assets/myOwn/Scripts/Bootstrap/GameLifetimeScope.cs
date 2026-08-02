@@ -1,3 +1,4 @@
+using Core.Module.Cutscene;
 using Core.Module.Map;
 using Core.Module.Farm;
 using Core.Module.Quest;
@@ -14,6 +15,11 @@ namespace MyOwn.ServiceHarness
     /// </summary>
     public sealed class GameLifetimeScope : LifetimeScope
     {
+        [Header("Cutscene (để trống nếu scene chưa dựng UI cutscene)")]
+        [SerializeField] private CutsceneView _cutsceneView;
+        [SerializeField] private CutsceneSkipInput _cutsceneSkipInput;
+        [SerializeField] private CutsceneAutoPlayer _cutsceneAutoPlayer;
+
         protected override void Awake()
         {
             if (parentReference.Object == null)
@@ -35,7 +41,8 @@ namespace MyOwn.ServiceHarness
 
             builder.RegisterMapSceneComponents()
                    .RegisterFarmGameplay()
-                   .RegisterQuestGameplay();
+                   .RegisterQuestGameplay()
+                   .RegisterCutsceneGameplay(_cutsceneView, _cutsceneSkipInput, _cutsceneAutoPlayer);
         }
     }
 }

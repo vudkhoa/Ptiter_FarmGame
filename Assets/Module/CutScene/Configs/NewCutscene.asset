@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df394a772c25d574b8f1628565e1716a, type: 3}
+  m_Name: NewCutscene
+  m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.CutsceneSO
+  cutsceneId: Bread
+  description: 
+  allowSkip: 1
+  steps:
+  - {fileID: 11400000, guid: af83ea12edb649a44b354432d9e7b24e, type: 2}
