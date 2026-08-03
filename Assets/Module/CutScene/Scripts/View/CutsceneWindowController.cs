@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using BrunoMikoski.UIManager;
-using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,63 +8,34 @@ using UnityEngine.UI;
 namespace Core.Module.Cutscene
 {
     /// <summary>
-    /// View cutscene sống dưới WindowsManager: prefab chỉ Instantiate ở lần Play đầu tiên.
-    /// Open/Close chỉ lo bật tắt GameObject + parent vào layer; fade vẫn do ShowAsync/HideAsync
-    /// giữ để CutsceneService await được như cũ.
+    /// View cutscene sống dưới WindowsManager, prefab chỉ Instantiate ở lần Play đầu tiên.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CutsceneWindowController : WindowController, ICutsceneView
     {
         [SerializeField] private SlotConfig[] _slots;
 
-        [Tooltip("Button cho WaitForButtonClickTask. Id phải khớp field Button Id trong task SO.")]
+        [Tooltip("Id phải khớp field Button Id trong WaitForButtonClickTask.")]
         [SerializeField] private NamedButton[] _buttons;
-
-        [Min(0f)]
-        [SerializeField] private float _showHideDuration = 0.3f;
 
         private SlotRuntime[] _runtime;
         private readonly Dictionary<Image, int> _imageToSlotIndex = new Dictionary<Image, int>();
         private readonly Dictionary<string, Button> _buttonById = new Dictionary<string, Button>();
 
-        // WindowController đã RequireComponent(CanvasGroup) nên không giữ field riêng nữa.
+        #region Properties
+        // WindowController đã RequireComponent(CanvasGroup) nên không giữ field riêng.
         public CanvasGroup RootCanvasGroup => CanvasGroup;
+        #endregion
 
+        #region Unity Lifecycle
         private void Awake()
         {
             InitSlots();
             InitButtons();
         }
+        #endregion
 
-        private void InitSlots()
-        {
-            if (_slots == null) return;
-
-            _runtime = new SlotRuntime[_slots.Length];
-            for (int i = 0; i < _slots.Length; i++)
-            {
-                _runtime[i] = new SlotRuntime();
-                var cfg = _slots[i];
-                // Template sống trong prefab, disable để nó không hiển thị khi cutscene chưa chạy.
-                if (cfg != null && cfg.template != null) cfg.template.gameObject.SetActive(false);
-            }
-        }
-
-        private void InitButtons()
-        {
-            if (_buttons == null) return;
-
-            for (int i = 0; i < _buttons.Length; i++)
-            {
-                var entry = _buttons[i];
-                if (entry == null || entry.button == null || string.IsNullOrWhiteSpace(entry.id)) continue;
-
-                _buttonById[entry.id] = entry.button;
-                // Button chỉ hiện đúng lúc task chờ nó, còn lại luôn ẩn.
-                entry.button.gameObject.SetActive(false);
-            }
-        }
-
+        #region Public API
         public Image AcquireImage(CutsceneImageSlot slot)
         {
             int idx = (int)slot;
@@ -75,7 +44,7 @@ namespace Core.Module.Cutscene
             var cfg = _slots[idx];
             if (cfg == null || cfg.parent == null || cfg.template == null)
             {
-                Debug.LogError($"[CutsceneWindow] Slot {slot} thiếu parent hoặc template - không Acquire được Image.");
+                Debug.LogError($"[CutsceneWindow] Slot {slot} thiếu parent hoặc template.", this);
                 return null;
             }
 
@@ -84,7 +53,7 @@ namespace Core.Module.Cutscene
 
             ResetImageState(image);
             image.gameObject.SetActive(true);
-            // SetAsLastSibling để Image mới acquire nằm trên cùng trong slot.
+            // Đẩy xuống cuối
             image.rectTransform.SetAsLastSibling();
 
             rt.Active.Add(image);
@@ -117,6 +86,7 @@ namespace Core.Module.Cutscene
                 {
                     var img = active[j];
                     if (img == null) continue;
+
                     img.DOKill();
                     img.gameObject.SetActive(false);
                     _runtime[i].Pool.Push(img);
@@ -132,46 +102,51 @@ namespace Core.Module.Cutscene
             return _buttonById.TryGetValue(buttonId, out var button) ? button : null;
         }
 
-        /// <summary>Provider đã Open() rồi; ở đây chỉ lo fade để CutsceneService await được.</summary>
-        public UniTask ShowAsync(CancellationToken ct)
-        {
-            // WindowsManager bật GameObject trong coroutine của nó, đặt alpha = 0 sẵn ở đây
-            // nên không loé một khung hình đầy đủ trước khi fade chạy.
-            CanvasGroup.alpha = 0f;
-            CanvasGroup.blocksRaycasts = true;
-            return FadeRootAsync(1f, ct);
-        }
+        #endregion
 
-        public async UniTask HideAsync(CancellationToken ct)
+        #region Private Methods
+        private void InitSlots()
         {
-            CanvasGroup.blocksRaycasts = false;
-            try
+            if (_slots == null) return;
+
+            _runtime = new SlotRuntime[_slots.Length];
+            for (int i = 0; i < _slots.Length; i++)
             {
-                await FadeRootAsync(0f, ct);
-            }
-            finally
-            {
-                // Tween hỏng lúc teardown scene vẫn phải đóng window, nếu không nó kẹt mở vĩnh viễn.
-                if (UIWindow != null) UIWindow.Close();
+                _runtime[i] = new SlotRuntime();
+                var cfg = _slots[i];
+                // Template sống trong prefab, disable để nó không hiện khi cutscene chưa chạy.
+                if (cfg != null && cfg.template != null) cfg.template.gameObject.SetActive(false);
             }
         }
 
-        private UniTask FadeRootAsync(float target, CancellationToken ct)
-            => CanvasGroup.DOFade(target, _showHideDuration)
-                          .SetLink(gameObject)
-                          .ToUniTask(TweenCancelBehaviour.CompleteAndCancelAwait, ct);
+        private void InitButtons()
+        {
+            if (_buttons == null) return;
 
+            for (int i = 0; i < _buttons.Length; i++)
+            {
+                var entry = _buttons[i];
+                if (entry == null || entry.button == null || string.IsNullOrWhiteSpace(entry.id)) continue;
+
+                _buttonById[entry.id] = entry.button;
+                // Button chỉ hiện đúng lúc task chờ nó, còn lại luôn ẩn.
+                entry.button.gameObject.SetActive(false);
+            }
+        }
+
+        // Image lấy từ pool còn giữ transform của panel cũ, phải trả về gốc trước khi dùng lại.
         private static void ResetImageState(Image image)
         {
             image.sprite = null;
-            image.enabled = true;
             var color = image.color;
             color.a = 0f;
             image.color = color;
+
             var rect = image.rectTransform;
             rect.anchoredPosition = Vector2.zero;
             rect.localScale = Vector3.one;
         }
+        #endregion
 
         [Serializable]
         private sealed class SlotConfig

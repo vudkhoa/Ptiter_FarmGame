@@ -1,5 +1,3 @@
-using System.Threading;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,8 +21,5 @@ namespace Core.Module.Cutscene
         /// SO không tham chiếu thẳng Button được (runtime là clone), nên phải đi qua id.
         /// </summary>
         Button GetButton(string buttonId);
-
-        UniTask ShowAsync(CancellationToken ct);
-        UniTask HideAsync(CancellationToken ct);
     }
 }

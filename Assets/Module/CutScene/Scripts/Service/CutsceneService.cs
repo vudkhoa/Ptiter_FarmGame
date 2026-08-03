@@ -100,7 +100,6 @@ namespace Core.Module.Cutscene
 
             try
             {
-                await view.ShowAsync(token);
                 view.ResetSlots();
 
                 await _runner.PrepareAllAsync(cutscene, ctx, token);
@@ -124,18 +123,9 @@ namespace Core.Module.Cutscene
             {
                 var endReason = _state.EndReason;
 
+                // Đóng window trước, trả Image sau: đảo lại thì ảnh tắt cụp trong lúc window còn hiện.
+                _viewProvider.Hide();
                 _runner.ReleaseAll(cutscene, ctx);
-
-                // None thay vì token: bị skip vẫn phải fade panel ra, không tắt cụp.
-                // Bọc try vì lúc teardown scene DOTween huỷ tween -> ném; kẹt ở đây là IsPlaying = true vĩnh viễn.
-                try
-                {
-                    await view.HideAsync(CancellationToken.None);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning($"[CutsceneService] Đóng panel lỗi: {e.Message}");
-                }
 
                 IsPlaying = false;
                 ClearPlaybackState();

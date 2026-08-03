@@ -51,5 +51,11 @@ namespace Core.Module.Cutscene
             _view = controller;
             return _view;
         }
+
+        public void Hide()
+        {
+            UIWindow window = _catalogProvider?.Catalog?.cutsceneWindow?.Ref;
+            if (window != null) window.Close();
+        }
     }
 }
