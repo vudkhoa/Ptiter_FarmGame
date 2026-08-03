@@ -10,9 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a5cdfba9485713849bf9b580dae8c779, type: 3}
-  m_Name: NewCutsceneStep
+  m_Name: BreadCutsceneStep
   m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.CutsceneStepSO
   stepId: 0
-  runMode: 0
+  runMode: 1
   tasks:
   - {fileID: 11400000, guid: 5c07755389dc2ad42b09c26b2a27648c, type: 2}
+  - {fileID: 11400000, guid: 058fa54888c86164687ba9d489acaf8f, type: 2}
+  - {fileID: 11400000, guid: 9c76dae488cc52a428076604dbd97210, type: 2}

@@ -1,3 +1,4 @@
+using BrunoMikoski.UIManager;
 using MessagePipe;
 using UnityEngine;
 using VContainer;
@@ -35,37 +36,23 @@ namespace Core.Module.Cutscene
         }
 
         /// <summary>
-        /// Service + view theo scene. Gọi ở GAME scope.
+        /// Service + view provider theo scene. Gọi ở GAME scope.
         /// Không cần enqueue gì: catalog lấy qua ICutsceneCatalogProvider kế thừa từ ROOT scope.
+        /// View KHÔNG nằm sẵn trong scene - provider tự Instantiate ở lần Play đầu tiên,
+        /// window reference lấy từ CutsceneCatalogSO nên installer không cần tham số nào.
+        /// Trigger (CutscenePlayButton, CutsceneAutoPlayer) KHÔNG đăng ký ở đây: không ai resolve chúng,
+        /// chúng chỉ cần được inject -> thả vào Auto Inject Game Objects của LifetimeScope là đủ.
         /// </summary>
-        /// <param name="view">Kéo ở GameLifetimeScope. Để trống = scene chưa dựng UI cutscene, bỏ qua cả module.</param>
-        /// <param name="skipInput">Optional - không có nút skip thì để trống.</param>
-        /// <param name="autoPlayer">Optional - chỉ cần khi muốn scene tự phát cutscene lúc mở.</param>
-        public static IContainerBuilder RegisterCutsceneGameplay(
-            this IContainerBuilder builder,
-            CutsceneView view,
-            CutsceneSkipInput skipInput = null,
-            CutsceneAutoPlayer autoPlayer = null)
+        public static IContainerBuilder RegisterCutsceneGameplay(this IContainerBuilder builder)
         {
-            if (view == null)
-            {
-                Debug.LogWarning("[CutsceneModuleInstaller] GameLifetimeScope chưa gán CutsceneView - bỏ qua module Cutscene.");
-                return builder;
-            }
-
             builder.Register<CutsceneRunner>(Lifetime.Singleton)
                    .AsSelf();
             builder.Register<CutsceneService>(Lifetime.Singleton)
                    .AsImplementedInterfaces()
                    .AsSelf();
 
-            // RegisterComponent tự kèm build-callback ép inject, y như RegisterComponentInHierarchy.
-            builder.RegisterComponent(view)
-                   .AsImplementedInterfaces()
-                   .AsSelf();
-
-            if (skipInput != null) builder.RegisterComponent(skipInput);
-            if (autoPlayer != null) builder.RegisterComponent(autoPlayer);
+            builder.Register<CutsceneViewProvider>(Lifetime.Singleton)
+                   .AsImplementedInterfaces();
 
             builder.RegisterEntryPoint<CutsceneRequestListener>();
 

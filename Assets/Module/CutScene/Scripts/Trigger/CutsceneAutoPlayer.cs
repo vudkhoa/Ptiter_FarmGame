@@ -5,7 +5,7 @@ using VContainer;
 namespace Core.Module.Cutscene
 {
     /// <summary>
-    /// Xin phát 1 cutscene khi scene mở. Đặt object dưới GameplayRoot để được inject.
+    /// Xin phát 1 cutscene khi scene mở. Thả object vào Auto Inject Game Objects của GameLifetimeScope để được inject.
     /// Publish payload chứ không gọi thẳng service, giữ đúng hướng phụ thuộc của module.
     /// </summary>
     [DisallowMultipleComponent]
@@ -37,7 +37,8 @@ namespace Core.Module.Cutscene
 
             if (_publisher == null)
             {
-                Debug.LogError($"[CutsceneAutoPlayer] '{name}' chưa được inject - object phải nằm dưới GameplayRoot.");
+                Debug.LogError(
+                    $"[CutsceneAutoPlayer] '{name}' chưa được inject - thả object vào Auto Inject Game Objects của GameLifetimeScope.");
                 return;
             }
 

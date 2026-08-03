@@ -13,7 +13,7 @@ namespace Core.Module.Cutscene
         private readonly ICutsceneCatalogProvider _catalogProvider;
         private readonly CutsceneRunner _runner;
         private readonly IAssetLoader _loader;
-        private readonly ICutsceneView _view;
+        private readonly ICutsceneViewProvider _viewProvider;
         private readonly IInputService _input;
         private readonly IPublisher<CutsceneStartedPayload> _startedPub;
         private readonly IPublisher<CutsceneStepChangedPayload> _stepPub;
@@ -33,7 +33,7 @@ namespace Core.Module.Cutscene
             ICutsceneCatalogProvider catalogProvider,
             CutsceneRunner runner,
             IAssetLoader loader,
-            ICutsceneView view,
+            ICutsceneViewProvider viewProvider,
             IInputService input,
             IPublisher<CutsceneStartedPayload> startedPub,
             IPublisher<CutsceneStepChangedPayload> stepPub,
@@ -42,11 +42,12 @@ namespace Core.Module.Cutscene
             _catalogProvider = catalogProvider;
             _runner = runner;
             _loader = loader;
-            _view = view;
+            _viewProvider = viewProvider;
             _input = input;
             _startedPub = startedPub;
             _stepPub = stepPub;
             _finishedPub = finishedPub;
+            Debug.Log($"[CutsceneService] VContainer initialized.");
         }
 
         public void Dispose()
@@ -81,20 +82,26 @@ namespace Core.Module.Cutscene
             _state = new CutsceneRuntimeState();
             _state.Reset(cutscene.steps?.Count ?? 0);
             _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-
-            var ctx = new CutsceneContext(_loader, _view, _input, _state, cutsceneId);
             var token = _cts.Token;
+
+            // Window chỉ Instantiate ở lần Play đầu tiên nên phải lấy view TRƯỚC khi coi là đang phát.
+            // Hỏng ở bước này thì chưa publish Started -> cũng không nợ ai Finished.
+            ICutsceneView view = _viewProvider.Acquire();
+            if (view == null)
+            {
+                ClearPlaybackState();
+                return;
+            }
+
+            var ctx = new CutsceneContext(_loader, view, _input, _state, cutsceneId);
 
             IsPlaying = true;
             _startedPub.Publish(new CutsceneStartedPayload(cutsceneId, _state.TotalSteps));
 
             try
             {
-                if (_view != null)
-                {
-                    await _view.ShowAsync(token);
-                    _view.ResetSlots();
-                }
+                await view.ShowAsync(token);
+                view.ResetSlots();
 
                 await _runner.PrepareAllAsync(cutscene, ctx, token);
                 await _runner.RunAsync(cutscene, ctx, token, PublishStepChanged);
@@ -123,7 +130,7 @@ namespace Core.Module.Cutscene
                 // Bọc try vì lúc teardown scene DOTween huỷ tween -> ném; kẹt ở đây là IsPlaying = true vĩnh viễn.
                 try
                 {
-                    if (_view != null) await _view.HideAsync(CancellationToken.None);
+                    await view.HideAsync(CancellationToken.None);
                 }
                 catch (Exception e)
                 {
@@ -131,13 +138,18 @@ namespace Core.Module.Cutscene
                 }
 
                 IsPlaying = false;
-                _current = null;
-                _state = null;
-                _cts?.Dispose();
-                _cts = null;
+                ClearPlaybackState();
 
                 if (!_disposed) _finishedPub.Publish(new CutsceneFinishedPayload(cutsceneId, endReason));
             }
+        }
+
+        private void ClearPlaybackState()
+        {
+            _current = null;
+            _state = null;
+            _cts?.Dispose();
+            _cts = null;
         }
 
         public void Skip()

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6b3ff9151dab27449bd5d0a22265c28, type: 3}
+  m_Name: TweenTransformTask
+  m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.TweenTransformTaskSO
+  taskName: Test Transform Task
+  startDelay: 0
+  targetImageId: 0
+  tweenPosition: 1
+  fromPosition: {x: 0, y: 0}
+  toPosition: {x: 500, y: 0}
+  tweenScale: 1
+  fromScale: {x: 1, y: 1, z: 1}
+  toScale: {x: 0.2, y: 0.2, z: 0.2}
+  duration: 1
+  ease: 1

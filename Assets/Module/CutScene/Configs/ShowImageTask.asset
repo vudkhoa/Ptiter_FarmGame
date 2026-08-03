@@ -16,11 +16,12 @@ MonoBehaviour:
   startDelay: 0
   sprite:
     m_AssetGUID: 99eb72c719f02eb49813d61f0d43ca0d
-    m_SubObjectName: 
-    m_SubObjectType: 
+    m_SubObjectName: img_test
+    m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
     m_SubObjectGUID: 
-    m_EditorAssetChanged: 0
+    m_EditorAssetChanged: 1
   slot: 0
   imageId: 0
   fadeDuration: 0.5
-  ease: 6
+  ease: 5
