@@ -24,6 +24,12 @@ namespace Core.Module.Map
         Continuous = 1
     }
 
+    public enum PlacementPositionMode
+    {
+        Grid = 0,
+        Free = 1
+    }
+
     [CreateAssetMenu(fileName = "Objects", menuName = "Data/Map/Objects")]
     public class ObjectDatabaseSO : ScriptableObject
     {
@@ -74,6 +80,8 @@ namespace Core.Module.Map
         public Vector2Int Size;
         public MapObjectKind Kind;
         public PlacementInputMode PlacementInputMode;
+        public PlacementPositionMode PositionMode;
+        [Min(0f)] public float FreeSnapStep;
         public MapObjectRotationMode RotationMode;
         public AssetReferenceGameObject Prefab;
     }

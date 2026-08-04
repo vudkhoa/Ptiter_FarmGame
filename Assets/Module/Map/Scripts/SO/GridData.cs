@@ -7,10 +7,15 @@ namespace Core.Module.Map
     [Serializable]
     public class MapPlacementSaveData
     {
+        public string instanceId;
         public int objectId;
+        public PlacementPositionMode positionMode;
         public int cellX;
         public int cellY;
         public int cellZ;
+        public float worldX;
+        public float worldY;
+        public float worldZ;
     }
 
     /// <summary>
@@ -27,16 +32,22 @@ namespace Core.Module.Map
     {
         private readonly Dictionary<Vector3Int, PlacementData> _placementObjects = new();
 
+        public void Clear()
+        {
+            _placementObjects.Clear();
+        }
+
         #region Logic
         public void AddObjectAt(
             Vector3Int gridPosition,
             Vector2Int objectSize,
             int id,
             MapObjectKind kind,
-            int placedObjectIndex)
+            int placedObjectIndex,
+            string instanceId = null)
         {
             List<Vector3Int> positionToOccupy = CalculatePositions(gridPosition, objectSize);
-            PlacementData data = new PlacementData(positionToOccupy, id, kind, placedObjectIndex);
+            PlacementData data = new PlacementData(positionToOccupy, id, kind, placedObjectIndex, instanceId);
 
             foreach (var pos in positionToOccupy)
             {
@@ -76,6 +87,15 @@ namespace Core.Module.Map
         {
             return _placementObjects.TryGetValue(gridPosition, out data);
         }
+
+        public bool RemoveObjectAt(Vector3Int gridPosition, out PlacementData removed)
+        {
+            if (!_placementObjects.TryGetValue(gridPosition, out removed)) return false;
+
+            foreach (Vector3Int occupiedPosition in removed.OcupiedPositions)
+                _placementObjects.Remove(occupiedPosition);
+            return true;
+        }
         #endregion
     }
 
@@ -87,17 +107,20 @@ namespace Core.Module.Map
         public int ID;
         public MapObjectKind Kind;
         public int PlacedObjectIndex;
+        public string InstanceId;
 
         public PlacementData(
             List<Vector3Int> ocupiedPositions,
             int id,
             MapObjectKind kind,
-            int placedObjectIndex)
+            int placedObjectIndex,
+            string instanceId)
         {
             this.OcupiedPositions = ocupiedPositions;
             this.ID = id;
             this.Kind = kind;
             this.PlacedObjectIndex = placedObjectIndex;
+            this.InstanceId = instanceId;
         }
     }
     #endregion

@@ -168,7 +168,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
   m_IgnoreReversedGraphics: 1
   m_BlockingObjects: 0
@@ -746,6 +746,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 480779548}
+  - component: {fileID: 480779549}
   m_Layer: 0
   m_Name: Map System
   m_TagString: Untagged
@@ -770,6 +771,20 @@ Transform:
   - {fileID: 756840002}
   m_Father: {fileID: 677694857}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &480779549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 480779547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 211446ef77144c55819ba25c1b4c794f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Map::Core.Module.Map.MapAuthoringController
+  _enableInEditor: 1
+  _layout: {fileID: 11400000, guid: 1358fca4cb12452b8fd68078732dc012, type: 2}
 --- !u!1 &576651263
 GameObject:
   m_ObjectHideFlags: 0

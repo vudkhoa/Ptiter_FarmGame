@@ -8,6 +8,8 @@ namespace Core.Module.Map
         public readonly GameObject Prefab;
         public readonly Vector3 SnappedWorld;
         public readonly Vector3Int Cell;
+        public readonly string InstanceId;
+        public readonly PlacementPositionMode PositionMode;
         public readonly int ChangeCount;       // ChangeCount sau khi increment
         public readonly MapObjectRotationMode RotationMode;
 
@@ -16,6 +18,8 @@ namespace Core.Module.Map
             GameObject prefab,
             Vector3 snappedWorld,
             Vector3Int cell,
+            string instanceId,
+            PlacementPositionMode positionMode,
             int changeCount,
             MapObjectRotationMode rotationMode)
         {
@@ -23,6 +27,8 @@ namespace Core.Module.Map
             Prefab = prefab;
             SnappedWorld = snappedWorld;
             Cell = cell;
+            InstanceId = instanceId;
+            PositionMode = positionMode;
             ChangeCount = changeCount;
             RotationMode = rotationMode;
         }

@@ -23,6 +23,7 @@ namespace Core.Module.Map
 
         private IMapService _map;
         private IInputService _input;
+        private MapAuthoringController _authoring;
         private Vector2 _lastScreen;
         private bool _isPrimaryPressed;
         private IDisposable _subscriptions;
@@ -32,6 +33,7 @@ namespace Core.Module.Map
         public void Construct(
            IMapService map,
            IInputService input,
+           MapAuthoringController authoring,
            ISubscriber<PointerScreenPayload> screenSub,
            ISubscriber<PointerButtonDownPayload> btnDownSub,
            ISubscriber<PointerButtonUpPayload> btnUpSub,
@@ -39,6 +41,7 @@ namespace Core.Module.Map
         {
             _map = map;
             _input = input;
+            _authoring = authoring;
 
             var bag = DisposableBag.CreateBuilder();
             screenSub.Subscribe(OnScreen).AddTo(bag);
@@ -67,7 +70,7 @@ namespace Core.Module.Map
 
             if (_isPrimaryPressed
                 && _map.CurrentPlacementInputMode == PlacementInputMode.Continuous
-                && !_input.IsPointerOverUI())
+                && !IsPointerBlocked())
             {
                 _map.AddFurniture(world);
             }
@@ -75,8 +78,17 @@ namespace Core.Module.Map
 
         private void OnButtonDown(PointerButtonDownPayload p)
         {
-            if (p.Button != 0 || !_map.HasActivePlacement) return;
-            if (_input.IsPointerOverUI()) return;
+            if (p.Button != 0) return;
+            if (IsPointerBlocked()) return;
+
+            if (_authoring != null && _authoring.IsEraseMode)
+            {
+                if (TryRaycast(_lastScreen, out var eraseWorld))
+                    _map.RemoveAuthoringObject(eraseWorld);
+                return;
+            }
+
+            if (!_map.HasActivePlacement) return;
 
             _isPrimaryPressed = true;
             if (!TryRaycast(_lastScreen, out var world)) return;
@@ -95,7 +107,7 @@ namespace Core.Module.Map
 
             if (!wasPressed || !_map.HasActivePlacement) return;
             if (_map.CurrentPlacementInputMode != PlacementInputMode.Single) return;
-            if (_input.IsPointerOverUI()) return;
+            if (IsPointerBlocked()) return;
             if (TryRaycast(_lastScreen, out var world))
                 _map.AddFurniture(world);
         }
@@ -103,6 +115,12 @@ namespace Core.Module.Map
         private void OnKey(KeyDownPayload p)
         {
             if (p.Key == KeyCode.Escape) _map.StopPlacement();
+        }
+
+        private bool IsPointerBlocked()
+        {
+            return _input.IsPointerOverUI()
+                || (_authoring != null && _authoring.IsPointerOverToolbar(_lastScreen));
         }
         #endregion
 
