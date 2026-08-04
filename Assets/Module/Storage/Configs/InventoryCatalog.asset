@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4480c53f430a34d4ba77ed92840d00bb, type: 3}
+  m_Name: InventoryCatalog
+  m_EditorClassIdentifier: Storage::Core.Module.Storage.InventoryCatalogSO
+  _items:
+  - itemId: bonsai
+    displayName: "C\xC2Y BONSAI"
+    description: "Mua \u1EDF ti\u1EC7m c\xE2y c\u1EA3nh"
+    category: 2
+    icon: {fileID: 21300000, guid: 8b9047921f6a4e44a86a88ac03209396, type: 3}
+    preview: {fileID: 21300000, guid: d6071073927d9fb4e8cca8fe9ecab9ba, type: 3}

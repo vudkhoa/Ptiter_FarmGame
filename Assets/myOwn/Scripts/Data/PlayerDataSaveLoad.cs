@@ -11,7 +11,7 @@ namespace MyOwn.ServiceHarness
     /// </summary>
     public static class PlayerDataSaveLoad
     {
-        private const int CURRENT_SAVE_VERSION = 2;
+        private const int CURRENT_SAVE_VERSION = 3;
         private const string FILE_NAME = "playerdata.json";
         private const string TEMP_SUFFIX = ".tmp";
 
@@ -79,6 +79,14 @@ namespace MyOwn.ServiceHarness
                     Core.Module.Quest.PendingQuestRewardSaveData>();
             data.GrantedQuestRewardTransactions ??=
                 new System.Collections.Generic.List<string>();
+
+            if (data.SaveVersion < 3)
+            {
+                bool hasBonsai = data.Inventory.Exists(
+                    entry => entry.itemId == "bonsai");
+                if (!hasBonsai)
+                    data.Inventory.Add(new InventoryEntry("bonsai", 6));
+            }
 
             if (data.SaveVersion < CURRENT_SAVE_VERSION)
                 data.SaveVersion = CURRENT_SAVE_VERSION;

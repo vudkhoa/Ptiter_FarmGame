@@ -18,15 +18,11 @@ namespace MyOwn.ServiceHarness
         IOnBeforeWindowOpen,
         IOnWindowClosed
     {
-        private const int TasksPerPage = 2;
-
         [Header("Navigation")]
         [SerializeField] private Button _dailyTab;
         [SerializeField] private Button _progressTab;
         [SerializeField] private Button _foodTab;
         [SerializeField] private Button _closeButton;
-        [SerializeField] private Button _previousPage;
-        [SerializeField] private Button _nextPage;
 
         [Header("Panels")]
         [SerializeField] private GameObject _dailyPanel;
@@ -35,10 +31,11 @@ namespace MyOwn.ServiceHarness
 
         [Header("Daily")]
         [SerializeField] private TMP_Text _countdown;
-        [SerializeField] private TMP_Text _pageLabel;
         [SerializeField] private TMP_Text _totalPoints;
         [SerializeField] private TMP_Text _lockedReason;
-        [SerializeField] private QuestTaskItemView[] _taskSlots;
+        [SerializeField] private ScrollRect _taskScroll;
+        [SerializeField] private RectTransform _taskContent;
+        [SerializeField] private QuestTaskItemView _taskTemplate;
         [SerializeField] private QuestMilestoneView[] _milestones;
 
         [Header("Reward feedback")]
@@ -47,7 +44,8 @@ namespace MyOwn.ServiceHarness
 
         private IDailyQuestService _dailyQuestService;
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
-        private int _pageIndex;
+        private readonly List<QuestTaskItemView> _taskViews =
+            new List<QuestTaskItemView>();
         private Coroutine _toastRoutine;
         private bool _isConstructed;
 
@@ -69,9 +67,9 @@ namespace MyOwn.ServiceHarness
 
         public void OnBeforeWindowOpen()
         {
-            _pageIndex = 0;
             RegisterButtons();
             ShowTab(0);
+            ResetTaskScroll();
             _dailyQuestService?.EnsureInitializedAsync(
                 this.GetCancellationTokenOnDestroy()).Forget();
             Render();
@@ -90,8 +88,6 @@ namespace MyOwn.ServiceHarness
             _progressTab?.onClick.AddListener(ShowProgress);
             _foodTab?.onClick.AddListener(ShowFood);
             _closeButton?.onClick.AddListener(Close);
-            _previousPage?.onClick.AddListener(PreviousPage);
-            _nextPage?.onClick.AddListener(NextPage);
         }
 
         private void UnregisterButtons()
@@ -100,8 +96,6 @@ namespace MyOwn.ServiceHarness
             _progressTab?.onClick.RemoveListener(ShowProgress);
             _foodTab?.onClick.RemoveListener(ShowFood);
             _closeButton?.onClick.RemoveListener(Close);
-            _previousPage?.onClick.RemoveListener(PreviousPage);
-            _nextPage?.onClick.RemoveListener(NextPage);
         }
 
         private void ShowTab(int index)
@@ -112,23 +106,14 @@ namespace MyOwn.ServiceHarness
             if (index == 0) Render();
         }
 
-        private void ShowDaily() => ShowTab(0);
+        private void ShowDaily()
+        {
+            ShowTab(0);
+            ResetTaskScroll();
+        }
+
         private void ShowProgress() => ShowTab(1);
         private void ShowFood() => ShowTab(2);
-
-        private void PreviousPage()
-        {
-            _pageIndex = Mathf.Max(0, _pageIndex - 1);
-            Render();
-        }
-
-        private void NextPage()
-        {
-            DailyQuestViewState state = _dailyQuestService?.GetViewState();
-            int pageCount = GetPageCount(state?.Tasks?.Count ?? 0);
-            _pageIndex = Mathf.Min(Mathf.Max(0, pageCount - 1), _pageIndex + 1);
-            Render();
-        }
 
         private void Render()
         {
@@ -140,24 +125,20 @@ namespace MyOwn.ServiceHarness
                 _lockedReason.text = state.LockedReason ?? string.Empty;
             }
 
-            int taskCount = state.Tasks?.Count ?? 0;
-            int pageCount = GetPageCount(taskCount);
-            _pageIndex = Mathf.Clamp(_pageIndex, 0, Mathf.Max(0, pageCount - 1));
-            if (_pageLabel != null)
-                _pageLabel.text = $"{_pageIndex + 1}/{pageCount}";
             if (_countdown != null)
                 _countdown.text = FormatCountdown(state.TimeUntilReset);
             if (_totalPoints != null)
                 _totalPoints.text = $"{state.TotalPoints} ĐIỂM";
 
-            for (int slot = 0; slot < (_taskSlots?.Length ?? 0); slot++)
+            int taskCount = state.Tasks?.Count ?? 0;
+            EnsureTaskViews(taskCount);
+            for (int i = 0; i < _taskViews.Count; i++)
             {
-                int taskIndex = _pageIndex * TasksPerPage + slot;
                 DailyQuestTaskViewData task =
-                    state.Tasks != null && taskIndex < state.Tasks.Count
-                        ? state.Tasks[taskIndex]
+                    state.Tasks != null && i < state.Tasks.Count
+                        ? state.Tasks[i]
                         : null;
-                _taskSlots[slot]?.Bind(task);
+                _taskViews[i]?.Bind(task);
             }
 
             for (int i = 0; i < (_milestones?.Length ?? 0); i++)
@@ -168,9 +149,31 @@ namespace MyOwn.ServiceHarness
                         : null;
                 _milestones[i]?.Bind(milestone, ClaimMilestone);
             }
+        }
 
-            if (_previousPage != null) _previousPage.interactable = _pageIndex > 0;
-            if (_nextPage != null) _nextPage.interactable = _pageIndex + 1 < pageCount;
+        private void EnsureTaskViews(int count)
+        {
+            if (_taskTemplate == null || _taskContent == null) return;
+            _taskTemplate.gameObject.SetActive(false);
+
+            while (_taskViews.Count < count)
+            {
+                QuestTaskItemView view = Instantiate(_taskTemplate, _taskContent);
+                view.name = $"Task {_taskViews.Count + 1}";
+                view.gameObject.SetActive(true);
+                _taskViews.Add(view);
+            }
+
+            for (int i = 0; i < _taskViews.Count; i++)
+                _taskViews[i].gameObject.SetActive(i < count);
+        }
+
+        private void ResetTaskScroll()
+        {
+            if (_taskScroll == null) return;
+            Canvas.ForceUpdateCanvases();
+            _taskScroll.StopMovement();
+            _taskScroll.verticalNormalizedPosition = 1f;
         }
 
         private void ClaimMilestone(string milestoneId)
@@ -182,7 +185,6 @@ namespace MyOwn.ServiceHarness
 
         private void OnRewardGranted(QuestRewardGrantedPayload payload)
         {
-            // Startup reconcile is silent; normal same-session rewards get immediate feedback.
             if (payload.ReconciledAtStartup || _rewardToast == null) return;
             if (_rewardToastText != null)
                 _rewardToastText.text = $"+{payload.Coins}";
@@ -196,11 +198,6 @@ namespace MyOwn.ServiceHarness
             yield return new WaitForSecondsRealtime(1.5f);
             _rewardToast.SetActive(false);
             _toastRoutine = null;
-        }
-
-        private static int GetPageCount(int taskCount)
-        {
-            return Mathf.Max(1, Mathf.CeilToInt(taskCount / (float)TasksPerPage));
         }
 
         private static string FormatCountdown(TimeSpan remaining)

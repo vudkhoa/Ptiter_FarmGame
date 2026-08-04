@@ -349,30 +349,16 @@ namespace Core.Module.Quest.Editor
                 "Locked Reason", daily.transform, "Synchronizing server time...",
                 new Vector2(0, -120), new Vector2(900, 70), 30, font);
 
-            QuestTaskItemView[] taskSlots =
-            {
-                TaskSlot("Task 1", daily.transform, new Vector2(0, -155), font),
-                TaskSlot("Task 2", daily.transform, new Vector2(0, -350), font)
-            };
+            ScrollRect taskScroll = TaskScroll(
+                daily.transform, font,
+                out RectTransform taskContent,
+                out QuestTaskItemView taskTemplate);
             QuestMilestoneView[] milestones =
             {
                 Milestone("Milestone 1", daily.transform, new Vector2(-440, 125), font),
                 Milestone("Milestone 2", daily.transform, new Vector2(0, 125), font),
                 Milestone("Milestone 3", daily.transform, new Vector2(440, 125), font)
             };
-
-            Button previous = ArtworkButton(
-                "Previous Page", daily.transform,
-                Sprite("quest hàng ngày_nút nhận thưởng 3.png"), "TRƯỚC",
-                new Vector2(-170, -490), new Vector2(130, 55), 18, font);
-            TextMeshProUGUI page = Text(
-                "Page", daily.transform, "1/2",
-                new Vector2(0, -490), new Vector2(120, 55), 28, font);
-            page.fontStyle = FontStyles.Bold;
-            Button next = ArtworkButton(
-                "Next Page", daily.transform,
-                Sprite("quest hàng ngày_nút nhận thưởng 3.png"), "SAU",
-                new Vector2(170, -490), new Vector2(130, 55), 18, font);
 
             GameObject toast = ImageObject(
                 "Reward Toast", root.transform, null,
@@ -389,16 +375,15 @@ namespace Core.Module.Quest.Editor
             Set(serialized, "_progressTab", progressTab);
             Set(serialized, "_foodTab", foodTab);
             Set(serialized, "_closeButton", close);
-            Set(serialized, "_previousPage", previous);
-            Set(serialized, "_nextPage", next);
             Set(serialized, "_dailyPanel", daily);
             Set(serialized, "_progressPlaceholder", progress);
             Set(serialized, "_foodPlaceholder", food);
             Set(serialized, "_countdown", countdown);
-            Set(serialized, "_pageLabel", page);
             Set(serialized, "_totalPoints", points);
             Set(serialized, "_lockedReason", locked);
-            SetArray(serialized, "_taskSlots", taskSlots);
+            Set(serialized, "_taskScroll", taskScroll);
+            Set(serialized, "_taskContent", taskContent);
+            Set(serialized, "_taskTemplate", taskTemplate);
             SetArray(serialized, "_milestones", milestones);
             Set(serialized, "_rewardToast", toast);
             Set(serialized, "_rewardToastText", toastText);
@@ -460,6 +445,67 @@ namespace Core.Module.Quest.Editor
         {
             destination.FindPropertyRelative(destinationName).longValue =
                 source.FindPropertyRelative(sourceName).longValue;
+        }
+
+        private static ScrollRect TaskScroll(
+            Transform parent,
+            TMP_FontAsset font,
+            out RectTransform content,
+            out QuestTaskItemView template)
+        {
+            GameObject root = ImageObject(
+                "Daily Task Scroll", parent, null,
+                new Vector2(0, -310), new Vector2(1450, 390));
+            Image inputSurface = root.GetComponent<Image>();
+            inputSurface.color = new Color(1f, 1f, 1f, 0.001f);
+
+            ScrollRect scroll = root.AddComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Elastic;
+            scroll.elasticity = 0.1f;
+            scroll.inertia = true;
+            scroll.decelerationRate = 0.135f;
+            scroll.scrollSensitivity = 60f;
+
+            GameObject viewportObject = new GameObject(
+                "Viewport", typeof(RectTransform), typeof(RectMask2D));
+            Rect(viewportObject, root.transform, Vector2.zero, new Vector2(1450, 390));
+            RectTransform viewport = viewportObject.GetComponent<RectTransform>();
+
+            GameObject contentObject = new GameObject(
+                "Content",
+                typeof(RectTransform),
+                typeof(VerticalLayoutGroup),
+                typeof(ContentSizeFitter));
+            content = contentObject.GetComponent<RectTransform>();
+            content.SetParent(viewport, false);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = Vector2.zero;
+
+            VerticalLayoutGroup layout = contentObject.GetComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(25, 25, 12, 12);
+            layout.spacing = 15f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            ContentSizeFitter fitter = contentObject.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            template = TaskSlot("Task Template", content, Vector2.zero, font);
+            template.gameObject.SetActive(false);
+
+            scroll.viewport = viewport;
+            scroll.content = content;
+            scroll.verticalNormalizedPosition = 1f;
+            return scroll;
         }
 
         private static QuestTaskItemView TaskSlot(
