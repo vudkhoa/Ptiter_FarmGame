@@ -14,11 +14,123 @@ MonoBehaviour:
   m_EditorClassIdentifier: Map::Core.Module.Map.MapLayoutSO
   MapId: 0
   Objects:
-  - ObjectId: 2
-    OriginCell: {x: 8, y: 0, z: 2}
-  - ObjectId: 2
-    OriginCell: {x: 11, y: 0, z: 0}
-  - ObjectId: 2
-    OriginCell: {x: 12, y: 0, z: 1}
-  - ObjectId: 2
-    OriginCell: {x: 14, y: 0, z: 3}
+  - InstanceId: 4b1be1040ccb4bf38e691937fb8d18c4
+    ObjectId: 103
+    PositionMode: 0
+    OriginCell: {x: -1, y: 0, z: -3}
+    WorldPosition: {x: 0, y: 0, z: 0}
+  - InstanceId: 4d664f2831cc466c93dbbbac28128a12
+    ObjectId: 104
+    PositionMode: 0
+    OriginCell: {x: 8, y: 0, z: -1}
+    WorldPosition: {x: 0, y: 0, z: 0}
+  - InstanceId: 829b12808b974e23a3ba63dfad879779
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 43.060238, y: 0, z: 36.82037}
+  - InstanceId: 8f1ab58d1abf4afdbf60a57f2f4fced2
+    ObjectId: 2
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 38.7, y: 0, z: 28.4}
+  - InstanceId: 468a8b2ef17d4d52923607026f60b709
+    ObjectId: 2
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 32.600002, y: 0, z: 28.4}
+  - InstanceId: 2b51d4ac8fa3412db0a5601df14ddfe5
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 41.036697, y: 0, z: 29.178358}
+  - InstanceId: a6dc7a5ad89b48fb8a340139fc861664
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 30.31305, y: 0, z: 37.24646}
+  - InstanceId: d7f57416b16d4c5f8757a108fda08bf3
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 31.263126, y: 0, z: 37.355595}
+  - InstanceId: 0ff39aaf44944cc8836dda2b90367064
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 47.779926, y: 0, z: 32.570393}
+  - InstanceId: 3e6f9866883045c19999dd5961888a06
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 47.857018, y: 0, z: 33.34823}
+  - InstanceId: 90f630ea779842788a512ea52e29a820
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 48.27065, y: 0, z: 32.631184}
+  - InstanceId: f91cc85ba0bc4858959b506c3e785b71
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 53.480785, y: 0, z: 24.96052}
+  - InstanceId: 14712aee8e07476b8e5fb3ea21890567
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 38.678566, y: 0, z: 12.569985}
+  - InstanceId: 8bf3d3c167ef4cb699a7b6c36c23be35
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 32.9203, y: 0, z: 12.53529}
+  - InstanceId: 1e35f0e57f6142918fca1aa3bb5504bd
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 12.484509, y: 0, z: 12.648572}
+  - InstanceId: 020c7fab1be94041865302e32b3706c8
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 21.903378, y: 0, z: 5.3264728}
+  - InstanceId: 7bfe03b68d4b42d7b1476a9dbb6c6cca
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 0.49268574, y: 0, z: 3.5714211}
+  - InstanceId: 9d7fdb1e0e8642bca5508df0a5eb29e4
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: -0.22179322, y: 0, z: 3.7233362}
+  - InstanceId: 9768049397e24d148524dae7a573d8ff
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 31.601585, y: 0, z: 3.7847517}
+  - InstanceId: bb7e5406f3e4479bb4079f04bfe88017
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 36.814133, y: 0, z: 3.6367655}
+  - InstanceId: 17ad9aa638a7430eab62000004cbd1c4
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 48.093662, y: 0, z: 3.7406945}
+  - InstanceId: d718d813db4e485c8e6e469683deb637
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 64.984276, y: 0, z: 12.619777}
+  - InstanceId: 69ad814d2cad404ea91ebb661da6c0d7
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 64.2145, y: 0, z: 12.595236}
+  - InstanceId: 03a233383a2c470e9031b1054aa8fa18
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 73.73525, y: 0, z: 3.7694962}
