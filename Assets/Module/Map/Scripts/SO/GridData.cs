@@ -16,6 +16,7 @@ namespace Core.Module.Map
         public float worldX;
         public float worldY;
         public float worldZ;
+        public float uniformScale;
     }
 
     /// <summary>
@@ -44,10 +45,12 @@ namespace Core.Module.Map
             int id,
             MapObjectKind kind,
             int placedObjectIndex,
-            string instanceId = null)
+            string instanceId = null,
+            float uniformScale = 1f)
         {
             List<Vector3Int> positionToOccupy = CalculatePositions(gridPosition, objectSize);
-            PlacementData data = new PlacementData(positionToOccupy, id, kind, placedObjectIndex, instanceId);
+            PlacementData data = new PlacementData(
+                positionToOccupy, id, kind, placedObjectIndex, instanceId, uniformScale);
 
             foreach (var pos in positionToOccupy)
             {
@@ -108,19 +111,22 @@ namespace Core.Module.Map
         public MapObjectKind Kind;
         public int PlacedObjectIndex;
         public string InstanceId;
+        public float UniformScale;
 
         public PlacementData(
             List<Vector3Int> ocupiedPositions,
             int id,
             MapObjectKind kind,
             int placedObjectIndex,
-            string instanceId)
+            string instanceId,
+            float uniformScale)
         {
             this.OcupiedPositions = ocupiedPositions;
             this.ID = id;
             this.Kind = kind;
             this.PlacedObjectIndex = placedObjectIndex;
             this.InstanceId = instanceId;
+            this.UniformScale = uniformScale;
         }
     }
     #endregion

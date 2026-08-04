@@ -97,6 +97,7 @@ namespace Core.Module.Map
         {
             var go = Instantiate(p.Prefab, _spawnRoot);
             go.transform.position = p.SnappedWorld;
+            go.transform.localScale *= p.UniformScale;
             if (p.RotationMode == MapObjectRotationMode.MatchCameraRotation)
                 MatchCameraRotation(go.transform);
             if (p.PositionMode == PlacementPositionMode.Grid)

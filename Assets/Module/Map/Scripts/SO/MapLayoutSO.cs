@@ -12,6 +12,7 @@ namespace Core.Module.Map
         public PlacementPositionMode PositionMode;
         public Vector3Int OriginCell;
         public Vector3 WorldPosition;
+        public float UniformScale;
 
         public static MapLayoutEntry Grid(string instanceId, int objectId, Vector3Int originCell)
         {
@@ -21,7 +22,8 @@ namespace Core.Module.Map
                 ObjectId = objectId,
                 PositionMode = PlacementPositionMode.Grid,
                 OriginCell = originCell,
-                WorldPosition = default
+                WorldPosition = default,
+                UniformScale = 1f
             };
         }
 
@@ -33,7 +35,8 @@ namespace Core.Module.Map
                 ObjectId = objectId,
                 PositionMode = PlacementPositionMode.Free,
                 OriginCell = default,
-                WorldPosition = worldPosition
+                WorldPosition = worldPosition,
+                UniformScale = 1f
             };
         }
     }

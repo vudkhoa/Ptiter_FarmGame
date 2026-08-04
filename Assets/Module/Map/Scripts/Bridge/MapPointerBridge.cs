@@ -63,6 +63,14 @@ namespace Core.Module.Map
         private void OnScreen(PointerScreenPayload p)
         {
             _lastScreen = p.ScreenPosition;
+
+            if (_authoring != null && _authoring.IsSelectMode && _isPrimaryPressed)
+            {
+                if (!IsPointerBlocked() && TryRaycast(_lastScreen, out var moveWorld))
+                    _map.MoveSelectedAuthoringObject(moveWorld);
+                return;
+            }
+
             if (!_map.HasActivePlacement) return;
             if (!TryRaycast(_lastScreen, out var world)) return;
 
@@ -80,6 +88,13 @@ namespace Core.Module.Map
         {
             if (p.Button != 0) return;
             if (IsPointerBlocked()) return;
+
+            if (_authoring != null && _authoring.IsSelectMode)
+            {
+                _isPrimaryPressed = TryRaycast(_lastScreen, out var selectWorld)
+                    && _map.SelectAuthoringObject(selectWorld);
+                return;
+            }
 
             if (_authoring != null && _authoring.IsEraseMode)
             {

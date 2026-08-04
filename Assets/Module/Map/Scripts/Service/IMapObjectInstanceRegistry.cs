@@ -11,9 +11,11 @@ namespace Core.Module.Map
         void Register(Vector3Int originCell, GameObject instance);
         void Register(string instanceId, GameObject instance);
         bool TryGetAtOrigin(Vector3Int originCell, out GameObject instance);
+        bool TryGet(string instanceId, out GameObject instance);
         void Unregister(Vector3Int originCell);
         bool RemoveAndDestroy(Vector3Int originCell);
         bool RemoveAndDestroy(string instanceId);
+        void MoveGridRegistration(Vector3Int oldOrigin, Vector3Int newOrigin);
         void ClearAndDestroy();
     }
 }

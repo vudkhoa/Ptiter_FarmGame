@@ -29,6 +29,16 @@ namespace Core.Module.Map
             _instances.Remove(originCell);
         }
 
+        public bool TryGet(string instanceId, out GameObject instance)
+        {
+            if (!string.IsNullOrEmpty(instanceId)
+                && _freeInstances.TryGetValue(instanceId, out instance)
+                && instance != null) return true;
+
+            instance = null;
+            return false;
+        }
+
         public void Register(string instanceId, GameObject instance)
         {
             if (string.IsNullOrEmpty(instanceId) || instance == null) return;
@@ -50,6 +60,13 @@ namespace Core.Module.Map
             _freeInstances.Remove(instanceId);
             if (instance != null) Object.Destroy(instance);
             return true;
+        }
+
+        public void MoveGridRegistration(Vector3Int oldOrigin, Vector3Int newOrigin)
+        {
+            if (!_instances.TryGetValue(oldOrigin, out GameObject instance)) return;
+            _instances.Remove(oldOrigin);
+            _instances[newOrigin] = instance;
         }
 
         public void ClearAndDestroy()
