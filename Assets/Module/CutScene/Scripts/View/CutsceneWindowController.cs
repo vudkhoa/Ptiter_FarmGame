@@ -14,8 +14,6 @@ namespace Core.Module.Cutscene
     public sealed class CutsceneWindowController : WindowController, ICutsceneView
     {
         [SerializeField] private SlotConfig[] _slots;
-
-        [Tooltip("Id phải khớp field Button Id trong WaitForButtonClickTask.")]
         [SerializeField] private NamedButton[] _buttons;
 
         private SlotRuntime[] _runtime;
@@ -51,7 +49,7 @@ namespace Core.Module.Cutscene
             var rt = _runtime[idx];
             Image image = rt.Pool.Count > 0 ? rt.Pool.Pop() : Instantiate(cfg.template, cfg.parent);
 
-            ResetImageState(image);
+            ResetImageState(image, cfg.template);
             image.gameObject.SetActive(true);
             // Đẩy xuống cuối
             image.rectTransform.SetAsLastSibling();
@@ -134,8 +132,8 @@ namespace Core.Module.Cutscene
             }
         }
 
-        // Image lấy từ pool còn giữ transform của panel cũ, phải trả về gốc trước khi dùng lại.
-        private static void ResetImageState(Image image)
+        // Image lấy từ pool còn giữ transform của panel cũ (kể cả anchor/size/góc nghiêng do task ghi đè).
+        private static void ResetImageState(Image image, Image template)
         {
             image.sprite = null;
             var color = image.color;
@@ -143,7 +141,13 @@ namespace Core.Module.Cutscene
             image.color = color;
 
             var rect = image.rectTransform;
-            rect.anchoredPosition = Vector2.zero;
+            var source = template.rectTransform;
+            rect.anchorMin = source.anchorMin;
+            rect.anchorMax = source.anchorMax;
+            rect.pivot = source.pivot;
+            rect.sizeDelta = source.sizeDelta;
+            rect.anchoredPosition = source.anchoredPosition;
+            rect.localRotation = Quaternion.identity;
             rect.localScale = Vector3.one;
         }
         #endregion
