@@ -329,10 +329,13 @@ namespace Core.Module.Quest.Editor
             Button foodTab = TransparentButton(
                 "Food Tab", root.transform,
                 new Vector2(480, 255), new Vector2(430, 110));
-            // Temporary visible close button until the artist exports a dedicated asset.
             Button close = Button(
-                "Temporary Close", root.transform, "X",
-                new Vector2(760, 470), new Vector2(72, 72), font);
+                "Temporary Close", root.transform, string.Empty,
+                new Vector2(790, 485), new Vector2(92, 92), font);
+            Image closeImage = close.GetComponent<Image>();
+            closeImage.sprite = Sprite("exit.png");
+            closeImage.color = Color.white;
+            closeImage.preserveAspect = true;
 
             TextMeshProUGUI countdown = Text(
                 "Countdown", daily.transform, "00:00:00",

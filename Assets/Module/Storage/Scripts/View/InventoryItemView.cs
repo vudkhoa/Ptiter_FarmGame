@@ -29,20 +29,33 @@ namespace Core.Module.Storage.View
             _onSelected = onSelected;
 
             bool visible = definition != null && amount > 0;
-            gameObject.SetActive(visible);
-            if (!visible) return;
+            gameObject.SetActive(true);
+
+            if (_button != null)
+                _button.interactable = visible;
 
             if (_icon != null)
             {
-                _icon.sprite = definition.icon;
-                _icon.enabled = definition.icon != null;
+                _icon.sprite = visible ? definition.icon : null;
+                _icon.enabled = visible && definition.icon != null;
             }
-            if (_amount != null) _amount.text = amount.ToString();
+
+            if (_amount != null)
+            {
+                _amount.text = visible ? amount.ToString() : string.Empty;
+                _amount.enabled = visible;
+            }
+
             if (_background != null)
-                _background.sprite = selected && _selectedSprite != null
+            {
+                _background.enabled = true;
+                _background.sprite = visible && selected && _selectedSprite != null
                     ? _selectedSprite
                     : _normalSprite;
-            _button?.onClick.AddListener(Select);
+            }
+
+            if (visible)
+                _button?.onClick.AddListener(Select);
         }
 
         private void Select() => _onSelected?.Invoke(_definition);

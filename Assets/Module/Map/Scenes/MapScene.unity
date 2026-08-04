@@ -4940,6 +4940,19 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
+--- !u!134 &1584879351
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!1 &1606044948
 GameObject:
   m_ObjectHideFlags: 0
@@ -5046,7 +5059,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1702518300}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 1584879351}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -5058,7 +5071,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.0096002, y: 3.0096002, z: 0.25}
+  m_Size: {x: 13.68, y: 13.68, z: 0.25}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!212 &1702518304
 SpriteRenderer:

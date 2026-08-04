@@ -297,8 +297,10 @@ namespace Core.Module.Storage.Editor
             actionVisual.GetComponent<Image>().raycastTarget = false;
             selectedDetails.SetActive(false);
 
-            Button close = SimpleButton("Temporary Close", root.transform, "X",
-                new Vector2(775, 335), new Vector2(68, 68), font);
+            Button close = ArtworkButton(
+                "Temporary Close", root.transform,
+                Sprite("UI/inventory_close_button.png"),
+                new Vector2(742, 275), new Vector2(92, 92));
 
             InventoryWindowController controller =
                 root.GetComponent<InventoryWindowController>();
@@ -381,9 +383,8 @@ namespace Core.Module.Storage.Editor
             if (renderer.sprite != null)
             {
                 Vector2 spriteSize = renderer.sprite.bounds.size;
-                // Keep the warehouse art large, but make its interaction footprint
-                // compact so nearby soil cells remain clickable.
-                const float interactionScale = 0.22f;
+                // Match the interaction footprint to the full warehouse artwork.
+                const float interactionScale = 1f;
                 collider.size = new Vector3(
                     spriteSize.x * interactionScale,
                     spriteSize.y * interactionScale,
