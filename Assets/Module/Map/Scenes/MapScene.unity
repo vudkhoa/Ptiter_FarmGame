@@ -378,12 +378,13 @@ MonoBehaviour:
   _zoomSpeedMouse: 10
   _zoomSpeedTouch: 0.1
   _minZoom: 5
-  _maxZoom: 20
+  _maxZoom: 10
   _useBounds: 1
-  _minX: -30
-  _maxX: 30
-  _minZ: -30
-  _maxZ: 30
+  _minX: -10
+  _maxX: 10
+  _minZ: -20
+  _maxZ: 5
+  _keepPanCoverageWhenZooming: 1
 --- !u!1 &42016499
 GameObject:
   m_ObjectHideFlags: 0
