@@ -22,6 +22,11 @@ namespace Core.Module.Cutscene
         public Vector3 fromScale = Vector3.one;
         public Vector3 toScale = Vector3.one * 1.1f;
 
+        [Header("Rotation (độ, quanh trục Z)")]
+        public bool tweenRotation;
+        public float fromRotationZ;
+        public float toRotationZ;
+
         [Min(0f)] public float duration = 3f;
         public Ease ease = Ease.Linear;
 
@@ -40,6 +45,8 @@ namespace Core.Module.Cutscene
             var sequence = DOTween.Sequence().SetLink(rect.gameObject);
             if (tweenPosition) sequence.Join(rect.DOAnchorPos(toPosition, duration).SetEase(ease));
             if (tweenScale) sequence.Join(rect.DOScale(toScale, duration).SetEase(ease));
+            if (tweenRotation)
+                sequence.Join(rect.DOLocalRotate(new Vector3(0f, 0f, toRotationZ), duration, RotateMode.Fast).SetEase(ease));
 
             return sequence.ToUniTask(TweenCancelBehaviour.CompleteAndCancelAwait, ct);
         }
@@ -52,12 +59,14 @@ namespace Core.Module.Cutscene
             var rect = image.rectTransform;
             if (tweenPosition) rect.anchoredPosition = toPosition;
             if (tweenScale) rect.localScale = toScale;
+            if (tweenRotation) rect.localRotation = Quaternion.Euler(0f, 0f, toRotationZ);
         }
 
         private void ApplyStart(RectTransform rect)
         {
             if (tweenPosition) rect.anchoredPosition = fromPosition;
             if (tweenScale) rect.localScale = fromScale;
+            if (tweenRotation) rect.localRotation = Quaternion.Euler(0f, 0f, fromRotationZ);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BrunoMikoski.UIManager;
 using UnityEngine;
 
 namespace Core.Module.Cutscene
@@ -6,6 +7,9 @@ namespace Core.Module.Cutscene
     [CreateAssetMenu(fileName = "CutsceneCatalog", menuName = "GDD/Cutscene/Cutscene Catalog")]
     public sealed class CutsceneCatalogSO : ScriptableObject
     {
+        [Tooltip("Window dùng để chiếu mọi cutscene. Chọn CutsceneWindow trong UIWindowCollection.")]
+        public UIWindowIndirectReference cutsceneWindow;
+
         public List<CutsceneSO> cutscenes = new List<CutsceneSO>();
 
         private Dictionary<string, CutsceneSO> _lookup;
