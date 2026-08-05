@@ -15,8 +15,8 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 05d6c6f35cb688243bae4c99263a6884
   m_SerializeEntries:
-  - m_GUID: 2b051b30267395f488668541f26a8ff8
-    m_Address: Assets/Module/Map/Prefabs/Buildings/Storage.prefab
+  - m_GUID: 9452e385f4d07d54bb7d1787cb989f3e
+    m_Address: Assets/Module/Map/Prefabs/Buildings/Inventory Warehouse.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

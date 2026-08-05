@@ -2,6 +2,7 @@ using MessagePipe;
 using System;
 using UnityEngine;
 using VContainer;
+using VContainer.Unity;
 
 namespace Core.Module.Map
 {
@@ -20,6 +21,7 @@ namespace Core.Module.Map
         private MaterialPropertyBlock _block;
         private IDisposable _subscriptions;
         private IMapObjectInstanceRegistry _instanceRegistry;
+        private IObjectResolver _resolver;
         private bool _showGridCursor;
 
         #region DI - Constructor
@@ -29,9 +31,11 @@ namespace Core.Module.Map
             ISubscriber<MapPreviewMovedPayload> moveSub,
             ISubscriber<MapFurnitureAddedPayload> addedSub,
             ISubscriber<MapPlacementStoppedPayload> stopSub,
-            IMapObjectInstanceRegistry instanceRegistry)
+            IMapObjectInstanceRegistry instanceRegistry,
+            IObjectResolver resolver)
         {
             _instanceRegistry = instanceRegistry;
+            _resolver = resolver;
             var bag = DisposableBag.CreateBuilder();
             startSub.Subscribe(OnStarted).AddTo(bag);
             moveSub.Subscribe(OnMoved).AddTo(bag);
@@ -95,7 +99,10 @@ namespace Core.Module.Map
 
         private void OnAdded(MapFurnitureAddedPayload p)
         {
-            var go = Instantiate(p.Prefab, _spawnRoot);
+            // Runtime map objects may contain injected behaviours (for example a
+            // WindowOpenTrigger), so real placements must be created by VContainer.
+            // Preview ghosts intentionally continue using Unity Instantiate.
+            var go = _resolver.Instantiate(p.Prefab, _spawnRoot);
             go.transform.position = p.SnappedWorld;
             go.transform.localScale *= p.UniformScale;
             if (p.RotationMode == MapObjectRotationMode.MatchCameraRotation)

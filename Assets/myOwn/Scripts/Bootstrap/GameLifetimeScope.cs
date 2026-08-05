@@ -1,3 +1,4 @@
+using BrunoMikoski.UIManager;
 using Core.Module.Cutscene;
 using Core.Module.Map;
 using Core.Module.Farm;
@@ -33,6 +34,7 @@ namespace MyOwn.ServiceHarness
             // Scene-scoped components only; global brokers are inherited from RootLifetimeScope.
             // FarmDatabaseSO + QuestCatalogSO are enqueued by MapSceneBootstrap right before Build() is called.
             builder.RegisterComponentInHierarchy<CameraPanZoom>();
+            builder.RegisterComponentInHierarchy<WindowsManager>();
 
             builder.RegisterMapSceneComponents()
                    .RegisterFarmGameplay()
