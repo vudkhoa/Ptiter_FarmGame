@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
+using Shared.Utils;
 
 namespace MyOwn.ServiceHarness
 {
@@ -86,7 +87,7 @@ namespace MyOwn.ServiceHarness
                 typeof(CanvasRenderer),
                 typeof(Image),
                 typeof(Button),
-                typeof(QuestHudLauncher));
+                typeof(WindowOpenTrigger));
             RectTransform rect = (RectTransform)launcherObject.transform;
             rect.SetParent(_launcherObject.transform, false);
             rect.anchorMin = rect.anchorMax = new Vector2(1f, 1f);
@@ -111,9 +112,9 @@ namespace MyOwn.ServiceHarness
             label.alignment = TextAlignmentOptions.Center;
             label.color = Color.white;
 
-            QuestHudLauncher launcher =
-                launcherObject.GetComponent<QuestHudLauncher>();
-            launcher.Configure(button, manager, questWindow, _resolver);
+            WindowOpenTrigger launcher =
+                launcherObject.GetComponent<WindowOpenTrigger>();
+            launcher.Configure(manager, questWindow, button, _resolver);
             yield return null;
             Canvas.ForceUpdateCanvases();
             Debug.Log(

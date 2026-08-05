@@ -15,23 +15,43 @@ MonoBehaviour:
   m_GroupName: CutScene
   m_GUID: e132add79c9be4343834c59a5f6e4cc7
   m_SerializeEntries:
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42001
+    m_Address: frame_01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42002
+    m_Address: frame_02
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42003
+    m_Address: frame_03
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42004
+    m_Address: frame_04
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42005
+    m_Address: frame_05
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42006
+    m_Address: frame_06
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5bd7c29dcf22c5b4186c46bae92c194d
     m_Address: NewCutscene
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5c07755389dc2ad42b09c26b2a27648c
-    m_Address: ShowImageTask
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 99eb72c719f02eb49813d61f0d43ca0d
     m_Address: img_test
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: af83ea12edb649a44b354432d9e7b24e
-    m_Address: NewCutsceneStep
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

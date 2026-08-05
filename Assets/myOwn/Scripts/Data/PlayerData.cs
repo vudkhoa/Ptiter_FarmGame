@@ -18,7 +18,11 @@ namespace MyOwn.ServiceHarness
         public long LastSaveUtcTicks;
 
         public int Coins = 1000;
-        public List<InventoryEntry> Inventory = new List<InventoryEntry>();
+        public List<InventoryEntry> Inventory = new List<InventoryEntry>
+        {
+            // Starter item used by the Storage UI mock-up.
+            new InventoryEntry("bonsai", 6)
+        };
         public List<FarmSlotSaveData> FarmSlots = new List<FarmSlotSaveData>();
         public List<MapPlacementSaveData> MapPlacements = new List<MapPlacementSaveData>();
         public DailyQuestSaveData DailyQuest;

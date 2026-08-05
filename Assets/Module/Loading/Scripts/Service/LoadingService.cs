@@ -64,7 +64,7 @@ namespace Core.Module.Loading
 
         public async UniTask<T> LoadTrackerAsync<T>(AssetReferenceT<T> reference) where T : UnityEngine.Object
         {
-            AsyncOperationHandle<T> handle = reference.LoadAssetAsync();
+            AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(reference.RuntimeKey);
             _handles.Add(handle);
             return await handle.ToUniTask();
         }
