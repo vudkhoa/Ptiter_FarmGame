@@ -82,6 +82,14 @@ namespace MyOwn.ServiceHarness
             data.GrantedQuestRewardTransactions ??=
                 new System.Collections.Generic.List<string>();
 
+            if (data.SaveVersion < 3)
+            {
+                bool hasBonsai = data.Inventory.Exists(
+                    entry => entry.itemId == "bonsai");
+                if (!hasBonsai)
+                    data.Inventory.Add(new InventoryEntry("bonsai", 6));
+            }
+
             if (data.SaveVersion < CURRENT_SAVE_VERSION)
                 data.SaveVersion = CURRENT_SAVE_VERSION;
         }

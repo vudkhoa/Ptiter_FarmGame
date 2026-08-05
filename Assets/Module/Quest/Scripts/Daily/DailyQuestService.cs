@@ -16,14 +16,10 @@ namespace Core.Module.Quest
             TimeSpan.FromSeconds(2),
             TimeSpan.FromSeconds(5)
         };
-        private static readonly TimeSpan ServerTimeWaitTimeout =
-            TimeSpan.FromSeconds(8);
-
         private readonly QuestCatalogSO _catalog;
         private readonly IQuestService _questService;
         private readonly IDailyQuestRepository _repository;
         private readonly IQuestRewardService _rewardService;
-        private readonly IServerTimeProvider _timeProvider;
         private readonly IPublisher<DailyQuestStateChangedPayload> _statePublisher;
         private readonly IPublisher<QuestRewardGrantedPayload> _rewardPublisher;
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
@@ -42,11 +38,9 @@ namespace Core.Module.Quest
             IQuestService questService,
             IDailyQuestRepository repository,
             IQuestRewardService rewardService,
-            IServerTimeProvider timeProvider,
             ISubscriber<QuestProgressChangedPayload> progressSubscriber,
             ISubscriber<QuestCompletedPayload> completedSubscriber,
             ISubscriber<ClockTickPayload> tickSubscriber,
-            ISubscriber<ServerTimeSyncedPayload> syncedSubscriber,
             IPublisher<DailyQuestStateChangedPayload> statePublisher,
             IPublisher<QuestRewardGrantedPayload> rewardPublisher)
         {
@@ -54,15 +48,12 @@ namespace Core.Module.Quest
             _questService = questService;
             _repository = repository;
             _rewardService = rewardService;
-            _timeProvider = timeProvider;
             _statePublisher = statePublisher;
             _rewardPublisher = rewardPublisher;
 
             _subscriptions.Add(progressSubscriber.Subscribe(OnQuestProgressChanged));
             _subscriptions.Add(completedSubscriber.Subscribe(OnQuestCompleted));
             _subscriptions.Add(tickSubscriber.Subscribe(OnClockTick));
-            _subscriptions.Add(syncedSubscriber.Subscribe(_ =>
-                EnsureInitializedAsync(_lifetimeCts.Token).Forget()));
         }
 
         public async UniTask EnsureInitializedAsync(CancellationToken cancellationToken = default)
@@ -72,22 +63,6 @@ namespace Core.Module.Quest
             try
             {
                 await _repository.WaitUntilLoadedAsync(cancellationToken);
-                DateTime timeWaitDeadline =
-                    DateTime.UtcNow + ServerTimeWaitTimeout;
-                while (!_timeProvider.IsSynced &&
-                       DateTime.UtcNow < timeWaitDeadline)
-                {
-                    await UniTask.Delay(
-                        TimeSpan.FromMilliseconds(250),
-                        cancellationToken: cancellationToken);
-                }
-                if (!_timeProvider.IsSynced)
-                {
-                    Debug.LogWarning(
-                        "[DailyQuest] Server time is unavailable; " +
-                        "using the current UTC clock for this session.");
-                }
-
                 DailyQuestScheduleSO schedule = _catalog != null ? _catalog.dailySchedule : null;
                 if (schedule == null)
                 {
@@ -95,7 +70,7 @@ namespace Core.Module.Quest
                     return;
                 }
 
-                DateTime now = _timeProvider.UtcNow;
+                DateTime now = DateTime.UtcNow;
                 string currentDay = schedule.GetDayKey(now);
                 DailyQuestSaveData saved = _repository.LoadDailyQuest();
                 if (saved == null ||
@@ -137,9 +112,7 @@ namespace Core.Module.Quest
                 return new DailyQuestViewState
                 {
                     IsReady = false,
-                    LockedReason = _timeProvider.IsSynced
-                        ? "Daily quests are loading..."
-                        : "Synchronizing server time...",
+                    LockedReason = "Daily quests are loading...",
                     Tasks = Array.Empty<DailyQuestTaskViewData>(),
                     Milestones = Array.Empty<DailyMilestoneViewData>()
                 };
@@ -215,8 +188,8 @@ namespace Core.Module.Quest
                 IsReady = true,
                 DayKey = _state.dayKey,
                 TotalPoints = totalPoints,
-                TimeUntilReset = MaxZero(schedule.GetNextResetUtc(_timeProvider.UtcNow) -
-                                         _timeProvider.UtcNow),
+                TimeUntilReset = MaxZero(schedule.GetNextResetUtc(DateTime.UtcNow) -
+                                         DateTime.UtcNow),
                 Tasks = taskViews,
                 Milestones = milestoneViews
             };
@@ -346,7 +319,7 @@ namespace Core.Module.Quest
         {
             if (!IsReady || _resetting) return;
             DailyQuestScheduleSO schedule = _catalog.dailySchedule;
-            if (schedule.GetDayKey(payload.UtcNow) != _state.dayKey)
+            if (schedule.GetDayKey(DateTime.UtcNow) != _state.dayKey)
                 ResetForNewDayAsync().Forget();
             else
                 PublishStateChanged();
@@ -363,7 +336,7 @@ namespace Core.Module.Quest
                 _questService.DeactivateQuests(runtimeIds);
 
                 DailyQuestSaveData next = BuildNewDay(
-                    _catalog.dailySchedule, _timeProvider.UtcNow);
+                    _catalog.dailySchedule, DateTime.UtcNow);
                 if (next == null) return;
                 _state = next;
                 _pendingTransactions.Clear();
