@@ -46,6 +46,10 @@ namespace Core.Module.Storage.View
         private InventoryCategory _category = InventoryCategory.All;
         private InventoryItemDefinition _selected;
         private int _pageIndex;
+        private InventoryTabMotion _allTabMotion;
+        private InventoryTabMotion _farmTabMotion;
+        private InventoryTabMotion _decorationTabMotion;
+        private bool _tabMotionInitialized;
         private bool _constructed;
 
         [Inject]
@@ -66,6 +70,8 @@ namespace Core.Module.Storage.View
             _pageIndex = 0;
             _selected = null;
             RegisterButtons();
+            EnsureTabMotionInitialized();
+            UpdateTabMotion(false);
             Render();
         }
 
@@ -101,7 +107,58 @@ namespace Core.Module.Storage.View
             _category = category;
             _pageIndex = 0;
             _selected = null;
+            UpdateTabMotion(true);
             Render();
+        }
+
+        private void EnsureTabMotionInitialized()
+        {
+            if (_tabMotionInitialized ||
+                _allTab == null ||
+                _farmTab == null ||
+                _decorationTab == null)
+                return;
+
+            RectTransform allRect = _allTab.transform as RectTransform;
+            RectTransform farmRect = _farmTab.transform as RectTransform;
+            if (allRect == null || farmRect == null) return;
+
+            float expandedX = allRect.anchoredPosition.x;
+            float collapsedX = farmRect.anchoredPosition.x;
+
+            _allTabMotion = GetOrAddTabMotion(_allTab);
+            _farmTabMotion = GetOrAddTabMotion(_farmTab);
+            _decorationTabMotion = GetOrAddTabMotion(_decorationTab);
+
+            _allTabMotion.Initialize(
+                expandedX, collapsedX, 0.15f, DG.Tweening.Ease.OutQuad);
+            _farmTabMotion.Initialize(
+                expandedX, collapsedX, 0.15f, DG.Tweening.Ease.OutQuad);
+            _decorationTabMotion.Initialize(
+                expandedX, collapsedX, 0.15f, DG.Tweening.Ease.OutQuad);
+            _tabMotionInitialized = true;
+        }
+
+        private static InventoryTabMotion GetOrAddTabMotion(Button button)
+        {
+            InventoryTabMotion motion =
+                button.GetComponent<InventoryTabMotion>();
+            return motion != null
+                ? motion
+                : button.gameObject.AddComponent<InventoryTabMotion>();
+        }
+
+        private void UpdateTabMotion(bool animate)
+        {
+            EnsureTabMotionInitialized();
+            if (!_tabMotionInitialized) return;
+
+            _allTabMotion.SetActive(
+                _category == InventoryCategory.All, animate);
+            _farmTabMotion.SetActive(
+                _category == InventoryCategory.FarmProduce, animate);
+            _decorationTabMotion.SetActive(
+                _category == InventoryCategory.Decoration, animate);
         }
 
         private void PreviousPage()
