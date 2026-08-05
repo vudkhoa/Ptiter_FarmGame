@@ -74,6 +74,8 @@ namespace MyOwn.ServiceHarness
             data.Inventory ??= new System.Collections.Generic.List<InventoryEntry>();
             data.FarmSlots ??=
                 new System.Collections.Generic.List<Core.Module.Farm.FarmSlotSaveData>();
+            data.MapPlacements ??=
+                new System.Collections.Generic.List<Core.Module.Map.MapPlacementSaveData>();
             data.PendingQuestRewards ??=
                 new System.Collections.Generic.List<
                     Core.Module.Quest.PendingQuestRewardSaveData>();

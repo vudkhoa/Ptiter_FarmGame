@@ -17,6 +17,7 @@ namespace Core.Module.Input
         {
             builder.RegisterMessageBroker<PointerScreenPayload>(options);
             builder.RegisterMessageBroker<PointerButtonDownPayload>(options);
+            builder.RegisterMessageBroker<PointerButtonUpPayload>(options);
             builder.RegisterMessageBroker<KeyDownPayload>(options);
             return builder;
         }

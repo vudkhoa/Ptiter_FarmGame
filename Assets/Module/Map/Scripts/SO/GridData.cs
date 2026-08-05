@@ -4,6 +4,25 @@ using UnityEngine;
 
 namespace Core.Module.Map
 {
+    [Serializable]
+    public class MapPlacementSaveData
+    {
+        public int objectId;
+        public int cellX;
+        public int cellY;
+        public int cellZ;
+    }
+
+    /// <summary>
+    /// Save data owned by the application layer and consumed by the scene-scoped map.
+    /// Keeping the list instance shared lets map mutations be included in the next player save.
+    /// </summary>
+    public interface IMapSaveSource
+    {
+        List<MapPlacementSaveData> MapPlacements { get; }
+        void SaveMap();
+    }
+
     public class GridData
     {
         private readonly Dictionary<Vector3Int, PlacementData> _placementObjects = new();

@@ -19,6 +19,7 @@ namespace Core.Module.Map
         private Material _previewMatInstance;
         private MaterialPropertyBlock _block;
         private IDisposable _subscriptions;
+        private IMapObjectInstanceRegistry _instanceRegistry;
 
         #region DI - Constructor
         [Inject]
@@ -26,8 +27,10 @@ namespace Core.Module.Map
             ISubscriber<MapPlacementStartedPayload> startSub,
             ISubscriber<MapPreviewMovedPayload> moveSub,
             ISubscriber<MapFurnitureAddedPayload> addedSub,
-            ISubscriber<MapPlacementStoppedPayload> stopSub)
+            ISubscriber<MapPlacementStoppedPayload> stopSub,
+            IMapObjectInstanceRegistry instanceRegistry)
         {
+            _instanceRegistry = instanceRegistry;
             var bag = DisposableBag.CreateBuilder();
             startSub.Subscribe(OnStarted).AddTo(bag);
             moveSub.Subscribe(OnMoved).AddTo(bag);
@@ -58,7 +61,8 @@ namespace Core.Module.Map
         private void OnStarted(MapPlacementStartedPayload p)
         {
             _ghost = Instantiate(p.Prefab);
-            if (p.RotationMode == MapObjectRotationMode.FaceCamera) FaceCamera(_ghost.transform);
+            if (p.RotationMode == MapObjectRotationMode.MatchCameraRotation)
+                MatchCameraRotation(_ghost.transform);
             SwapToPreviewMaterial(_ghost);
             _cursor.transform.localScale = new Vector3(p.Size.x, 1, p.Size.y);
             _cursor.Renderer.GetPropertyBlock(_block);
@@ -81,7 +85,9 @@ namespace Core.Module.Map
         {
             var go = Instantiate(p.Prefab, _spawnRoot);
             go.transform.position = p.SnappedWorld;
-            if (p.RotationMode == MapObjectRotationMode.FaceCamera) FaceCamera(go.transform);
+            if (p.RotationMode == MapObjectRotationMode.MatchCameraRotation)
+                MatchCameraRotation(go.transform);
+            _instanceRegistry.Register(p.Cell, go);
         }
 
         private void OnStopped(MapPlacementStoppedPayload _)
@@ -101,15 +107,10 @@ namespace Core.Module.Map
             }
         }
 
-        private void FaceCamera(Transform target)
+        private void MatchCameraRotation(Transform target)
         {
-            if (_camera == null) return;
-
-            var direction = Vector3.ProjectOnPlane(-_camera.transform.forward, Vector3.up);
-            if (direction.sqrMagnitude > Mathf.Epsilon)
-            {
-                target.rotation = Quaternion.LookRotation(direction, Vector3.up);
-            }
+            if (_camera == null || target == null) return;
+            target.rotation = _camera.transform.rotation;
         }
         #endregion
     }

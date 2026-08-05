@@ -13,32 +13,11 @@ MonoBehaviour:
   m_Name: Objects
   m_EditorClassIdentifier: Map::ObjectDatabaseSO
   Objects:
-  - name: Bench
-    ID: 0
-    Size: {x: 1, y: 1}
-    Kind: 0
-    RotationMode: 1
-    Prefab:
-      m_AssetGUID: dd00099fd1c1f2c4aa3ca0d60fcbddb0
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
-  - name: Bed Single
-    ID: 1
-    Size: {x: 1, y: 2}
-    Kind: 0
-    RotationMode: 1
-    Prefab:
-      m_AssetGUID: 5a47464c4919db4478f4400bacf375cb
-      m_SubObjectName: 
-      m_SubObjectType: 
-      m_SubObjectGUID: 
-      m_EditorAssetChanged: 0
   - name: Bonsai
     ID: 2
     Size: {x: 1, y: 1}
     Kind: 0
+    PlacementInputMode: 0
     RotationMode: 1
     Prefab:
       m_AssetGUID: ae52bbda48f03314fbe0c9838ac8a276
@@ -50,9 +29,22 @@ MonoBehaviour:
     ID: 101
     Size: {x: 1, y: 1}
     Kind: 1
+    PlacementInputMode: 1
     RotationMode: 0
     Prefab:
       m_AssetGUID: 5ffff12187c8c9c4089a03de8f4fc2c4
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - name: Pig Barn
+    ID: 102
+    Size: {x: 3, y: 3}
+    Kind: 2
+    PlacementInputMode: 0
+    RotationMode: 1
+    Prefab:
+      m_AssetGUID: a3f534c1c5f309249aeff6196ffa60f8
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 

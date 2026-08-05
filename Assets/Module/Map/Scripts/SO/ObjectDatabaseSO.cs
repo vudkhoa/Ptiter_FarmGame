@@ -15,7 +15,13 @@ namespace Core.Module.Map
     public enum MapObjectRotationMode
     {
         KeepPrefabRotation = 0,
-        FaceCamera = 1
+        MatchCameraRotation = 1
+    }
+
+    public enum PlacementInputMode
+    {
+        Single = 0,
+        Continuous = 1
     }
 
     [CreateAssetMenu(fileName = "Objects", menuName = "Data/Map/Objects")]
@@ -67,6 +73,7 @@ namespace Core.Module.Map
         public int ID;
         public Vector2Int Size;
         public MapObjectKind Kind;
+        public PlacementInputMode PlacementInputMode;
         public MapObjectRotationMode RotationMode;
         public AssetReferenceGameObject Prefab;
     }

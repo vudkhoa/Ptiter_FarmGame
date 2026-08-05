@@ -9,6 +9,7 @@ namespace Core.Module.Map
         int ChangeCount { get; }
         int CurrentObjectId { get; }
         bool HasActivePlacement { get; }
+        PlacementInputMode CurrentPlacementInputMode { get; }
 
         // State machine
         void StartPlacement(int objectId);
@@ -17,6 +18,9 @@ namespace Core.Module.Map
         // World-only API
         void UpdatePreview(Vector3 worldHit);
         bool AddFurniture(Vector3 worldHit);
+
+        // Legacy-save compatibility: rebuild a missing Soil/Barn underneath a persisted farm slot.
+        bool EnsureFarmPlacement(Vector3Int originCell, MapObjectKind kind);
 
         // Grid queries & coordinate conversion
         bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data);

@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Core.Module.Map;
+using VContainer;
 
 namespace Core.Common
 {
@@ -13,6 +15,7 @@ namespace Core.Common
     {
         [Header("Camera Reference")]
         private Camera _camera;
+        private IMapService _mapService;
 
         [Header("Pan (Di chuyển Map)")]
         [Tooltip("Phím chuột dùng để di chuyển: 0 = Trái, 1 = Phải, 2 = Giữa")]
@@ -43,6 +46,12 @@ namespace Core.Common
 
         // Lưu thông số touch cho mobile
         private Vector2 _touchStartPos;
+
+        [Inject]
+        public void Construct(IMapService mapService)
+        {
+            _mapService = mapService;
+        }
 
         private void Awake()
         {
@@ -130,6 +139,14 @@ namespace Core.Common
         /// </summary>
         private void HandlePan()
         {
+            // Khi dang placement, mot ngon tay duoc danh rieng cho thao tac dat vat.
+            // Khong pan camera de tranh cung mot gesture vua dat vat vua keo map tren mobile.
+            if (_mapService != null && _mapService.HasActivePlacement)
+            {
+                _isDragging = false;
+                return;
+            }
+
             // --- ĐIỀU KHIỂN BẰNG TOUCH (MOBILE) ---
             if (Input.touchCount == 1)
             {

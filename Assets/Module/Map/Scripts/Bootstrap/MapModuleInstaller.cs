@@ -41,12 +41,17 @@ namespace Core.Module.Map
         /// <summary>Component sống theo scene. Gọi ở GAME scope.</summary>
         public static IContainerBuilder RegisterMapSceneComponents(this IContainerBuilder builder)
         {
+            builder.Register<MapObjectInstanceRegistry>(Lifetime.Scoped)
+                   .AsImplementedInterfaces()
+                   .AsSelf();
+
             builder.RegisterComponentInHierarchy<MapService>()
                    .AsImplementedInterfaces()
                    .AsSelf();
 
             builder.RegisterComponentInHierarchy<MapPointerBridge>();
             builder.RegisterComponentInHierarchy<MapPreviewView>();
+            builder.RegisterComponentInHierarchy<MapPlacementCancelButton>();
 
             return builder;
         }

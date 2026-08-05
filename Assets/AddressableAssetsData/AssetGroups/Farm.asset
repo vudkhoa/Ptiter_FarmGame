@@ -30,6 +30,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3fc365db15ba8c34fb9b9f003857588a
+    m_Address: a_pig
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c30bb595dab6e3142b47365b4173b001
     m_Address: FarmDatabase
     m_ReadOnly: 0

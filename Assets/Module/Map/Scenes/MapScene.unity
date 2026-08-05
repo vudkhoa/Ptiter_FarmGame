@@ -401,6 +401,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MapSceneBoostrap
   _scope: {fileID: 123408506}
   _gameplayRoot: {fileID: 1870457101}
+--- !u!1 &177328982
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 177328983}
+  m_Layer: 0
+  m_Name: CutsceneAutoPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &177328983
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 177328982}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1586907557}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &480779547
 GameObject:
   m_ObjectHideFlags: 0
@@ -955,7 +986,6 @@ GameObject:
   - component: {fileID: 945751118}
   - component: {fileID: 945751119}
   - component: {fileID: 945751121}
-  - component: {fileID: 945751120}
   m_Layer: 0
   m_Name: FarmInput
   m_TagString: Untagged
@@ -996,18 +1026,6 @@ MonoBehaviour:
     m_Bits: 8
   _maxRayDistance: 1000
   _useMathPlane: 1
---- !u!114 &945751120
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 945751117}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca7fa3d3ed5539840a4c8258ee552e40, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmTestHelper
 --- !u!114 &945751121
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4940,19 +4958,38 @@ Grid:
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
---- !u!134 &1584879351
-PhysicsMaterial:
+--- !u!1 &1586907556
+GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: 
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1586907557}
+  m_Layer: 0
+  m_Name: CutScene
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1586907557
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1586907556}
   serializedVersion: 2
-  m_DynamicFriction: 0.6
-  m_StaticFriction: 0.6
-  m_Bounciness: 0
-  m_FrictionCombine: 0
-  m_BounceCombine: 0
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 177328983}
+  m_Father: {fileID: 2123314326}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1606044948
 GameObject:
   m_ObjectHideFlags: 0
@@ -14752,6 +14789,7 @@ Transform:
   m_Children:
   - {fileID: 677694857}
   - {fileID: 2135663382}
+  - {fileID: 1586907557}
   m_Father: {fileID: 1870457102}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2135663381
