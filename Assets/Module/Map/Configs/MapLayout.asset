@@ -66,25 +66,25 @@ MonoBehaviour:
     ObjectId: 3
     PositionMode: 1
     OriginCell: {x: 0, y: 0, z: 0}
-    WorldPosition: {x: 47.779926, y: 0, z: 32.570393}
+    WorldPosition: {x: 47.680035, y: 0, z: 31.853497}
     UniformScale: 1
   - InstanceId: 3e6f9866883045c19999dd5961888a06
     ObjectId: 4
     PositionMode: 1
     OriginCell: {x: 0, y: 0, z: 0}
-    WorldPosition: {x: 47.857018, y: 0, z: 33.34823}
+    WorldPosition: {x: 47.861195, y: 0, z: 32.83092}
     UniformScale: 1
   - InstanceId: 90f630ea779842788a512ea52e29a820
     ObjectId: 5
     PositionMode: 1
     OriginCell: {x: 0, y: 0, z: 0}
-    WorldPosition: {x: 48.27065, y: 0, z: 32.631184}
+    WorldPosition: {x: 48.483387, y: 0, z: 31.988087}
     UniformScale: 1
   - InstanceId: f91cc85ba0bc4858959b506c3e785b71
     ObjectId: 5
     PositionMode: 1
     OriginCell: {x: 0, y: 0, z: 0}
-    WorldPosition: {x: 53.480785, y: 0, z: 24.96052}
+    WorldPosition: {x: 52.849037, y: 0, z: 24.918983}
     UniformScale: 1
   - InstanceId: 14712aee8e07476b8e5fb3ea21890567
     ObjectId: 3
@@ -331,4 +331,10 @@ MonoBehaviour:
     PositionMode: 1
     OriginCell: {x: 0, y: 0, z: 0}
     WorldPosition: {x: 61.555576, y: 0, z: 31.170078}
+    UniformScale: 1
+  - InstanceId: 2e7be5af520a4b01b9b1473d0a209847
+    ObjectId: 6
+    PositionMode: 0
+    OriginCell: {x: 10, y: 0, z: -10}
+    WorldPosition: {x: 0, y: 0, z: 0}
     UniformScale: 1

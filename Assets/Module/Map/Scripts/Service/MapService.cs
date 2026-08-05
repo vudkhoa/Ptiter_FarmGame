@@ -180,14 +180,15 @@ namespace Core.Module.Map
                 cell = WorldToCell(position);
                 if ((position - _lastPreviewWorld).sqrMagnitude < 0.0001f) return;
                 _lastPreviewWorld = position;
-                valid = IsPlacementSurfaceValid(cell, Vector2Int.one);
+                valid = CanPlaceFreeObjectAt(data, position)
+                    && IsPlacementSurfaceValid(cell, Vector2Int.one);
             }
             else
             {
                 if (cell == _lastCell) return;
                 _lastCell = cell;
                 position = CellToWorld(cell);
-                valid = _grid.CanPlaceObjectAt(cell, data.Size)
+                valid = CanPlaceGridObjectAt(data, cell)
                     && IsPlacementSurfaceValid(cell, data.Size);
             }
 
@@ -214,13 +215,14 @@ namespace Core.Module.Map
             {
                 placedWorld = GetFreePosition(data, worldHit);
                 cell = WorldToCell(placedWorld);
-                if (!IsPlacementSurfaceValid(cell, Vector2Int.one) ||
+                if (!CanPlaceFreeObjectAt(data, placedWorld) ||
+                    !IsPlacementSurfaceValid(cell, Vector2Int.one) ||
                     !PlaceFreeObjectAt(data, prefab, placedWorld, instanceId, 1f)) return false;
             }
             else
             {
                 placedWorld = CellToWorld(cell);
-                if (!_grid.CanPlaceObjectAt(cell, data.Size) ||
+                if (!CanPlaceGridObjectAt(data, cell) ||
                     !IsPlacementSurfaceValid(cell, data.Size) ||
                     !PlaceGridObjectAt(data, prefab, cell, instanceId, 1f)) return false;
             }
@@ -262,7 +264,7 @@ namespace Core.Module.Map
 
             if (!_database.TryGetFirstByKind(kind, out ObjectData data) ||
                 !_catalog.TryGet(data.ID, out var prefab) ||
-                !_grid.CanPlaceObjectAt(originCell, data.Size))
+                !CanPlaceGridObjectAt(data, originCell))
             {
                 Debug.LogWarning($"[MapService] Could not rebuild missing {kind} at {originCell}.");
                 return false;
@@ -350,6 +352,7 @@ namespace Core.Module.Map
                     !_instanceRegistry.TryGet(_selectedInstanceId, out GameObject instance)) return false;
 
                 Vector3 position = GetFreePosition(data, worldHit);
+                if (!CanPlaceFreeObjectAt(data, position)) return false;
                 free.WorldPosition = position;
                 _freePlacements[_selectedInstanceId] = free;
                 instance.transform.position = position;
@@ -361,7 +364,7 @@ namespace Core.Module.Map
             if (nextOrigin == _selectedGridOrigin) return true;
             if (!_grid.RemoveObjectAt(_selectedGridOrigin, out PlacementData removed)) return false;
             if (!_database.TryGetById(removed.ID, out ObjectData gridData, out _) ||
-                !_grid.CanPlaceObjectAt(nextOrigin, gridData.Size))
+                !CanPlaceGridObjectAt(gridData, nextOrigin))
             {
                 RestoreRemovedGridPlacement(removed, _selectedGridOrigin);
                 return false;
@@ -490,7 +493,7 @@ namespace Core.Module.Map
             string instanceId,
             float uniformScale)
         {
-            if (!_grid.CanPlaceObjectAt(cell, data.Size)) return false;
+            if (!CanPlaceGridObjectAt(data, cell)) return false;
 
             _grid.AddObjectAt(cell, data.Size, data.ID, data.Kind, _changeCount, instanceId, uniformScale);
             _changeCount++;
@@ -514,7 +517,9 @@ namespace Core.Module.Map
             string instanceId,
             float uniformScale)
         {
-            if (string.IsNullOrEmpty(instanceId) || _freePlacements.ContainsKey(instanceId)) return false;
+            if (string.IsNullOrEmpty(instanceId) ||
+                _freePlacements.ContainsKey(instanceId) ||
+                !CanPlaceFreeObjectAt(data, worldPosition)) return false;
 
             _freePlacements.Add(instanceId, new FreePlacementRecord(data.ID, worldPosition, uniformScale));
             _changeCount++;
@@ -529,6 +534,100 @@ namespace Core.Module.Map
                 _changeCount,
                 data.RotationMode));
             return true;
+        }
+
+        private bool CanPlaceGridObjectAt(ObjectData data, Vector3Int originCell)
+        {
+            Vector2Int size = NormalizeSize(data.Size);
+            // Grid objects remain exclusive with other Grid objects. Layer policies control
+            // Grid-vs-Free overlap without coupling collision rules to PositionMode.
+            if (!_grid.CanPlaceObjectAt(originCell, size) ||
+                !IsAllowedOnSurfaces(data, originCell, size)) return false;
+
+            foreach (FreePlacementRecord free in _freePlacements.Values)
+            {
+                if (!_database.TryGetById(free.ObjectId, out ObjectData freeData, out _) ||
+                    !DoLayersConflict(data, freeData)) continue;
+
+                Vector3Int freeOrigin = WorldToCell(free.WorldPosition);
+                if (DoGridFootprintsOverlap(originCell, size, freeOrigin, NormalizeSize(freeData.Size)))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool CanPlaceFreeObjectAt(ObjectData data, Vector3 worldPosition)
+        {
+            Vector3Int originCell = WorldToCell(worldPosition);
+            Vector2Int size = NormalizeSize(data.Size);
+            if (!IsAllowedOnSurfaces(data, originCell, size)) return false;
+
+            for (int x = 0; x < size.x; x++)
+            {
+                for (int z = 0; z < size.y; z++)
+                {
+                    Vector3Int cell = originCell + new Vector3Int(x, 0, z);
+                    if (!_grid.TryGetPlacementAt(cell, out PlacementData existing)) continue;
+                    if (!_database.TryGetById(existing.ID, out ObjectData existingData, out _) ||
+                        DoLayersConflict(data, existingData)) return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool IsAllowedOnSurfaces(ObjectData data, Vector3Int originCell, Vector2Int size)
+        {
+            MapSurfaceType allowed = data.AllowedSurfaces == MapSurfaceType.None
+                ? MapSurfaceType.Any
+                : data.AllowedSurfaces;
+
+            for (int x = 0; x < size.x; x++)
+            {
+                for (int z = 0; z < size.y; z++)
+                {
+                    MapSurfaceType surface = GetSurfaceAt(originCell + new Vector3Int(x, 0, z));
+                    if ((allowed & surface) == 0) return false;
+                }
+            }
+
+            return true;
+        }
+
+        private MapSurfaceType GetSurfaceAt(Vector3Int cell)
+        {
+            if (_grid.TryGetPlacementAt(cell, out PlacementData placement) &&
+                _database.TryGetById(placement.ID, out ObjectData data, out _) &&
+                data.ProvidedSurface != MapSurfaceType.None)
+                return data.ProvidedSurface;
+
+            return MapSurfaceType.Land;
+        }
+
+        private static bool DoLayersConflict(ObjectData first, ObjectData second)
+        {
+            return (first.BlockedLayers & second.PlacementLayer) != 0 ||
+                   (second.BlockedLayers & first.PlacementLayer) != 0;
+        }
+
+        private static bool DoGridFootprintsOverlap(
+            Vector3Int firstOrigin,
+            Vector2Int firstSize,
+            Vector3Int secondOrigin,
+            Vector2Int secondSize)
+        {
+            firstSize = NormalizeSize(firstSize);
+            secondSize = NormalizeSize(secondSize);
+            return firstOrigin.x < secondOrigin.x + secondSize.x
+                && firstOrigin.x + firstSize.x > secondOrigin.x
+                && firstOrigin.z < secondOrigin.z + secondSize.y
+                && firstOrigin.z + firstSize.y > secondOrigin.z;
+        }
+
+        private static Vector2Int NormalizeSize(Vector2Int size)
+        {
+            return new Vector2Int(Mathf.Max(1, size.x), Mathf.Max(1, size.y));
         }
 
         private Vector3 GetFreePosition(ObjectData data, Vector3 worldHit)

@@ -479,7 +479,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 211446ef77144c55819ba25c1b4c794f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Map::Core.Module.Map.MapAuthoringController
-  _enableInEditor: 0
+  _enableInEditor: 1
   _layout: {fileID: 11400000, guid: 1358fca4cb12452b8fd68078732dc012, type: 2}
 --- !u!156049354 &576651264 stripped
 Grid:

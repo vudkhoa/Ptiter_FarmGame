@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d6f832f400f5344fa9a1d6a2236b1dc
+    m_Address: Assets/Module/Map/Prefabs/Props/Lake.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 94e74c8473c46084b95c06e08fedd847
     m_Address: Assets/Module/Map/Prefabs/Props/Banana Tree.prefab
     m_ReadOnly: 0
