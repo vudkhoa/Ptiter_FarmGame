@@ -649,12 +649,21 @@ namespace Core.Module.Quest.Editor
             Vector2 position,
             TMP_FontAsset font)
         {
+            // The selected artwork has a larger transparent canvas than the outline artwork.
+            // Compensate its rect and vertical center so both states keep identical visible bounds.
+            Vector2 visualPosition = selected
+                ? position + new Vector2(0f, -3.38f)
+                : position;
+            Vector2 visualSize = selected
+                ? new Vector2(433.25f, 111.7f)
+                : new Vector2(430f, 110f);
             GameObject visual = ImageObject(
                 name, parent,
                 Sprite(selected
                     ? "quest hàng ngày_nút1 1.png"
                     : "quest hàng ngày_nút 2.png"),
-                position, new Vector2(430, 106));
+                visualPosition, visualSize);
+            visual.GetComponent<Image>().preserveAspect = false;
             TextMeshProUGUI text = Text(
                 name + " Label", visual.transform, label,
                 Vector2.zero, new Vector2(390, 90), 30, font);
