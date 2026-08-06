@@ -57,7 +57,7 @@ namespace Core.Module.Farm
             if (_inputService.IsPointerOverUI()) return;
 
             // If map has active placement (decor/furniture building mode), do not trigger farming interactions
-            if (_mapService.HasActivePlacement) return;
+            if (_mapService.HasActivePlacement || _mapService.IsPlayerRemovalMode) return;
 
             Camera cam = _camera != null ? _camera : Camera.main;
             if (cam == null) return;

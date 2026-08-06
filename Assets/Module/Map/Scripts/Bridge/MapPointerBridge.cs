@@ -103,6 +103,13 @@ namespace Core.Module.Map
                 return;
             }
 
+            if (_map.IsPlayerRemovalMode)
+            {
+                if (TryRaycast(_lastScreen, out var removeWorld))
+                    _map.RemovePlayerObject(removeWorld);
+                return;
+            }
+
             if (!_map.HasActivePlacement) return;
 
             _isPrimaryPressed = true;

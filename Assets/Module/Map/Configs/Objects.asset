@@ -36,7 +36,7 @@ MonoBehaviour:
     Size: {x: 1, y: 1}
     Kind: 0
     PlacementInputMode: 0
-    PositionMode: 1
+    PositionMode: 0
     FreeSnapStep: 0.1
     PlacementLayer: 4
     BlockedLayers: 2

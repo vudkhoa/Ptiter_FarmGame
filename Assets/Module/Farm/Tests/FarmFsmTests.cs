@@ -5,6 +5,7 @@ using UnityEngine;
 using Core.Module.Time;
 using Core.Module.Farm;
 using Core.Module.Storage;
+using Core.Module.Map;
 using MessagePipe;
 
 namespace Core.Module.Farm.Tests
@@ -638,6 +639,52 @@ namespace Core.Module.Farm.Tests
 
             Assert.IsFalse(success);
             Assert.AreEqual(0f, slot.growthTimeSec);
+        }
+
+        #endregion
+
+        #region Map placement removal policy tests
+
+        [Test]
+        public void Test_RemovePolicy_AllowsAndCleansEmptySoilSlot()
+        {
+            var cell = new Vector3Int(4, 0, 6);
+            var savedSlots = new List<FarmSlotSaveData>
+            {
+                new FarmSlotSaveData
+                {
+                    cellX = cell.x,
+                    cellY = cell.y,
+                    cellZ = cell.z,
+                    entityId = null,
+                    state = FarmSlotState.Empty
+                }
+            };
+            var service = CreateFarmService(savedSlots);
+            var context = new MapPlacementRemovalContext(
+                "soil-instance", 101, MapObjectKind.Soil,
+                PlacementPositionMode.Grid, cell, Vector3.zero);
+
+            Assert.IsTrue(service.CanRemove(context));
+
+            service.OnRemoved(context);
+
+            Assert.IsNull(service.GetSlotAt(cell));
+            Assert.AreEqual(0, service.ActiveSlots.Count);
+            Assert.AreEqual(0, savedSlots.Count);
+        }
+
+        [Test]
+        public void Test_RemovePolicy_RejectsSoilWithActiveCrop()
+        {
+            var cell = new Vector3Int(4, 0, 6);
+            var service = CreateFarmService();
+            Assert.IsTrue(service.TryPlant(cell, "wheat"));
+            var context = new MapPlacementRemovalContext(
+                "soil-instance", 101, MapObjectKind.Soil,
+                PlacementPositionMode.Grid, cell, Vector3.zero);
+
+            Assert.IsFalse(service.CanRemove(context));
         }
 
         #endregion
