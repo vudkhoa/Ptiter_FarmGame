@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 333d33a7b8d0d184faade8f3cdb476b6, type: 3}
-  m_Name: BreadFrame5Task
+  m_Name: BreadFrame4Task
   m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.ShowImageTaskSO
-  taskName: Frame 5
+  taskName: Frame 4
   startDelay: 0.12
   sprite:
     m_AssetGUID: 3b7d1e94c5a04f28ab6d0e17c9f42001
@@ -22,10 +22,10 @@ MonoBehaviour:
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   slot: 1
-  imageId: frame5
+  imageId: frame4
   fadeDuration: 0.4
   ease: 6
   overrideLayout: 1
-  anchoredPosition: {x: 400, y: 120}
-  size: {x: 440, y: 300}
-  rotationZ: -7.44
+  anchoredPosition: {x: 565.8, y: -177.2}
+  size: {x: 597, y: 448}
+  rotationZ: 24.68

@@ -16,4 +16,8 @@ MonoBehaviour:
   description: 
   allowSkip: 0
   steps:
+  - {fileID: 11400000, guid: 98b0ad293fdccf44fa47c6e8c0e8b12a, type: 2}
+  - {fileID: 11400000, guid: c122054a73d2b5248b154c9ca4ac3248, type: 2}
+  - {fileID: 11400000, guid: 0b8bad365e3929f41b56deacedd88949, type: 2}
+  - {fileID: 11400000, guid: e45e68edc69aaea45aa68f302f2d9c71, type: 2}
   - {fileID: 11400000, guid: 3b7d1e94c5a04f28ab6d0e17c9f41010, type: 2}

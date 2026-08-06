@@ -20,6 +20,36 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0640042913d4e068b52f6c8418926c3
+    m_Address: bread_pig_bg
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 873a64b99f2146819cbe90969cf10fa7
+    m_Address: bread_pig_sleep
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4bad9673ad5b4102a7f42e959a3b4023
+    m_Address: bread_pig_hay
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28b08ffe569445e1856d01b5b643d759
+    m_Address: bread_pig_piglet
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5722f0c1d10c4e6ab24f25d5b5d5966d
+    m_Address: bread_pig_boy
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d86cbba5fb1043bc8a10f3109a1dfe18
+    m_Address: bread_pig_corner
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5bd7c29dcf22c5b4186c46bae92c194d
     m_Address: NewCutscene
     m_ReadOnly: 0

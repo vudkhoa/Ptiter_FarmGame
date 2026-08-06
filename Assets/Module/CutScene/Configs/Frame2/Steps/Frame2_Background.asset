@@ -10,12 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a5cdfba9485713849bf9b580dae8c779, type: 3}
-  m_Name: BreadStoryboardStep
+  m_Name: Frame2_Background
   m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.CutsceneStepSO
-  stepId: Storyboard
+  stepId: Frame2_Background
   runMode: 1
   tasks:
-  - {fileID: 11400000, guid: 3b7d1e94c5a04f28ab6d0e17c9f41003, type: 2}
-  - {fileID: 11400000, guid: 3b7d1e94c5a04f28ab6d0e17c9f41004, type: 2}
-  - {fileID: 11400000, guid: 3b7d1e94c5a04f28ab6d0e17c9f41005, type: 2}
-  - {fileID: 11400000, guid: f65bfc35c205dd04eb3798cee65ea84d, type: 2}
+  - {fileID: 11400000, guid: 3b7d1e94c5a04f28ab6d0e17c9f41002, type: 2}
+  - {fileID: 11400000, guid: 9dcaf2e7fce1412382f9bfaf22241737, type: 2}
