@@ -21,11 +21,15 @@ namespace Core.Module.Map
         [SerializeField] private float _maxRayDistance = 1000f;
         [SerializeField] private bool _useMathPlane = true;
 
+        [Header("Tap Gesture")]
+        [SerializeField, Min(1f)] private float _removalTapMaxMovementPixels = 20f;
+
         private IMapService _map;
         private IInputService _input;
         private MapAuthoringController _authoring;
         private Vector2 _lastScreen;
         private bool _isPrimaryPressed;
+        private PointerTapTracker _removalTapTracker;
         private IDisposable _subscriptions;
 
         #region DI - Constructor
@@ -53,6 +57,17 @@ namespace Core.Module.Map
         #endregion
 
         #region Unity LifeCycle
+        private void Awake()
+        {
+            _removalTapTracker = new PointerTapTracker(_removalTapMaxMovementPixels);
+        }
+
+        private void Update()
+        {
+            if (_input != null && _input.IsMultiTouchActive)
+                _removalTapTracker.Cancel();
+        }
+
         private void OnDestroy()
         {
             _subscriptions?.Dispose();
@@ -63,6 +78,12 @@ namespace Core.Module.Map
         private void OnScreen(PointerScreenPayload p)
         {
             _lastScreen = p.ScreenPosition;
+
+            if (_map.IsPlayerRemovalMode)
+            {
+                _removalTapTracker.Move(_lastScreen);
+                return;
+            }
 
             if (_authoring != null && _authoring.IsSelectMode && _isPrimaryPressed)
             {
@@ -105,8 +126,7 @@ namespace Core.Module.Map
 
             if (_map.IsPlayerRemovalMode)
             {
-                if (TryRaycast(_lastScreen, out var removeWorld))
-                    _map.RemovePlayerObject(removeWorld);
+                _removalTapTracker.Begin(_lastScreen);
                 return;
             }
 
@@ -123,6 +143,17 @@ namespace Core.Module.Map
         private void OnButtonUp(PointerButtonUpPayload p)
         {
             if (p.Button != 0) return;
+
+            if (_map.IsPlayerRemovalMode)
+            {
+                bool isRemovalTap = _removalTapTracker.Complete(_lastScreen);
+                if (isRemovalTap && !IsPointerBlocked()
+                    && TryRaycast(_lastScreen, out var removeWorld))
+                {
+                    _map.RemovePlayerObject(removeWorld);
+                }
+                return;
+            }
 
             bool wasPressed = _isPrimaryPressed;
             _isPrimaryPressed = false;

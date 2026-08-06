@@ -23,9 +23,7 @@ namespace Core.Module.Farm
         private IMapService _mapService;
         private IFarmService _farmService;
         private IPublisher<OpenFarmSelectorUIPayload> _openSelectorPub;
-        private Vector2 _tapStartScreen;
-        private bool _isTapTracking;
-        private bool _tapMovedTooFar;
+        private PointerTapTracker _tapTracker;
         private IDisposable _subscriptions;
 
         #region DI - Constructor
@@ -53,6 +51,17 @@ namespace Core.Module.Farm
         #endregion
 
         #region Unity LifeCycle
+        private void Awake()
+        {
+            _tapTracker = new PointerTapTracker(_tapMaxMovementPixels);
+        }
+
+        private void Update()
+        {
+            if (_inputService != null && _inputService.IsMultiTouchActive)
+                _tapTracker.Cancel();
+        }
+
         private void OnDestroy()
         {
             _subscriptions?.Dispose();
@@ -64,33 +73,23 @@ namespace Core.Module.Farm
         {
             if (payload.Button != 0) return;
 
-            _isTapTracking = false;
+            _tapTracker.Cancel();
             if (_inputService.IsPointerOverUI()) return;
             if (_mapService.HasActivePlacement || _mapService.IsPlayerRemovalMode) return;
 
-            _tapStartScreen = _inputService.PointerScreen;
-            _tapMovedTooFar = false;
-            _isTapTracking = true;
+            _tapTracker.Begin(_inputService.PointerScreen);
         }
 
         private void OnPointerScreen(PointerScreenPayload payload)
         {
-            if (!_isTapTracking || _tapMovedTooFar) return;
-
-            float maxMovementSqr = _tapMaxMovementPixels * _tapMaxMovementPixels;
-            if ((payload.ScreenPosition - _tapStartScreen).sqrMagnitude > maxMovementSqr)
-                _tapMovedTooFar = true;
+            _tapTracker.Move(payload.ScreenPosition);
         }
 
         private void OnPointerUp(PointerButtonUpPayload payload)
         {
-            if (payload.Button != 0 || !_isTapTracking) return;
-
-            bool isTap = !_tapMovedTooFar;
-            _isTapTracking = false;
-            _tapMovedTooFar = false;
-
-            if (!isTap || _inputService.IsPointerOverUI()) return;
+            if (payload.Button != 0) return;
+            if (!_tapTracker.Complete(_inputService.PointerScreen)) return;
+            if (_inputService.IsPointerOverUI()) return;
             if (_mapService.HasActivePlacement || _mapService.IsPlayerRemovalMode) return;
 
             ProcessTap(_inputService.PointerScreen);

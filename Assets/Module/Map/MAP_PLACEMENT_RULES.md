@@ -496,12 +496,12 @@ Các placement được restore vẫn kiểm tra occupancy, surface và layer. R
 
 ### Player removal hiện tại
 
-Gameplay có removal mode một lần:
+Gameplay có removal mode liên tục, chỉ thoát khi người chơi nhấn Cancel:
 
 ```text
 Nhấn Remove
     ↓
-Chạm object
+Tap object (drag/pinch chỉ điều khiển camera, không xóa)
     ↓
 InstanceId có trong player MapPlacements?
     ├── Không → từ chối; base layout được bảo vệ
@@ -509,7 +509,7 @@ InstanceId có trong player MapPlacements?
          ↓
     IMapPlacementRemovalPolicy cho phép?
          ├── Không → giữ removal mode để chọn lại hoặc Cancel
-         └── Có → release occupancy, destroy instance, xóa save và thoát mode
+         └── Có → release occupancy, destroy instance, xóa save và giữ removal mode
 ```
 
 Ownership ở giai đoạn này được xác định bằng nguồn persistence:

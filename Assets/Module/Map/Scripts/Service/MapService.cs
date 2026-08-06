@@ -686,7 +686,6 @@ namespace Core.Module.Map
             }
 
             _saveSource?.SaveMap();
-            SetPlayerRemovalMode(false);
         }
 
         private static string CreateInstanceId() => Guid.NewGuid().ToString("N");
