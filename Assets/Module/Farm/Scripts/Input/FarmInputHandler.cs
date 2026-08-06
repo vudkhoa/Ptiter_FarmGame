@@ -16,11 +16,17 @@ namespace Core.Module.Farm
         [SerializeField] private float _maxRayDistance = 1000f;
         [SerializeField] private bool _useMathPlane = true;
 
+        [Header("Tap Gesture")]
+        [SerializeField, Min(1f)] private float _tapMaxMovementPixels = 20f;
+
         private IInputService _inputService;
         private IMapService _mapService;
         private IFarmService _farmService;
         private IPublisher<OpenFarmSelectorUIPayload> _openSelectorPub;
-        private IDisposable _subscription;
+        private Vector2 _tapStartScreen;
+        private bool _isTapTracking;
+        private bool _tapMovedTooFar;
+        private IDisposable _subscriptions;
 
         #region DI - Constructor
         [Inject]
@@ -28,7 +34,9 @@ namespace Core.Module.Farm
             IInputService inputService,
             IMapService mapService,
             IFarmService farmService,
-            ISubscriber<PointerButtonDownPayload> clickSub,
+            ISubscriber<PointerScreenPayload> screenSub,
+            ISubscriber<PointerButtonDownPayload> buttonDownSub,
+            ISubscriber<PointerButtonUpPayload> buttonUpSub,
             IPublisher<OpenFarmSelectorUIPayload> openSelectorPub)
         {
             _inputService = inputService;
@@ -36,36 +44,67 @@ namespace Core.Module.Farm
             _farmService = farmService;
             _openSelectorPub = openSelectorPub;
 
-            _subscription = clickSub.Subscribe(OnClickDetected);
+            var bag = DisposableBag.CreateBuilder();
+            screenSub.Subscribe(OnPointerScreen).AddTo(bag);
+            buttonDownSub.Subscribe(OnPointerDown).AddTo(bag);
+            buttonUpSub.Subscribe(OnPointerUp).AddTo(bag);
+            _subscriptions = bag.Build();
         }
         #endregion
 
         #region Unity LifeCycle
         private void OnDestroy()
         {
-            _subscription?.Dispose();
+            _subscriptions?.Dispose();
         }
         #endregion
 
         #region Input Click Logic
-        private void OnClickDetected(PointerButtonDownPayload payload)
+        private void OnPointerDown(PointerButtonDownPayload payload)
         {
-            // Only handle left click / finger tap (Button index 0)
             if (payload.Button != 0) return;
 
-            // Ignore interaction if pointer is over UI elements
+            _isTapTracking = false;
             if (_inputService.IsPointerOverUI()) return;
-
-            // If map has active placement (decor/furniture building mode), do not trigger farming interactions
             if (_mapService.HasActivePlacement || _mapService.IsPlayerRemovalMode) return;
 
+            _tapStartScreen = _inputService.PointerScreen;
+            _tapMovedTooFar = false;
+            _isTapTracking = true;
+        }
+
+        private void OnPointerScreen(PointerScreenPayload payload)
+        {
+            if (!_isTapTracking || _tapMovedTooFar) return;
+
+            float maxMovementSqr = _tapMaxMovementPixels * _tapMaxMovementPixels;
+            if ((payload.ScreenPosition - _tapStartScreen).sqrMagnitude > maxMovementSqr)
+                _tapMovedTooFar = true;
+        }
+
+        private void OnPointerUp(PointerButtonUpPayload payload)
+        {
+            if (payload.Button != 0 || !_isTapTracking) return;
+
+            bool isTap = !_tapMovedTooFar;
+            _isTapTracking = false;
+            _tapMovedTooFar = false;
+
+            if (!isTap || _inputService.IsPointerOverUI()) return;
+            if (_mapService.HasActivePlacement || _mapService.IsPlayerRemovalMode) return;
+
+            ProcessTap(_inputService.PointerScreen);
+        }
+
+        private void ProcessTap(Vector2 screenPosition)
+        {
             Camera cam = _camera != null ? _camera : Camera.main;
             if (cam == null) return;
 
             Vector3 hitPoint;
             bool hasHit = false;
 
-            var ray = cam.ScreenPointToRay(_inputService.PointerScreen);
+            var ray = cam.ScreenPointToRay(screenPosition);
             if (_useMathPlane)
             {
                 Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
