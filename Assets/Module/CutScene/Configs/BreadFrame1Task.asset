@@ -16,7 +16,7 @@ MonoBehaviour:
   startDelay: 0
   sprite:
     m_AssetGUID: 3b7d1e94c5a04f28ab6d0e17c9f42001
-    m_SubObjectName: frame_01
+    m_SubObjectName: frame_bg
     m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
     m_SubObjectGUID: 
@@ -28,4 +28,4 @@ MonoBehaviour:
   overrideLayout: 1
   anchoredPosition: {x: -560, y: 180}
   size: {x: 440, y: 300}
-  rotationZ: -6
+  rotationZ: 12.06

@@ -15,8 +15,8 @@ MonoBehaviour:
   taskName: Frame 5
   startDelay: 0.12
   sprite:
-    m_AssetGUID: 3b7d1e94c5a04f28ab6d0e17c9f42005
-    m_SubObjectName: frame_05
+    m_AssetGUID: 3b7d1e94c5a04f28ab6d0e17c9f42001
+    m_SubObjectName: frame_bg
     m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
     m_SubObjectGUID: 
@@ -28,4 +28,4 @@ MonoBehaviour:
   overrideLayout: 1
   anchoredPosition: {x: 400, y: 120}
   size: {x: 440, y: 300}
-  rotationZ: -4
+  rotationZ: -7.44
