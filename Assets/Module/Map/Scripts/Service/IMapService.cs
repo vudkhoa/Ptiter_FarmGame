@@ -18,6 +18,10 @@ namespace Core.Module.Map
         // World-only API
         void UpdatePreview(Vector3 worldHit);
         bool AddFurniture(Vector3 worldHit);
+        bool RemoveAuthoringObject(Vector3 worldHit);
+        bool SelectAuthoringObject(Vector3 worldHit);
+        bool MoveSelectedAuthoringObject(Vector3 worldHit);
+        void SetSelectedAuthoringScale(float uniformScale);
 
         // Legacy-save compatibility: rebuild a missing Soil/Barn underneath a persisted farm slot.
         bool EnsureFarmPlacement(Vector3Int originCell, MapObjectKind kind);

@@ -3,13 +3,13 @@ using BrunoMikoski.UIManager;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
-using VContainer.Unity;
 
 namespace Shared.Utils
 {
     /// <summary>
     /// Reusable trigger that opens a UIManager window from either a UI Button or
-    /// a world object with a Collider (via OnMouseUpAsButton).
+    /// a world object with a Collider (via OnMouseUpAsButton). The UIWindow is
+    /// serialized in the prefab; the scene-owned WindowsManager is injected.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class WindowOpenTrigger : MonoBehaviour
@@ -25,9 +25,12 @@ namespace Shared.Utils
         private bool _windowEventsSubscribed;
 
         [Inject]
-        public void Construct(IObjectResolver resolver)
+        public void Construct(
+            IObjectResolver resolver,
+            WindowsManager windowsManager)
         {
             _resolver = resolver;
+            _windowsManager = windowsManager;
         }
 
         public void Configure(
@@ -47,7 +50,11 @@ namespace Shared.Utils
         }
 
         private void OnEnable() => RegisterButton();
-        private void Start() => SubscribeWindowEvents();
+
+        private void Start()
+        {
+            SubscribeWindowEvents();
+        }
 
         private void OnDisable()
         {
@@ -78,7 +85,22 @@ namespace Shared.Utils
 
         public void Open()
         {
-            if (_windowsManager == null || _window == null) return;
+            if (_window == null)
+            {
+                Debug.LogError(
+                    $"[WindowOpenTrigger] '{name}' has no UIWindow assigned.",
+                    this);
+                return;
+            }
+
+            if (_windowsManager == null)
+            {
+                Debug.LogError(
+                    $"[WindowOpenTrigger] '{name}' was not injected with a WindowsManager. " +
+                    "Instantiate this prefab through VContainer.",
+                    this);
+                return;
+            }
 
             SubscribeWindowEvents();
             if (!_windowsManager.Open(_window)) return;
@@ -88,7 +110,7 @@ namespace Shared.Utils
                     _window, out WindowController controller))
                 return;
 
-            ResolveContainer()?.Inject(controller);
+            _resolver?.Inject(controller);
         }
 
         private static bool HasOpenTrigger()
@@ -98,7 +120,9 @@ namespace Shared.Utils
 
         private void SubscribeWindowEvents()
         {
-            if (_windowEventsSubscribed || _window == null) return;
+            if (_windowEventsSubscribed || _window == null ||
+                _windowsManager == null)
+                return;
 
             _window.OnOpenedEvent += OnWindowOpened;
             _window.OnClosedEvent += OnWindowClosed;
@@ -126,33 +150,5 @@ namespace Shared.Utils
                 OpenTriggers.Remove(this);
         }
 
-        private IObjectResolver ResolveContainer()
-        {
-            if (_resolver != null) return _resolver;
-
-            LifetimeScope[] scopes = FindObjectsByType<LifetimeScope>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
-            for (int i = 0; i < scopes.Length; i++)
-            {
-                if (scopes[i] != null && scopes[i].Container != null &&
-                    scopes[i].name == "GameLifetimeScope")
-                {
-                    _resolver = scopes[i].Container;
-                    return _resolver;
-                }
-            }
-
-            for (int i = 0; i < scopes.Length; i++)
-            {
-                if (scopes[i] != null && scopes[i].Container != null)
-                {
-                    _resolver = scopes[i].Container;
-                    return _resolver;
-                }
-            }
-
-            return null;
-        }
     }
 }

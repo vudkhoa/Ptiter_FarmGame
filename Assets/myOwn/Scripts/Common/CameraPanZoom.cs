@@ -36,6 +36,8 @@ namespace Core.Common
         [SerializeField] private float _maxX = 30f;
         [SerializeField] private float _minZ = -30f;
         [SerializeField] private float _maxZ = 30f;
+        [Tooltip("Noi bounds khi zoom gan de camera van pan toi cung pham vi map nhu luc zoom xa.")]
+        [SerializeField] private bool _keepPanCoverageWhenZooming = true;
 
         private Vector3 _targetPosition;
         private float _targetZoom;
@@ -213,8 +215,19 @@ namespace Core.Common
             // 1. Áp dụng giới hạn biên (Boundaries) cho targetPosition trước khi di chuyển
             if (_useBounds)
             {
-                _targetPosition.x = Mathf.Clamp(_targetPosition.x, _minX, _maxX);
-                _targetPosition.z = Mathf.Clamp(_targetPosition.z, _minZ, _maxZ);
+                float paddingX = 0f;
+                float paddingZ = 0f;
+
+                if (_keepPanCoverageWhenZooming
+                    && TryGetGroundFootprintSize(GetCurrentZoom(), out Vector2 currentSize)
+                    && TryGetGroundFootprintSize(_maxZoom, out Vector2 maxZoomSize))
+                {
+                    paddingX = Mathf.Max(0f, (maxZoomSize.x - currentSize.x) * 0.5f);
+                    paddingZ = Mathf.Max(0f, (maxZoomSize.y - currentSize.y) * 0.5f);
+                }
+
+                _targetPosition.x = Mathf.Clamp(_targetPosition.x, _minX - paddingX, _maxX + paddingX);
+                _targetPosition.z = Mathf.Clamp(_targetPosition.z, _minZ - paddingZ, _maxZ + paddingZ);
             }
 
             // 2. Làm mượt di chuyển (Position Lerp)
@@ -266,6 +279,57 @@ namespace Core.Common
             
             // Trường hợp dự phòng nếu tia không cắt mặt phẳng nằm ngang
             return transform.position;
+        }
+
+        private float GetCurrentZoom()
+        {
+            return _camera.orthographic ? _camera.orthographicSize : _camera.fieldOfView;
+        }
+
+        private bool TryGetGroundFootprintSize(float zoom, out Vector2 size)
+        {
+            float originalZoom = GetCurrentZoom();
+            if (_camera.orthographic)
+                _camera.orthographicSize = zoom;
+            else
+                _camera.fieldOfView = zoom;
+
+            bool hasBottomLeft = TryGetGroundPoint(new Vector2(0f, 0f), out Vector3 bottomLeft);
+            bool hasBottomRight = TryGetGroundPoint(new Vector2(1f, 0f), out Vector3 bottomRight);
+            bool hasTopLeft = TryGetGroundPoint(new Vector2(0f, 1f), out Vector3 topLeft);
+            bool hasTopRight = TryGetGroundPoint(new Vector2(1f, 1f), out Vector3 topRight);
+            bool hasAllCorners = hasBottomLeft && hasBottomRight && hasTopLeft && hasTopRight;
+
+            if (_camera.orthographic)
+                _camera.orthographicSize = originalZoom;
+            else
+                _camera.fieldOfView = originalZoom;
+
+            if (!hasAllCorners)
+            {
+                size = default;
+                return false;
+            }
+
+            float minX = Mathf.Min(bottomLeft.x, bottomRight.x, topLeft.x, topRight.x);
+            float maxX = Mathf.Max(bottomLeft.x, bottomRight.x, topLeft.x, topRight.x);
+            float minZ = Mathf.Min(bottomLeft.z, bottomRight.z, topLeft.z, topRight.z);
+            float maxZ = Mathf.Max(bottomLeft.z, bottomRight.z, topLeft.z, topRight.z);
+            size = new Vector2(maxX - minX, maxZ - minZ);
+            return true;
+        }
+
+        private bool TryGetGroundPoint(Vector2 viewportPosition, out Vector3 point)
+        {
+            Ray ray = _camera.ViewportPointToRay(viewportPosition);
+            if (_groundPlane.Raycast(ray, out float enterDistance))
+            {
+                point = ray.GetPoint(enterDistance);
+                return true;
+            }
+
+            point = default;
+            return false;
         }
     }
 }
