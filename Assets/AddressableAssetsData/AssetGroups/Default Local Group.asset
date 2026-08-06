@@ -14,42 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Default Local Group
   m_GUID: 05d6c6f35cb688243bae4c99263a6884
-  m_SerializeEntries:
-  - m_GUID: 9452e385f4d07d54bb7d1787cb989f3e
-    m_Address: Assets/Module/Map/Prefabs/Buildings/Inventory Warehouse.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2d6f832f400f5344fa9a1d6a2236b1dc
-    m_Address: Assets/Module/Map/Prefabs/Props/Lake.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 94e74c8473c46084b95c06e08fedd847
-    m_Address: Assets/Module/Map/Prefabs/Props/Banana Tree.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9906269cb329e4244ac0acac54e3fdf7
-    m_Address: Assets/Module/Map/Prefabs/Buildings/Main House.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a5a288aa3274b854f898676405737ac2
-    m_Address: Assets/Module/Map/Prefabs/Props/Rock_2.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e2d88bfd4c4970d42b8e4788f1146614
-    m_Address: Assets/Module/Map/Prefabs/Props/Bush.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: fdb1dbab8b15a72479a152dad2078e14
-    m_Address: Assets/Module/Map/Prefabs/Props/Rock_1.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 921e3904ace7fff4ab65ff693ddec476, type: 2}
   m_SchemaSet:
