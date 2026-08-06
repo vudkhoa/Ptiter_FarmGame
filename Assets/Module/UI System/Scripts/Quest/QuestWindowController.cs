@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using BrunoMikoski.UIManager;
 using Core.Module.Quest;
 using Cysharp.Threading.Tasks;
@@ -38,11 +39,17 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private QuestTaskItemView _taskTemplate;
         [SerializeField] private QuestMilestoneView[] _milestones;
 
+        [Header("Progress")]
+        [SerializeField] private Image _progressStarIcon;
+        [SerializeField] private TMP_Text _progressStars;
+        [SerializeField] private ProgressMilestoneView[] _progressMilestones;
+
         [Header("Reward feedback")]
         [SerializeField] private GameObject _rewardToast;
         [SerializeField] private TMP_Text _rewardToastText;
 
         private IDailyQuestService _dailyQuestService;
+        private IProgressQuestService _progressQuestService;
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
         private readonly List<QuestTaskItemView> _taskViews =
             new List<QuestTaskItemView>();
@@ -52,17 +59,26 @@ namespace MyOwn.ServiceHarness
         [Inject]
         public void Construct(
             IDailyQuestService dailyQuestService,
+            IProgressQuestService progressQuestService,
             ISubscriber<DailyQuestStateChangedPayload> stateSubscriber,
-            ISubscriber<QuestRewardGrantedPayload> rewardSubscriber)
+            ISubscriber<QuestRewardGrantedPayload> rewardSubscriber,
+            ISubscriber<ProgressQuestStateChangedPayload> progressStateSubscriber,
+            ISubscriber<ProgressRewardClaimedPayload> progressRewardSubscriber)
         {
             if (_isConstructed) return;
             _isConstructed = true;
             _dailyQuestService = dailyQuestService;
+            _progressQuestService = progressQuestService;
             _subscriptions.Add(stateSubscriber.Subscribe(_ => Render()));
             _subscriptions.Add(rewardSubscriber.Subscribe(OnRewardGranted));
+            _subscriptions.Add(progressStateSubscriber.Subscribe(_ => RenderProgress()));
+            _subscriptions.Add(progressRewardSubscriber.Subscribe(OnProgressRewardClaimed));
             _dailyQuestService.EnsureInitializedAsync(
                 this.GetCancellationTokenOnDestroy()).Forget();
+            _progressQuestService.EnsureInitializedAsync(
+                this.GetCancellationTokenOnDestroy()).Forget();
             Render();
+            RenderProgress();
         }
 
         public void OnBeforeWindowOpen()
@@ -72,7 +88,10 @@ namespace MyOwn.ServiceHarness
             ResetTaskScroll();
             _dailyQuestService?.EnsureInitializedAsync(
                 this.GetCancellationTokenOnDestroy()).Forget();
+            _progressQuestService?.EnsureInitializedAsync(
+                this.GetCancellationTokenOnDestroy()).Forget();
             Render();
+            RenderProgress();
         }
 
         public void OnWindowClosed()
@@ -104,6 +123,7 @@ namespace MyOwn.ServiceHarness
             if (_progressPlaceholder != null) _progressPlaceholder.SetActive(index == 1);
             if (_foodPlaceholder != null) _foodPlaceholder.SetActive(index == 2);
             if (index == 0) Render();
+            if (index == 1) RenderProgress();
         }
 
         private void ShowDaily()
@@ -183,11 +203,48 @@ namespace MyOwn.ServiceHarness
                 this.GetCancellationTokenOnDestroy()).Forget();
         }
 
+        private void RenderProgress()
+        {
+            if (_progressQuestService == null) return;
+            ProgressQuestViewState state = _progressQuestService.GetViewState();
+            if (_progressStars != null)
+                _progressStars.text = FormatNumber(state.Stars);
+
+            for (int i = 0; i < (_progressMilestones?.Length ?? 0); i++)
+            {
+                ProgressMilestoneViewData milestone =
+                    state.Milestones != null && i < state.Milestones.Count
+                        ? state.Milestones[i]
+                        : null;
+                _progressMilestones[i]?.Bind(milestone, ClaimProgressMilestone);
+            }
+        }
+
+        private void ClaimProgressMilestone(string milestoneId)
+        {
+            _progressQuestService.ClaimMilestoneAsync(
+                milestoneId,
+                this.GetCancellationTokenOnDestroy()).Forget();
+        }
+
         private void OnRewardGranted(QuestRewardGrantedPayload payload)
         {
             if (payload.ReconciledAtStartup || _rewardToast == null) return;
             if (_rewardToastText != null)
                 _rewardToastText.text = $"+{payload.Coins}";
+            if (_toastRoutine != null) StopCoroutine(_toastRoutine);
+            _toastRoutine = StartCoroutine(ShowRewardToast());
+        }
+
+        private void OnProgressRewardClaimed(ProgressRewardClaimedPayload payload)
+        {
+            ShowRewardToast($"+{payload.Stars} SAO");
+        }
+
+        private void ShowRewardToast(string text)
+        {
+            if (_rewardToast == null) return;
+            if (_rewardToastText != null) _rewardToastText.text = text;
             if (_toastRoutine != null) StopCoroutine(_toastRoutine);
             _toastRoutine = StartCoroutine(ShowRewardToast());
         }
@@ -204,6 +261,11 @@ namespace MyOwn.ServiceHarness
         {
             int hours = Mathf.Max(0, (int)remaining.TotalHours);
             return $"{hours:00}:{remaining.Minutes:00}:{remaining.Seconds:00}";
+        }
+
+        private static string FormatNumber(int value)
+        {
+            return value.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"));
         }
 
         protected override void OnDestroy()

@@ -29,3 +29,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e0fe9269c4b9c9e4b829f73d0bf3533b, type: 2}
   - {fileID: 11400000, guid: c826941f07a05604980c73111d43a04d, type: 2}
   dailySchedule: {fileID: 11400000, guid: e7a75a011d5ec224cb25986823c61b6e, type: 2}
+  progressConfig: {fileID: 11400000, guid: 494dd89fd0aadb4488ebcf96bfc3a476, type: 2}

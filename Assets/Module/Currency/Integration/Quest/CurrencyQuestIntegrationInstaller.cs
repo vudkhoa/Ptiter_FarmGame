@@ -1,4 +1,5 @@
 using VContainer;
+using VContainer.Unity;
 
 namespace Core.Module.Currency.Integration.Quest
 {
@@ -9,6 +10,8 @@ namespace Core.Module.Currency.Integration.Quest
         {
             builder.Register<QuestCurrencyEventBridge>(Lifetime.Singleton)
                    .AsImplementedInterfaces()
+                   .AsSelf();
+            builder.RegisterEntryPoint<QuestProgressCurrencyBridge>()
                    .AsSelf();
             return builder;
         }

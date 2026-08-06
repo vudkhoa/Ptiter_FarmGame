@@ -20,6 +20,9 @@ namespace Core.Module.Quest
             builder.RegisterMessageBroker<QuestCompletedPayload>(options);
             builder.RegisterMessageBroker<DailyQuestStateChangedPayload>(options);
             builder.RegisterMessageBroker<QuestRewardGrantedPayload>(options);
+            builder.RegisterMessageBroker<ProgressCoinsEarnedPayload>(options);
+            builder.RegisterMessageBroker<ProgressQuestStateChangedPayload>(options);
+            builder.RegisterMessageBroker<ProgressRewardClaimedPayload>(options);
             return builder;
         }
 
@@ -65,7 +68,11 @@ namespace Core.Module.Quest
             builder.Register<DailyQuestService>(Lifetime.Singleton)
                    .AsImplementedInterfaces()
                    .AsSelf();
+            builder.Register<ProgressQuestService>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()
+                   .AsSelf();
             builder.RegisterEntryPoint<DailyQuestBootstrapper>();
+            builder.RegisterEntryPoint<ProgressQuestBootstrapper>();
             builder.RegisterEntryPoint<FarmQuestEventBridge>();
 
             return builder;
