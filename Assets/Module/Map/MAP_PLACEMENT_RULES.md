@@ -36,6 +36,7 @@ Ba câu hỏi này lần lượt do các thuộc tính sau xử lý:
 ```text
 MapService
  ├── điều phối placement state và authoring
+ ├── điều phối player removal mode
  ├── gọi Tilemap validation
  ├── cập nhật occupancy
  ├── publish spawn/preview events
@@ -492,6 +493,40 @@ Runtime thực hiện:
 Base layout vì vậy có quyền ưu tiên. Player Grid placement xung đột với base layout hoặc blocking decor sẽ bị bỏ qua.
 
 Các placement được restore vẫn kiểm tra occupancy, surface và layer. Restore hiện không gọi Tilemap ground validation.
+
+### Player removal hiện tại
+
+Gameplay có removal mode liên tục, chỉ thoát khi người chơi nhấn Cancel:
+
+```text
+Nhấn Remove
+    ↓
+Tap object (drag/pinch chỉ điều khiển camera, không xóa)
+    ↓
+InstanceId có trong player MapPlacements?
+    ├── Không → từ chối; base layout được bảo vệ
+    └── Có
+         ↓
+    IMapPlacementRemovalPolicy cho phép?
+         ├── Không → giữ removal mode để chọn lại hoặc Cancel
+         └── Có → release occupancy, destroy instance, xóa save và giữ removal mode
+```
+
+Ownership ở giai đoạn này được xác định bằng nguồn persistence:
+
+- Có `InstanceId` trong `IMapSaveSource.MapPlacements`: player-owned, có thể được xem xét xóa.
+- Chỉ có trong `MapLayoutSO`: base-map object, không thể xóa trong gameplay.
+
+Map không tham chiếu trực tiếp tới Farm. Module gameplay có thể triển khai `IMapPlacementRemovalPolicy` để veto removal và dọn state thuộc module đó.
+
+FarmService hiện áp dụng rule:
+
+- Soil/Barn chưa có cây hoặc vật nuôi: được xóa.
+- Soil đang có cây: không được xóa.
+- Barn đang có vật nuôi: không được xóa.
+- Khi xóa Soil/Barn rỗng, farm slot rỗng tương ứng cũng được loại khỏi player save trước khi `SaveMap` ghi dữ liệu.
+
+Player save cũ thiếu `instanceId` được cấp ID một lần khi restore và được save lại, để các thao tác remove sau đó nhận diện đúng ownership.
 
 ### Thay đổi rule sau khi đã có save
 
