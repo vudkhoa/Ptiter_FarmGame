@@ -7,22 +7,25 @@ using VContainer;
 namespace Core.Module.Map
 {
     [DisallowMultipleComponent]
-    public sealed class MapPlacementCancelButton : MonoBehaviour
+    public sealed class MapPlayerRemoveButton : MonoBehaviour
     {
         [SerializeField] private Button _button;
 
         private IMapService _map;
+        private MapAuthoringController _authoring;
         private IDisposable _subscriptions;
 
         [Inject]
         public void Construct(
             IMapService map,
+            MapAuthoringController authoring,
             ISubscriber<MapPlacementStartedPayload> startSub,
             ISubscriber<MapPlacementStoppedPayload> stopSub,
             ISubscriber<MapPlayerRemovalModeChangedPayload> removalModeSub)
         {
             _map = map;
-            _button.onClick.AddListener(CancelPlacement);
+            _authoring = authoring;
+            _button.onClick.AddListener(BeginRemoval);
 
             var bag = DisposableBag.CreateBuilder();
             startSub.Subscribe(_ => RefreshVisibility()).AddTo(bag);
@@ -40,23 +43,22 @@ namespace Core.Module.Map
 
         private void OnDestroy()
         {
-            if (_button != null) _button.onClick.RemoveListener(CancelPlacement);
+            if (_button != null) _button.onClick.RemoveListener(BeginRemoval);
             _subscriptions?.Dispose();
         }
 
-        private void CancelPlacement()
+        private void BeginRemoval()
         {
-            _map?.StopPlacement();
-        }
-
-        private void SetVisible(bool visible)
-        {
-            gameObject.SetActive(visible);
+            _map?.SetPlayerRemovalMode(true);
         }
 
         private void RefreshVisibility()
         {
-            SetVisible(_map != null && (_map.HasActivePlacement || _map.IsPlayerRemovalMode));
+            bool visible = _map != null
+                && (_authoring == null || !_authoring.IsAuthoringMode)
+                && !_map.HasActivePlacement
+                && !_map.IsPlayerRemovalMode;
+            gameObject.SetActive(visible);
         }
     }
 }

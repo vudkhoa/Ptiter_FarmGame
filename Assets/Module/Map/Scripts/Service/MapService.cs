@@ -27,6 +27,7 @@ namespace Core.Module.Map
         private IPublisher<MapPreviewMovedPayload> _pubMove;
         private IPublisher<MapFurnitureAddedPayload> _pubAdded;
         private IPublisher<MapPlacementStoppedPayload> _pubStop;
+        private IPublisher<MapPlayerRemovalModeChangedPayload> _pubRemovalMode;
 
         private GridData _grid;
         private MapPlacementValidator _placementValidator;
@@ -34,6 +35,7 @@ namespace Core.Module.Map
         private int _currentObjectId = -1;
         private int _currentDbIndex = -1;
         private int _changeCount;
+        private bool _isPlayerRemovalMode;
         private Vector3Int _lastCell = new(int.MinValue, 0, 0);
         private Vector3 _lastPreviewWorld = new(float.PositiveInfinity, 0f, 0f);
         private readonly Dictionary<string, FreePlacementRecord> _freePlacements = new();
@@ -47,6 +49,7 @@ namespace Core.Module.Map
         private MapAuthoringController _authoring;
         private IMapSaveSource _saveSource;
         private List<MapPlacementSaveData> _persistedPlacements;
+        private IReadOnlyList<IMapPlacementRemovalPolicy> _removalPolicies;
 
         #region DI - Constructor
         [Inject]
@@ -55,22 +58,26 @@ namespace Core.Module.Map
             IPublisher<MapPreviewMovedPayload> pubMove,
             IPublisher<MapFurnitureAddedPayload> pubAdded,
             IPublisher<MapPlacementStoppedPayload> pubStop,
+            IPublisher<MapPlayerRemovalModeChangedPayload> pubRemovalMode,
             IObjectCatalog catalog,
             IMapObjectInstanceRegistry instanceRegistry,
             MapAuthoringController authoring,
             ObjectDatabaseSO database,
-            IMapSaveSource saveSource)
+            IMapSaveSource saveSource,
+            IReadOnlyList<IMapPlacementRemovalPolicy> removalPolicies)
         {
             _pubStart = pubStart;
             _pubMove = pubMove;
             _pubAdded = pubAdded;
             _pubStop = pubStop;
+            _pubRemovalMode = pubRemovalMode;
             _catalog = catalog;
             _instanceRegistry = instanceRegistry;
             _authoring = authoring;
             _database = database;
             _saveSource = saveSource;
             _persistedPlacements = saveSource?.MapPlacements;
+            _removalPolicies = removalPolicies;
             _authoring.Initialize(this, database);
         }
         #endregion
@@ -118,6 +125,8 @@ namespace Core.Module.Map
 
         public bool HasActivePlacement => _currentDbIndex >= 0;
 
+        public bool IsPlayerRemovalMode => _isPlayerRemovalMode;
+
         public PlacementInputMode CurrentPlacementInputMode => HasActivePlacement
             ? _database.Objects[_currentDbIndex].PlacementInputMode
             : PlacementInputMode.Single;
@@ -132,6 +141,7 @@ namespace Core.Module.Map
         public void StartPlacement(int objectId)
         {
             if (HasActivePlacement) StopPlacement();
+            else SetPlayerRemovalMode(false);
 
             if (!_database.TryGetById(objectId, out ObjectData data, out int index))
             {
@@ -160,10 +170,24 @@ namespace Core.Module.Map
 
         public void StopPlacement()
         {
-            if (!HasActivePlacement) return;
-            _currentObjectId = -1;
-            _currentDbIndex = -1;
-            _pubStop.Publish(default);
+            if (HasActivePlacement)
+            {
+                _currentObjectId = -1;
+                _currentDbIndex = -1;
+                _pubStop.Publish(default);
+            }
+
+            SetPlayerRemovalMode(false);
+        }
+
+        public void SetPlayerRemovalMode(bool active)
+        {
+            if (active && _authoring.IsAuthoringMode) return;
+            if (_isPlayerRemovalMode == active) return;
+
+            if (active && HasActivePlacement) StopPlacement();
+            _isPlayerRemovalMode = active;
+            _pubRemovalMode.Publish(new MapPlayerRemovalModeChangedPayload(active));
         }
         #endregion
 
@@ -295,6 +319,56 @@ namespace Core.Module.Map
                 });
                 _saveSource?.SaveMap();
             }
+            return true;
+        }
+
+        public bool RemovePlayerObject(Vector3 worldHit)
+        {
+            if (_authoring.IsAuthoringMode || !_isPlayerRemovalMode || _persistedPlacements == null)
+                return false;
+
+            if (TryFindFreePlacement(worldHit, out string freeInstanceId))
+            {
+                int saveIndex = FindPersistedPlacementIndex(freeInstanceId);
+                if (saveIndex < 0 ||
+                    !_freePlacements.TryGetValue(freeInstanceId, out FreePlacementRecord free) ||
+                    !_database.TryGetById(free.ObjectId, out ObjectData data, out _)) return false;
+
+                var context = new MapPlacementRemovalContext(
+                    freeInstanceId,
+                    free.ObjectId,
+                    data.Kind,
+                    PlacementPositionMode.Free,
+                    default,
+                    free.WorldPosition);
+                if (!CanRemovePlayerPlacement(context)) return false;
+
+                _freePlacements.Remove(freeInstanceId);
+                _instanceRegistry.RemoveAndDestroy(freeInstanceId);
+                CompletePlayerRemoval(saveIndex, context);
+                return true;
+            }
+
+            Vector3Int cell = WorldToCell(worldHit);
+            if (!_grid.TryGetPlacementAt(cell, out PlacementData placement)) return false;
+
+            int persistedIndex = FindPersistedPlacementIndex(placement.InstanceId);
+            if (persistedIndex < 0 || placement.OcupiedPositions == null ||
+                placement.OcupiedPositions.Count == 0) return false;
+
+            Vector3Int originCell = placement.OcupiedPositions[0];
+            var gridContext = new MapPlacementRemovalContext(
+                placement.InstanceId,
+                placement.ID,
+                placement.Kind,
+                PlacementPositionMode.Grid,
+                originCell,
+                CellToWorld(originCell));
+            if (!CanRemovePlayerPlacement(gridContext) ||
+                !_grid.RemoveObjectAt(cell, out _)) return false;
+
+            _instanceRegistry.RemoveAndDestroy(originCell);
+            CompletePlayerRemoval(persistedIndex, gridContext);
             return true;
         }
 
@@ -465,6 +539,7 @@ namespace Core.Module.Map
                 return;
             }
 
+            bool migratedInstanceId = false;
             for (int i = 0; i < _persistedPlacements.Count; i++)
             {
                 MapPlacementSaveData saved = _persistedPlacements[i];
@@ -477,6 +552,11 @@ namespace Core.Module.Map
                 }
 
                 string instanceId = EnsureInstanceId(saved.instanceId);
+                if (saved.instanceId != instanceId)
+                {
+                    saved.instanceId = instanceId;
+                    migratedInstanceId = true;
+                }
                 if (saved.positionMode == PlacementPositionMode.Free)
                 {
                     var worldPosition = new Vector3(saved.worldX, saved.worldY, saved.worldZ);
@@ -488,6 +568,8 @@ namespace Core.Module.Map
                 if (!PlaceGridObjectAt(data, prefab, cell, instanceId, NormalizeScale(saved.uniformScale)))
                     Debug.LogWarning($"[MapService] Skipped overlapping saved object {saved.objectId} at {cell}.");
             }
+
+            if (migratedInstanceId) _saveSource?.SaveMap();
         }
 
         private bool PlaceGridObjectAt(
@@ -564,6 +646,46 @@ namespace Core.Module.Map
                 instanceId = pair.Key;
             }
             return !string.IsNullOrEmpty(instanceId);
+        }
+
+        private int FindPersistedPlacementIndex(string instanceId)
+        {
+            if (string.IsNullOrEmpty(instanceId) || _persistedPlacements == null) return -1;
+            return _persistedPlacements.FindIndex(saved =>
+                saved != null && saved.instanceId == instanceId);
+        }
+
+        private bool CanRemovePlayerPlacement(in MapPlacementRemovalContext context)
+        {
+            if (_removalPolicies == null) return true;
+
+            for (int i = 0; i < _removalPolicies.Count; i++)
+            {
+                IMapPlacementRemovalPolicy policy = _removalPolicies[i];
+                if (policy != null && !policy.CanRemove(context))
+                {
+                    Debug.LogWarning($"[MapService] Removal of {context.InstanceId} was rejected by {policy.GetType().Name}.");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void CompletePlayerRemoval(
+            int persistedIndex,
+            in MapPlacementRemovalContext context)
+        {
+            _persistedPlacements.RemoveAt(persistedIndex);
+            _changeCount++;
+
+            if (_removalPolicies != null)
+            {
+                for (int i = 0; i < _removalPolicies.Count; i++)
+                    _removalPolicies[i]?.OnRemoved(context);
+            }
+
+            _saveSource?.SaveMap();
         }
 
         private static string CreateInstanceId() => Guid.NewGuid().ToString("N");

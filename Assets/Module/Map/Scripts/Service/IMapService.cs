@@ -9,15 +9,18 @@ namespace Core.Module.Map
         int ChangeCount { get; }
         int CurrentObjectId { get; }
         bool HasActivePlacement { get; }
+        bool IsPlayerRemovalMode { get; }
         PlacementInputMode CurrentPlacementInputMode { get; }
 
         // State machine
         void StartPlacement(int objectId);
         void StopPlacement();
+        void SetPlayerRemovalMode(bool active);
 
         // World-only API
         void UpdatePreview(Vector3 worldHit);
         bool AddFurniture(Vector3 worldHit);
+        bool RemovePlayerObject(Vector3 worldHit);
         bool RemoveAuthoringObject(Vector3 worldHit);
         bool SelectAuthoringObject(Vector3 worldHit);
         bool MoveSelectedAuthoringObject(Vector3 worldHit);
