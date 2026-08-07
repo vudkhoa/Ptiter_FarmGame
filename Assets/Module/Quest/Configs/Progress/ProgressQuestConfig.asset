@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: ProgressQuestConfig
   m_EditorClassIdentifier: Quest::Core.Module.Quest.ProgressQuestConfigSO
   milestones:
-  - milestoneId: progress_1000
-    requiredCoins: 1000
+  - milestoneId: progress_100
+    requiredCoins: 100
     starReward: 10
-  - milestoneId: progress_5000
-    requiredCoins: 5000
+  - milestoneId: progress_200
+    requiredCoins: 200
     starReward: 20
-  - milestoneId: progress_10000
-    requiredCoins: 10000
+  - milestoneId: progress_300
+    requiredCoins: 300
     starReward: 30

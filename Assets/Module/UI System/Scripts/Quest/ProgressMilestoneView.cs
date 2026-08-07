@@ -16,6 +16,11 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private Image _starIcon;
         [SerializeField] private Button _claimButton;
         [SerializeField] private GameObject _locked;
+
+        [Header("Board States")]
+        [SerializeField] private Sprite _lockedBoardSprite;
+        [SerializeField] private Sprite _claimableBoardSprite;
+        [SerializeField] private Sprite _claimedBoardSprite;
         [SerializeField] private Image _boardImage;
         [SerializeField] private Material _lockedMaterial;
         [SerializeField] private Color _normalColor = Color.white;
@@ -60,10 +65,22 @@ namespace MyOwn.ServiceHarness
             if (_locked != null) _locked.SetActive(locked);
             if (_boardImage != null)
             {
-                _boardImage.material = locked ? _lockedMaterial : null;
-                _boardImage.color = locked && _lockedMaterial == null
-                    ? _lockedColor
-                    : _normalColor;
+                Sprite boardSprite = data.ClaimState switch
+                {
+                    ProgressMilestoneClaimState.Locked => _lockedBoardSprite,
+                    ProgressMilestoneClaimState.Claimable => _claimableBoardSprite,
+                    ProgressMilestoneClaimState.Claimed => _claimedBoardSprite,
+                    _ => null
+                };
+
+                if (boardSprite != null)
+                    _boardImage.sprite = boardSprite;
+
+                // Each state now has its own authored artwork; do not tint the board.
+                _boardImage.material = null;
+                _boardImage.color = boardSprite != null
+                    ? _normalColor
+                    : locked ? _lockedColor : _normalColor;
             }
             if (_requirement != null)
                 _requirement.color = locked

@@ -60,6 +60,11 @@ namespace Core.Module.Map
         private void OnScreen(PointerScreenPayload p)
         {
             _lastScreen = p.ScreenPosition;
+            if (_input.IsGameplayInputBlocked)
+            {
+                _isPrimaryPressed = false;
+                return;
+            }
             if (!_map.HasActivePlacement) return;
             if (!TryRaycast(_lastScreen, out var world)) return;
 
@@ -76,6 +81,7 @@ namespace Core.Module.Map
         private void OnButtonDown(PointerButtonDownPayload p)
         {
             if (p.Button != 0 || !_map.HasActivePlacement) return;
+            if (_input.IsGameplayInputBlocked) return;
             if (_input.IsPointerOverUI()) return;
 
             _isPrimaryPressed = true;
@@ -94,6 +100,7 @@ namespace Core.Module.Map
             _isPrimaryPressed = false;
 
             if (!wasPressed || !_map.HasActivePlacement) return;
+            if (_input.IsGameplayInputBlocked) return;
             if (_map.CurrentPlacementInputMode != PlacementInputMode.Single) return;
             if (_input.IsPointerOverUI()) return;
             if (TryRaycast(_lastScreen, out var world))

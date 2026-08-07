@@ -528,7 +528,7 @@ namespace Core.Module.Quest.Editor
                 "Description", root.transform, "Mô tả",
                 new Vector2(-230, 5), new Vector2(560, 40), 20, font);
             description.alignment = TextAlignmentOptions.Left;
-            Slider slider = SliderObject(
+            Image progressFill = ProgressBarObject(
                 root.transform, new Vector2(-145, -55), new Vector2(700, 61));
             TextMeshProUGUI progress = Text(
                 "Progress", root.transform, "0/1",
@@ -544,27 +544,18 @@ namespace Core.Module.Quest.Editor
             TextMeshProUGUI reward = Text(
                 "Reward", rewardBackground.transform, "100",
                 new Vector2(25, 0), new Vector2(110, 70), 30, font);
-            GameObject complete = Text(
-                "Completed", root.transform, "DONE",
-                new Vector2(545, 68), new Vector2(130, 45), 20, font).gameObject;
-            GameObject pending = Text(
-                "Pending", root.transform, "...",
-                new Vector2(545, -65), new Vector2(70, 45), 24, font).gameObject;
-
             SerializedObject serialized = new SerializedObject(view);
             Set(serialized, "_icon", icon);
             Set(serialized, "_title", title);
             Set(serialized, "_description", description);
             Set(serialized, "_progress", progress);
-            Set(serialized, "_progressBar", slider);
+            Set(serialized, "_progressFill", progressFill);
             Set(serialized, "_reward", reward);
             Set(serialized, "_rewardBackground", rewardBackground);
             Set(serialized, "_defaultRewardSprite",
                 Sprite("quest hàng ngày_nút nhận thưởng 3.png"));
             Set(serialized, "_completedRewardSprite",
                 Sprite("quest hàng ngày_nút nhận thưởng2 1.png"));
-            Set(serialized, "_completedMark", complete);
-            Set(serialized, "_pendingMark", pending);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return view;
         }
@@ -577,7 +568,12 @@ namespace Core.Module.Quest.Editor
             QuestMilestoneView view = root.AddComponent<QuestMilestoneView>();
             Button claim = TransparentButton(
                 "Claim Gift", root.transform,
-                new Vector2(0, 25), new Vector2(150, 115));
+                new Vector2(0, 25), new Vector2(150, 140));
+            Image gift = claim.GetComponent<Image>();
+            gift.sprite = Sprite("quest hàng ngày_ hộp quà 1.png");
+            gift.color = Color.white;
+            gift.preserveAspect = true;
+            claim.targetGraphic = gift;
             TextMeshProUGUI points = Text(
                 "Points", root.transform, "MỐC 25",
                 new Vector2(0, -82), new Vector2(150, 32), 17, font);
@@ -591,10 +587,6 @@ namespace Core.Module.Quest.Editor
                 "Reward", root.transform, "+100",
                 new Vector2(23, -49), new Vector2(85, 34), 20, font);
             reward.fontStyle = FontStyles.Bold;
-            GameObject locked = ImageObject(
-                "Locked", root.transform, Sprite("quest khóa 1.png"),
-                new Vector2(0, 36), new Vector2(55, 64));
-            locked.GetComponent<Image>().raycastTarget = false;
             Image statusBackground = ImageObject(
                 "Status Background", root.transform, null,
                 new Vector2(0, -12), new Vector2(138, 38)).GetComponent<Image>();
@@ -610,35 +602,48 @@ namespace Core.Module.Quest.Editor
             Set(serialized, "_points", points);
             Set(serialized, "_reward", reward);
             Set(serialized, "_claimButton", claim);
-            Set(serialized, "_locked", locked);
             Set(serialized, "_statusBackground", statusBackground);
             Set(serialized, "_status", status);
+            Set(serialized, "_giftImage", gift);
+            Set(serialized, "_lockedGiftSprite",
+                Sprite("quest hàng ngày_ hộp quà_chưa mở.png"));
+            Set(serialized, "_claimableGiftSprite",
+                Sprite("quest hàng ngày_ hộp quà 1.png"));
+            Set(serialized, "_claimedGiftSprite",
+                Sprite("quest hàng ngày_ hộp quà_đã mở.png"));
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return view;
         }
 
-        private static Slider SliderObject(
+        private static Image ProgressBarObject(
             Transform parent, Vector2 position, Vector2 size)
         {
             GameObject root = ImageObject(
                 "Progress Bar", parent,
-                Sprite("quest thanh tiến trình 1.png"), position, size);
+                Sprite("quest hàng ngày_ quà tặng_rỗng.png"), position, size);
             Image background = root.GetComponent<Image>();
             background.color = Color.white;
-            Slider slider = root.AddComponent<Slider>();
+            background.raycastTarget = false;
             GameObject fill = ImageObject(
-                "Fill", root.transform, null, Vector2.zero,
-                new Vector2(size.x - 55, 13));
-            fill.GetComponent<Image>().color =
-                new Color(0.62f, 0.88f, 0.3f, 0.75f);
+                "Fill", root.transform,
+                Sprite("quest thanh tiến trình 1.png"),
+                Vector2.zero, size);
             RectTransform fillRect = fill.GetComponent<RectTransform>();
-            fillRect.anchorMin = new Vector2(0, 0);
-            fillRect.anchorMax = new Vector2(1, 1);
-            fillRect.offsetMin = fillRect.offsetMax = Vector2.zero;
-            slider.fillRect = fillRect;
-            slider.targetGraphic = fill.GetComponent<Image>();
-            slider.interactable = false;
-            return slider;
+            fillRect.anchorMin = fillRect.anchorMax = new Vector2(0.5f, 0.5f);
+            fillRect.anchoredPosition = new Vector2(
+                size.x * 0.00162f,
+                size.y * 0.0609f);
+            fillRect.sizeDelta = new Vector2(
+                size.x * 0.9966f,
+                size.y * 1.0922f);
+            Image fillImage = fill.GetComponent<Image>();
+            fillImage.type = Image.Type.Filled;
+            fillImage.fillMethod = Image.FillMethod.Horizontal;
+            fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fillImage.fillAmount = 0f;
+            fillImage.preserveAspect = false;
+            fillImage.raycastTarget = false;
+            return fillImage;
         }
 
         private static void TabVisual(

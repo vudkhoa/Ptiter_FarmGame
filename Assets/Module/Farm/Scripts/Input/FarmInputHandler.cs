@@ -53,6 +53,11 @@ namespace Core.Module.Farm
             // Only handle left click / finger tap (Button index 0)
             if (payload.Button != 0) return;
 
+            // Full-screen modal windows such as Quest and Inventory own input
+            // while they are open. Gameplay windows (for example the farm
+            // selector) deliberately do not register as blockers.
+            if (_inputService.IsGameplayInputBlocked) return;
+
             // Ignore interaction if pointer is over UI elements
             if (_inputService.IsPointerOverUI()) return;
 

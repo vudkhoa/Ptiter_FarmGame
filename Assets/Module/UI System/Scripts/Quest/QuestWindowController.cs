@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using BrunoMikoski.UIManager;
+using Core.Module.Input;
 using Core.Module.Quest;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
@@ -25,6 +26,19 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private Button _foodTab;
         [SerializeField] private Button _closeButton;
 
+        [Header("Shared Tab Visuals")]
+        [SerializeField] private Image _dailyTabVisual;
+        [SerializeField] private Image _progressTabVisual;
+        [SerializeField] private Image _foodTabVisual;
+        [SerializeField] private TMP_Text _dailyTabLabel;
+        [SerializeField] private TMP_Text _progressTabLabel;
+        [SerializeField] private TMP_Text _foodTabLabel;
+        [SerializeField] private Sprite _selectedTabSprite;
+        [SerializeField] private Sprite _inactiveTabSprite;
+        [SerializeField] private Color _selectedTabTextColor = Color.white;
+        [SerializeField] private Color _inactiveTabTextColor =
+            new Color(0.55f, 0.30f, 0.24f, 1f);
+
         [Header("Panels")]
         [SerializeField] private GameObject _dailyPanel;
         [SerializeField] private GameObject _progressPlaceholder;
@@ -38,6 +52,7 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private RectTransform _taskContent;
         [SerializeField] private QuestTaskItemView _taskTemplate;
         [SerializeField] private QuestMilestoneView[] _milestones;
+        [SerializeField] private Image _dailyMilestoneFill;
 
         [Header("Progress")]
         [SerializeField] private Image _progressStarIcon;
@@ -83,6 +98,8 @@ namespace MyOwn.ServiceHarness
 
         public void OnBeforeWindowOpen()
         {
+            EnsureModalInputBlocker();
+            GameplayInputBlockRegistry.Add(this);
             RegisterButtons();
             ShowTab(0);
             ResetTaskScroll();
@@ -96,6 +113,7 @@ namespace MyOwn.ServiceHarness
 
         public void OnWindowClosed()
         {
+            GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
             if (_rewardToast != null) _rewardToast.SetActive(false);
         }
@@ -122,6 +140,7 @@ namespace MyOwn.ServiceHarness
             if (_dailyPanel != null) _dailyPanel.SetActive(index == 0);
             if (_progressPlaceholder != null) _progressPlaceholder.SetActive(index == 1);
             if (_foodPlaceholder != null) _foodPlaceholder.SetActive(index == 2);
+            UpdateTabVisuals(index);
             if (index == 0) Render();
             if (index == 1) RenderProgress();
         }
@@ -149,6 +168,7 @@ namespace MyOwn.ServiceHarness
                 _countdown.text = FormatCountdown(state.TimeUntilReset);
             if (_totalPoints != null)
                 _totalPoints.text = $"{state.TotalPoints} ĐIỂM";
+            UpdateDailyMilestoneFill(state);
 
             int taskCount = state.Tasks?.Count ?? 0;
             EnsureTaskViews(taskCount);
@@ -201,6 +221,81 @@ namespace MyOwn.ServiceHarness
             _dailyQuestService.ClaimMilestoneAsync(
                 milestoneId,
                 this.GetCancellationTokenOnDestroy()).Forget();
+        }
+
+        private void EnsureModalInputBlocker()
+        {
+            const string blockerName = "Modal Input Blocker";
+            Transform existing = transform.Find(blockerName);
+            GameObject blocker = existing != null
+                ? existing.gameObject
+                : new GameObject(
+                    blockerName,
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+
+            RectTransform rect = blocker.transform as RectTransform;
+            rect.SetParent(transform, false);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(10000f, 10000f);
+            rect.SetAsFirstSibling();
+
+            Image image = blocker.GetComponent<Image>();
+            image.color = Color.clear;
+            image.raycastTarget = true;
+            image.maskable = false;
+        }
+
+        private void UpdateDailyMilestoneFill(DailyQuestViewState state)
+        {
+            if (_dailyMilestoneFill == null) return;
+
+            int finalMilestone = 0;
+            if (state?.Milestones != null)
+            {
+                for (int i = 0; i < state.Milestones.Count; i++)
+                {
+                    DailyMilestoneViewData milestone = state.Milestones[i];
+                    if (milestone != null)
+                        finalMilestone = Mathf.Max(
+                            finalMilestone, milestone.RequiredPoints);
+                }
+            }
+
+            _dailyMilestoneFill.fillAmount = finalMilestone > 0
+                ? Mathf.Clamp01((float)state.TotalPoints / finalMilestone)
+                : 0f;
+        }
+
+        private void UpdateTabVisuals(int activeIndex)
+        {
+            ApplyTabVisual(
+                _dailyTabVisual, _dailyTabLabel, activeIndex == 0);
+            ApplyTabVisual(
+                _progressTabVisual, _progressTabLabel, activeIndex == 1);
+            ApplyTabVisual(
+                _foodTabVisual, _foodTabLabel, activeIndex == 2);
+        }
+
+        private void ApplyTabVisual(
+            Image visual,
+            TMP_Text label,
+            bool selected)
+        {
+            if (visual != null)
+            {
+                visual.sprite = selected
+                    ? _selectedTabSprite
+                    : _inactiveTabSprite;
+                visual.color = Color.white;
+            }
+
+            if (label != null)
+                label.color = selected
+                    ? _selectedTabTextColor
+                    : _inactiveTabTextColor;
         }
 
         private void RenderProgress()
@@ -270,6 +365,7 @@ namespace MyOwn.ServiceHarness
 
         protected override void OnDestroy()
         {
+            GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
             for (int i = 0; i < _subscriptions.Count; i++)
                 _subscriptions[i]?.Dispose();

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Core.Module.Input;
 using Core.Module.Map;
 using VContainer;
 
@@ -16,6 +17,7 @@ namespace Core.Common
         [Header("Camera Reference")]
         private Camera _camera;
         private IMapService _mapService;
+        private IInputService _inputService;
 
         [Header("Pan (Di chuyển Map)")]
         [Tooltip("Phím chuột dùng để di chuyển: 0 = Trái, 1 = Phải, 2 = Giữa")]
@@ -48,9 +50,10 @@ namespace Core.Common
         private Vector2 _touchStartPos;
 
         [Inject]
-        public void Construct(IMapService mapService)
+        public void Construct(IMapService mapService, IInputService inputService)
         {
             _mapService = mapService;
+            _inputService = inputService;
         }
 
         private void Awake()
@@ -70,6 +73,12 @@ namespace Core.Common
 
         private void Update()
         {
+            if (_inputService != null && _inputService.IsGameplayInputBlocked)
+            {
+                _isDragging = false;
+                return;
+            }
+
             // Kiểm tra xem chuột/tay có đang đè lên UI hay không
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             {

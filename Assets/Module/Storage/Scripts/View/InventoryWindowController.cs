@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BrunoMikoski.UIManager;
+using Core.Module.Input;
 using MessagePipe;
 using TMPro;
 using UnityEngine;
@@ -66,6 +67,8 @@ namespace Core.Module.Storage.View
 
         public void OnBeforeWindowOpen()
         {
+            EnsureModalInputBlocker();
+            GameplayInputBlockRegistry.Add(this);
             _category = InventoryCategory.All;
             _pageIndex = 0;
             _selected = null;
@@ -75,7 +78,36 @@ namespace Core.Module.Storage.View
             Render();
         }
 
-        public void OnWindowClosed() => UnregisterButtons();
+        public void OnWindowClosed()
+        {
+            GameplayInputBlockRegistry.Remove(this);
+            UnregisterButtons();
+        }
+
+        private void EnsureModalInputBlocker()
+        {
+            const string blockerName = "Modal Input Blocker";
+            Transform existing = transform.Find(blockerName);
+            GameObject blocker = existing != null
+                ? existing.gameObject
+                : new GameObject(
+                    blockerName,
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+
+            RectTransform rect = blocker.transform as RectTransform;
+            rect.SetParent(transform, false);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(10000f, 10000f);
+            rect.SetAsFirstSibling();
+
+            Image image = blocker.GetComponent<Image>();
+            image.color = Color.clear;
+            image.raycastTarget = true;
+            image.maskable = false;
+        }
 
         private void RegisterButtons()
         {
@@ -251,6 +283,7 @@ namespace Core.Module.Storage.View
 
         protected override void OnDestroy()
         {
+            GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
             for (int i = 0; i < _subscriptions.Count; i++)
                 _subscriptions[i]?.Dispose();
