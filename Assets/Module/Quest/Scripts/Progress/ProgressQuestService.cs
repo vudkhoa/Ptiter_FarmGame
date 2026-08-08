@@ -105,11 +105,13 @@ namespace Core.Module.Quest
             var views = new List<ProgressMilestoneViewData>();
             if (config.milestones != null)
             {
+                var usedIds = new HashSet<string>(StringComparer.Ordinal);
                 for (int i = 0; i < config.milestones.Count; i++)
                 {
                     ProgressMilestoneDefinition milestone = config.milestones[i];
                     if (milestone == null ||
-                        string.IsNullOrWhiteSpace(milestone.milestoneId))
+                        string.IsNullOrWhiteSpace(milestone.milestoneId) ||
+                        !usedIds.Add(milestone.milestoneId))
                         continue;
 
                     bool claimed = _state.claimedMilestoneIds.Contains(

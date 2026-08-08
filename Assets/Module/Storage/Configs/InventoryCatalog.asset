@@ -19,3 +19,21 @@ MonoBehaviour:
     category: 2
     icon: {fileID: 21300000, guid: 8b9047921f6a4e44a86a88ac03209396, type: 3}
     preview: {fileID: 21300000, guid: d6071073927d9fb4e8cca8fe9ecab9ba, type: 3}
+  - itemId: wheat_grain
+    displayName: "Hạt Lúa"
+    description: "Nông sản thu hoạch từ ruộng lúa."
+    category: 1
+    icon: {fileID: 0}
+    preview: {fileID: 0}
+  - itemId: sugarcane_raw
+    displayName: "Mía Thô"
+    description: "Nông sản thu hoạch từ ruộng mía."
+    category: 1
+    icon: {fileID: 0}
+    preview: {fileID: 0}
+  - itemId: egg
+    displayName: "Trứng Gà"
+    description: "Nông sản thu hoạch từ vật nuôi."
+    category: 1
+    icon: {fileID: 0}
+    preview: {fileID: 0}

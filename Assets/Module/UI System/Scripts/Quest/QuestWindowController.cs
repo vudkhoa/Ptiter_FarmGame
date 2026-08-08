@@ -57,7 +57,9 @@ namespace MyOwn.ServiceHarness
         [Header("Progress")]
         [SerializeField] private Image _progressStarIcon;
         [SerializeField] private TMP_Text _progressStars;
-        [SerializeField] private ProgressMilestoneView[] _progressMilestones;
+        [SerializeField] private ScrollRect _progressScroll;
+        [SerializeField] private RectTransform _progressContent;
+        [SerializeField] private ProgressMilestoneView _progressMilestoneTemplate;
 
         [Header("Reward feedback")]
         [SerializeField] private GameObject _rewardToast;
@@ -68,6 +70,8 @@ namespace MyOwn.ServiceHarness
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
         private readonly List<QuestTaskItemView> _taskViews =
             new List<QuestTaskItemView>();
+        private readonly List<ProgressMilestoneView> _progressMilestoneViews =
+            new List<ProgressMilestoneView>();
         private Coroutine _toastRoutine;
         private bool _isConstructed;
 
@@ -151,7 +155,11 @@ namespace MyOwn.ServiceHarness
             ResetTaskScroll();
         }
 
-        private void ShowProgress() => ShowTab(1);
+        private void ShowProgress()
+        {
+            ShowTab(1);
+            ResetProgressScroll();
+        }
         private void ShowFood() => ShowTab(2);
 
         private void Render()
@@ -305,14 +313,50 @@ namespace MyOwn.ServiceHarness
             if (_progressStars != null)
                 _progressStars.text = FormatNumber(state.Stars);
 
-            for (int i = 0; i < (_progressMilestones?.Length ?? 0); i++)
+            int milestoneCount = state.Milestones?.Count ?? 0;
+            EnsureProgressMilestoneViews(milestoneCount);
+            for (int i = 0; i < _progressMilestoneViews.Count; i++)
             {
                 ProgressMilestoneViewData milestone =
                     state.Milestones != null && i < state.Milestones.Count
                         ? state.Milestones[i]
                         : null;
-                _progressMilestones[i]?.Bind(milestone, ClaimProgressMilestone);
+                _progressMilestoneViews[i]?.Bind(
+                    milestone, ClaimProgressMilestone);
             }
+
+            if (_progressContent != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(_progressContent);
+        }
+
+        private void EnsureProgressMilestoneViews(int count)
+        {
+            if (_progressMilestoneTemplate == null || _progressContent == null)
+                return;
+
+            _progressMilestoneTemplate.gameObject.SetActive(false);
+            while (_progressMilestoneViews.Count < count)
+            {
+                ProgressMilestoneView view = Instantiate(
+                    _progressMilestoneTemplate, _progressContent);
+                view.name =
+                    $"Progress Milestone {_progressMilestoneViews.Count + 1}";
+                view.gameObject.SetActive(true);
+                _progressMilestoneViews.Add(view);
+            }
+
+            for (int i = 0; i < _progressMilestoneViews.Count; i++)
+                _progressMilestoneViews[i].gameObject.SetActive(i < count);
+        }
+
+        private void ResetProgressScroll()
+        {
+            if (_progressScroll == null) return;
+            Canvas.ForceUpdateCanvases();
+            if (_progressContent != null)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(_progressContent);
+            _progressScroll.StopMovement();
+            _progressScroll.horizontalNormalizedPosition = 0f;
         }
 
         private void ClaimProgressMilestone(string milestoneId)
