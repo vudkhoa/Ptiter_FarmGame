@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AudioCatalog
   m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioCatalogSO
   _farmMusic: {fileID: 0}
-  _buttonClick: {fileID: 0}
+  _buttonClick: {fileID: 8300000, guid: a74469ac53ed28549bc26c9617316040, type: 3}
   _success: {fileID: 0}
   _error: {fileID: 0}
   _plant: {fileID: 0}

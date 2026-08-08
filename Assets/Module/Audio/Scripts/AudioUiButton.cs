@@ -7,14 +7,20 @@ namespace Core.Module.Audio
     [RequireComponent(typeof(Button))]
     public sealed class AudioUiButton : MonoBehaviour
     {
-        [SerializeField] private AudioClip _clickClip;
         [SerializeField, Range(0f, 1f)] private float _volume = 1f;
 
         private Button _button;
         private IAudioService _audio;
+        private AudioCatalogSO _catalog;
 
         [Inject]
-        public void Construct(IAudioService audio) => _audio = audio;
+        public void Construct(
+            IAudioService audio,
+            AudioCatalogSO catalog)
+        {
+            _audio = audio;
+            _catalog = catalog;
+        }
 
         private void Awake() => _button = GetComponent<Button>();
 
@@ -31,8 +37,8 @@ namespace Core.Module.Audio
 
         public void Play()
         {
-            if (_audio != null && _clickClip != null)
-                _audio.PlaySfx(_clickClip, _volume);
+            if (_audio != null && _catalog != null)
+                _audio.PlaySfx(_catalog.ButtonClick, _volume);
         }
     }
 }
