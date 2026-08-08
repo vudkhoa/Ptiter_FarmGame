@@ -88,4 +88,25 @@ namespace Core.Module.Currency
             Reason = reason;
         }
     }
+
+    /// <summary>
+    /// Published only after a new Credit transaction has been persisted.
+    /// Balance overrides, initialization and debit transactions never emit it.
+    /// </summary>
+    public readonly struct CurrencyCreditedPayload
+    {
+        public readonly string TransactionId;
+        public readonly int Amount;
+        public readonly string Reason;
+
+        public CurrencyCreditedPayload(
+            string transactionId,
+            int amount,
+            string reason)
+        {
+            TransactionId = transactionId;
+            Amount = amount;
+            Reason = reason;
+        }
+    }
 }

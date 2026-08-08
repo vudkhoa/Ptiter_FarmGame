@@ -1,0 +1,20 @@
+{
+    "name": "Storage.FarmIntegration",
+    "rootNamespace": "Core.Module.Storage.Integration.Farm",
+    "references": [
+        "Farm",
+        "Storage",
+        "MessagePipe",
+        "VContainer",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

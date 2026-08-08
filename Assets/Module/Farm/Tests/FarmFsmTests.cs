@@ -6,6 +6,7 @@ using Core.Module.Time;
 using Core.Module.Farm;
 using Core.Module.Storage;
 using Core.Module.Map;
+using Core.Module.Storage.Integration.Farm;
 using MessagePipe;
 
 namespace Core.Module.Farm.Tests
@@ -47,6 +48,24 @@ namespace Core.Module.Farm.Tests
             public IDisposable Subscribe(IMessageHandler<T> handler, params MessageHandlerFilter<T>[] filters)
             {
                 return new StubDisposable();
+            }
+        }
+
+        private class DispatchingSubscriber<T> : ISubscriber<T>
+        {
+            private IMessageHandler<T> _handler;
+
+            public IDisposable Subscribe(
+                IMessageHandler<T> handler,
+                params MessageHandlerFilter<T>[] filters)
+            {
+                _handler = handler;
+                return new StubDisposable();
+            }
+
+            public void Publish(T message)
+            {
+                _handler?.Handle(message);
             }
         }
 
@@ -400,7 +419,7 @@ namespace Core.Module.Farm.Tests
         #region Nhóm Test Thu Hoạch (Harvesting Tests)
 
         [Test]
-        public void Test_Harvest_Success_AddsProducts_And_Publishes_HarvestedEvent()
+        public void Test_Harvest_Success_PublishesRewards_WithoutMutatingStorageDirectly()
         {
             var service = CreateFarmService();
             Vector3Int cell = new Vector3Int(1, 0, 1);
@@ -416,7 +435,8 @@ namespace Core.Module.Farm.Tests
             Assert.IsTrue(success);
             Assert.AreEqual("wheat_grain", product);
             Assert.AreEqual(2, amount);
-            Assert.AreEqual(2, _mockInventory.GetItemCount("wheat_grain"));
+            Assert.AreEqual(0, _mockInventory.GetItemCount("wheat_grain"));
+            Assert.AreEqual(0, _mockInventory.PublishedEvents.Count);
 
             // Assert harvested event was fired
             Assert.AreEqual(1, _harvestedPub.Published.Count);
@@ -427,6 +447,28 @@ namespace Core.Module.Farm.Tests
             Assert.AreEqual("wheat_grain", harvestedEvent.Outputs[0].item.ItemId);
             Assert.AreEqual(2, harvestedEvent.Outputs[0].amount);
             Assert.AreEqual(FarmEntityType.Crop, harvestedEvent.EntityType);
+        }
+
+        [Test]
+        public void Test_HarvestStorageBridge_AddsPublishedRewardsToStorage()
+        {
+            var subscriber =
+                new DispatchingSubscriber<FarmEntityHarvestedPayload>();
+            using var bridge = new FarmHarvestStorageBridge(
+                _mockInventory,
+                subscriber);
+
+            subscriber.Publish(new FarmEntityHarvestedPayload(
+                _sampleCrop.EntityId,
+                new Vector3Int(1, 0, 1),
+                _sampleCrop.entityType,
+                _sampleCrop.outputs));
+
+            Assert.AreEqual(2, _mockInventory.GetItemCount("wheat_grain"));
+            Assert.AreEqual(1, _mockInventory.PublishedEvents.Count);
+            Assert.AreEqual(
+                2,
+                _mockInventory.PublishedEvents[0].Delta);
         }
 
         [Test]
@@ -490,7 +532,8 @@ namespace Core.Module.Farm.Tests
             Assert.IsTrue(success);
             Assert.AreEqual("egg", product);
             Assert.AreEqual(1, amount);
-            Assert.AreEqual(1, _mockInventory.GetItemCount("egg"));
+            Assert.AreEqual(0, _mockInventory.GetItemCount("egg"));
+            Assert.AreEqual(1, _harvestedPub.Published.Count);
 
             // Verification of state reset
             Assert.IsNotNull(slot);

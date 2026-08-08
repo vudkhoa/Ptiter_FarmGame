@@ -165,21 +165,48 @@ namespace Core.Module.Storage.Editor
 
             SerializedObject serialized = new SerializedObject(catalog);
             SerializedProperty items = serialized.FindProperty("_items");
-            items.arraySize = 1;
-            SerializedProperty bonsai = items.GetArrayElementAtIndex(0);
-            bonsai.FindPropertyRelative("itemId").stringValue = "bonsai";
-            bonsai.FindPropertyRelative("displayName").stringValue = "CÂY BONSAI";
-            bonsai.FindPropertyRelative("description").stringValue =
-                "Mua ở tiệm cây cảnh";
-            bonsai.FindPropertyRelative("category").enumValueIndex =
-                (int)InventoryCategory.Decoration;
-            bonsai.FindPropertyRelative("icon").objectReferenceValue =
-                Sprite("UI/inventory_item_bonsai_icon.png");
-            bonsai.FindPropertyRelative("preview").objectReferenceValue =
-                Sprite("UI/inventory_item_bonsai_preview.png");
+            items.arraySize = 4;
+            ConfigureCatalogItem(
+                items.GetArrayElementAtIndex(0),
+                "bonsai", "CÂY BONSAI", "Mua ở tiệm cây cảnh",
+                InventoryCategory.Decoration,
+                Sprite("UI/inventory_item_bonsai_icon.png"),
+                Sprite("UI/inventory_item_bonsai_preview.png"));
+            ConfigureCatalogItem(
+                items.GetArrayElementAtIndex(1),
+                "wheat_grain", "Hạt Lúa", "Nông sản thu hoạch từ ruộng lúa.",
+                InventoryCategory.FarmProduce,
+                null, null);
+            ConfigureCatalogItem(
+                items.GetArrayElementAtIndex(2),
+                "sugarcane_raw", "Mía Thô", "Nông sản thu hoạch từ ruộng mía.",
+                InventoryCategory.FarmProduce,
+                null, null);
+            ConfigureCatalogItem(
+                items.GetArrayElementAtIndex(3),
+                "egg", "Trứng Gà", "Nông sản thu hoạch từ vật nuôi.",
+                InventoryCategory.FarmProduce,
+                null, null);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(catalog);
             return catalog;
+        }
+
+        private static void ConfigureCatalogItem(
+            SerializedProperty item,
+            string itemId,
+            string displayName,
+            string description,
+            InventoryCategory category,
+            Sprite icon,
+            Sprite preview)
+        {
+            item.FindPropertyRelative("itemId").stringValue = itemId;
+            item.FindPropertyRelative("displayName").stringValue = displayName;
+            item.FindPropertyRelative("description").stringValue = description;
+            item.FindPropertyRelative("category").enumValueIndex = (int)category;
+            item.FindPropertyRelative("icon").objectReferenceValue = icon;
+            item.FindPropertyRelative("preview").objectReferenceValue = preview;
         }
 
         private static PrefabUIWindow BuildInventoryWindow(
@@ -245,8 +272,8 @@ namespace Core.Module.Storage.Editor
             Button farmTab = Tab("Farm Tab", root.transform,
                 Sprite("UI/inventory_tab_farm_bg.png"),
                 "Nông sản", new Vector2(-775, 25), font);
-            Button decorationTab = Tab("Decoration Tab", root.transform,
-                Sprite("UI/inventory_tab_decoration_bg.png"), "Trang trí",
+            Button foodTab = Tab("Food Tab", root.transform,
+                Sprite("UI/inventory_tab_decoration_bg.png"), "Món ăn",
                 new Vector2(-775, -95), font);
 
             InventoryItemView[] slots = new InventoryItemView[12];
@@ -308,7 +335,7 @@ namespace Core.Module.Storage.Editor
             Set(controllerSo, "_catalog", catalog);
             Set(controllerSo, "_allTab", allTab);
             Set(controllerSo, "_farmTab", farmTab);
-            Set(controllerSo, "_decorationTab", decorationTab);
+            Set(controllerSo, "_foodTab", foodTab);
             Set(controllerSo, "_previousPage", previous);
             Set(controllerSo, "_nextPage", next);
             Set(controllerSo, "_closeButton", close);

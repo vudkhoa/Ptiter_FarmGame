@@ -4,6 +4,7 @@ using Core.Module.Input;
 using Core.Module.Map;
 using Core.Module.Farm;
 using Core.Module.Storage;
+using Core.Module.Storage.Integration.Farm;
 using MessagePipe;
 using VContainer;
 using VContainer.Unity;
@@ -48,6 +49,7 @@ namespace MyOwn.ServiceHarness
                    .RegisterStorageModule(options)
                    .RegisterCurrencyModule(options)
                    .RegisterFarmModule(options)
+                   .RegisterFarmStorageIntegration()
                    .RegisterQuestModule(options)
                    .RegisterCutsceneModule(options)
                    .RegisterCurrencyQuestIntegration()

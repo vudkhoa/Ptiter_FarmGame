@@ -278,8 +278,6 @@ namespace Core.Module.Farm
                 var reward = entity.outputs[i];
                 if (reward.item == null) continue;
 
-                _storageService.AddItem(reward.item.ItemId, reward.amount);
-
                 // The first reward is the one the UI shows floating up.
                 if (productItemId == null)
                 {
