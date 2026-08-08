@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using VContainer;
 
@@ -9,8 +10,9 @@ namespace Core.Module.Audio
     {
         [SerializeField] private AudioBus _bus = AudioBus.Master;
         [SerializeField] private Slider _volumeSlider;
-        [Tooltip("Toggle ON means this bus is muted.")]
-        [SerializeField] private Toggle _muteToggle;
+        [Tooltip("Toggle ON means this audio bus is enabled.")]
+        [FormerlySerializedAs("_muteToggle")]
+        [SerializeField] private Toggle _enabledToggle;
 
         private IAudioSettingsProvider _settings;
 
@@ -33,6 +35,7 @@ namespace Core.Module.Audio
 
         public void SetVolume(float value) => _settings?.SetVolume(_bus, value);
         public void SetMuted(bool muted) => _settings?.SetMuted(_bus, muted);
+        public void SetEnabled(bool enabled) => _settings?.SetMuted(_bus, !enabled);
         public void ToggleMuted() => _settings?.ToggleMuted(_bus);
         public void ResetAll() => _settings?.ResetToDefaults();
 
@@ -50,10 +53,10 @@ namespace Core.Module.Audio
                 _volumeSlider.onValueChanged.AddListener(SetVolume);
             }
 
-            if (_muteToggle != null)
+            if (_enabledToggle != null)
             {
-                _muteToggle.onValueChanged.RemoveListener(SetMuted);
-                _muteToggle.onValueChanged.AddListener(SetMuted);
+                _enabledToggle.onValueChanged.RemoveListener(SetEnabled);
+                _enabledToggle.onValueChanged.AddListener(SetEnabled);
             }
         }
 
@@ -63,8 +66,8 @@ namespace Core.Module.Audio
                 _settings.Changed -= OnSettingsChanged;
             if (_volumeSlider != null)
                 _volumeSlider.onValueChanged.RemoveListener(SetVolume);
-            if (_muteToggle != null)
-                _muteToggle.onValueChanged.RemoveListener(SetMuted);
+            if (_enabledToggle != null)
+                _enabledToggle.onValueChanged.RemoveListener(SetEnabled);
         }
 
         private void OnSettingsChanged(AudioBus bus)
@@ -76,7 +79,7 @@ namespace Core.Module.Audio
         {
             if (_settings == null) return;
             _volumeSlider?.SetValueWithoutNotify(_settings.GetVolume(_bus));
-            _muteToggle?.SetIsOnWithoutNotify(_settings.IsMuted(_bus));
+            _enabledToggle?.SetIsOnWithoutNotify(!_settings.IsMuted(_bus));
         }
     }
 }

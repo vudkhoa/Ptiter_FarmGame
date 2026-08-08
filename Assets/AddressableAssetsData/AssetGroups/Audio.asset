@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1257114bdaf185749af1ecb2e492a85a
+    m_Address: AudioCatalog
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3c9148e7a77eb3c44adb48dd797f93f0
     m_Address: kuzu420-oink-oink-228771
     m_ReadOnly: 0

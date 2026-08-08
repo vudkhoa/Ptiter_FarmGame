@@ -12,7 +12,8 @@ The module is intentionally small and fully 2D:
 1. Create **Farm Game > Audio > Settings** and **Farm Game > Audio > Catalog**.
 2. Assign both assets to `RootLifetimeScope`.
 3. Fill the catalog's Music, UI, Farm, Map, and Quest clip fields.
-4. Add `AudioSettingsReference` to each Master, Music, and Sound settings row.
+4. Add `AudioSettingsReference` to the Music and Sound settings rows.
+   Toggle ON means enabled; Toggle OFF means muted.
 
 ## Usage
 
