@@ -4,8 +4,11 @@ namespace Core.Module.Audio
 {
     public interface IAudioService
     {
-        AudioSource Play(AudioCue cue);
-        void PlayMusic(AudioCue cue, bool restartIfSame = false);
+        void PlaySfx(AudioClip clip, float volume = 1f);
+        void PlayMusic(
+            AudioClip clip,
+            float volume = 1f,
+            bool restartIfSame = false);
         void StopMusic();
         void StopAll();
     }

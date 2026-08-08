@@ -43,36 +43,26 @@ namespace Core.Module.Audio
             RefreshVolumes();
         }
 
-        public AudioSource Play(AudioCue cue)
+        public void PlaySfx(AudioClip clip, float volume = 1f)
         {
             EnsureInitialized();
-            if (cue == null) return null;
-
-            if (cue.Bus == AudioBus.Music)
-            {
-                PlayMusic(cue);
-                return _musicSource;
-            }
-
-            AudioClip clip = cue.GetClip();
-            if (clip == null) return null;
+            if (clip == null) return;
 
             AudioSource source = GetAvailableSfxSource();
-            source.PlayOneShot(clip, cue.Volume);
-            return source;
+            source.PlayOneShot(clip, Mathf.Clamp01(volume));
         }
 
-        public void PlayMusic(AudioCue cue, bool restartIfSame = false)
+        public void PlayMusic(
+            AudioClip clip,
+            float volume = 1f,
+            bool restartIfSame = false)
         {
             EnsureInitialized();
-            if (cue == null) return;
-
-            AudioClip clip = cue.GetClip();
             if (clip == null) return;
             if (!restartIfSame && _musicSource.isPlaying && _musicSource.clip == clip)
                 return;
 
-            _musicCueVolume = cue.Volume;
+            _musicCueVolume = Mathf.Clamp01(volume);
             _musicSource.clip = clip;
             _musicSource.loop = true;
             RefreshVolumes();

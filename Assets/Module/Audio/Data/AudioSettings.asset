@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: AudioSettings
   m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioSettingsSO
   _masterVolume: 1
-  _musicVolume: 0.8
+  _musicVolume: 1
   _sfxVolume: 1
   _sfxPoolSize: 8

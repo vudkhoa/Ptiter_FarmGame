@@ -8,10 +8,13 @@ namespace Core.Module.Audio
     {
         public static IContainerBuilder RegisterAudioModule(
             this IContainerBuilder builder,
-            AudioSettingsSO settings = null)
+            AudioSettingsSO settings = null,
+            AudioCatalogSO catalog = null)
         {
             settings ??= ScriptableObject.CreateInstance<AudioSettingsSO>();
+            catalog ??= ScriptableObject.CreateInstance<AudioCatalogSO>();
             builder.RegisterInstance(settings);
+            builder.RegisterInstance(catalog);
             builder.Register<AudioSettingsProvider>(Lifetime.Singleton)
                    .AsImplementedInterfaces();
             builder.RegisterEntryPoint<AudioService>()

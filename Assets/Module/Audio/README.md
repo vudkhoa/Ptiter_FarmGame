@@ -1,36 +1,49 @@
 # Audio module
 
-The root scope registers one `IAudioService` and one `IAudioSettingsProvider`.
-The service creates one 2D Music source and a small 2D SFX source pool
-automatically; no `AudioSource` or `AudioMixer` needs to be placed in a scene.
-UI sounds use the `Sfx` bus, so the settings screen only needs Master, Music,
-and SFX rows.
+The module is intentionally small and fully 2D:
+
+- one looping Music source;
+- a configurable SFX pool shared by gameplay and UI;
+- Master, Music, and SFX volume/mute settings saved in `PlayerPrefs`;
+- one `AudioCatalogSO` containing the game's clips.
 
 ## Setup
 
-1. Create an optional **Farm Game > Audio > Settings** asset and assign it to
-   `RootLifetimeScope`. Leaving it empty uses the built-in defaults.
-2. Create cues from **Farm Game > Audio > Cue** and assign one or more clips.
-3. Add `AudioSettingsReference` to each settings row. Choose its bus, then
-   assign that row's Slider and mute Toggle. Toggle ON means muted.
-4. Add `AudioUiButton` to a Button and assign an SFX cue for click feedback.
+1. Create **Farm Game > Audio > Settings** and **Farm Game > Audio > Catalog**.
+2. Assign both assets to `RootLifetimeScope`.
+3. Fill the catalog's Music, UI, Farm, Map, and Quest clip fields.
+4. Add `AudioSettingsReference` to each Master, Music, and Sound settings row.
 
-Scene objects must be under a VContainer auto-injected scope. Runtime-created
-UI prefabs must be instantiated or injected through VContainer, like the other
-game UI controllers.
+## Usage
 
-## Gameplay usage
+Inject `IAudioService` and `AudioCatalogSO` into the controller that owns the
+action:
 
 ```csharp
 private readonly IAudioService _audio;
+private readonly AudioCatalogSO _catalog;
 
-public Example(IAudioService audio) => _audio = audio;
+public Example(IAudioService audio, AudioCatalogSO catalog)
+{
+    _audio = audio;
+    _catalog = catalog;
+}
 
 public void Harvest()
 {
-    _audio.Play(_harvestCue);
+    _audio.PlaySfx(_catalog.Harvest);
+}
+
+public void StartMusic()
+{
+    _audio.PlayMusic(_catalog.FarmMusic);
 }
 ```
 
-Use `PlayMusic(cue)` for background music and `Play(cue)` for UI or 2D SFX.
-Volume and mute values are restored automatically from `PlayerPrefs`.
+Pass an optional `0..1` volume only when a particular call needs adjustment:
+
+```csharp
+_audio.PlaySfx(_catalog.ButtonClick, 0.7f);
+```
+
+`AudioUiButton` is optional; UI controllers can call `PlaySfx` directly.
