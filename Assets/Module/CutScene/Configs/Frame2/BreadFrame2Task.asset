@@ -20,12 +20,12 @@ MonoBehaviour:
     m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
     m_SubObjectGUID: 
-    m_EditorAssetChanged: 0
+    m_EditorAssetChanged: 1
   slot: 1
   imageId: frame2
   fadeDuration: 0.4
   ease: 6
   overrideLayout: 1
   anchoredPosition: {x: -400.4, y: -99.1}
-  size: {x: 597, y: 448}
+  size: {x: 591, y: 448}
   rotationZ: -25.3

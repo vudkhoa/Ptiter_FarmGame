@@ -15,18 +15,18 @@ MonoBehaviour:
   m_GroupName: CutScene
   m_GUID: e132add79c9be4343834c59a5f6e4cc7
   m_SerializeEntries:
+  - m_GUID: 28b08ffe569445e1856d01b5b643d759
+    m_Address: bread_pig_piglet
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 39dbf42f716869a4ca41118762d9c812
+    m_Address: shot3_background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42001
     m_Address: frame_bg
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e0640042913d4e068b52f6c8418926c3
-    m_Address: bread_pig_bg
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 873a64b99f2146819cbe90969cf10fa7
-    m_Address: bread_pig_sleep
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -35,18 +35,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 28b08ffe569445e1856d01b5b643d759
-    m_Address: bread_pig_piglet
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5722f0c1d10c4e6ab24f25d5b5d5966d
     m_Address: bread_pig_boy
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d86cbba5fb1043bc8a10f3109a1dfe18
-    m_Address: bread_pig_corner
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -55,8 +45,43 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5d806346615c88e48ba57f1334992979
+    m_Address: shot3_rimlight
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 62839771d0a14c54cb192ee7ab7f3122
+    m_Address: shot3_glow
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 873a64b99f2146819cbe90969cf10fa7
+    m_Address: bread_pig_sleep
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 914baa18e2c6ed748a7ee110239ebf8b
+    m_Address: shot3_wash
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 99eb72c719f02eb49813d61f0d43ca0d
     m_Address: img_test
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a7e3c26627912df42b7235206a2f2fd2
+    m_Address: shot3_chef
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d86cbba5fb1043bc8a10f3109a1dfe18
+    m_Address: bread_pig_corner
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0640042913d4e068b52f6c8418926c3
+    m_Address: bread_pig_bg
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
