@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using MessagePipe;
 using UnityEngine;
@@ -15,6 +16,7 @@ namespace Core.Module.Map
 
         [Header("Ref")]
         [SerializeField] private float _cellSize = 1f;
+        [SerializeField, Min(0.05f)] private float _freeEraseRadius = 0.75f;
 
         [Header("Tilemap & Grid Configuration")]
         [SerializeField] private Grid _unityGrid;
@@ -25,17 +27,29 @@ namespace Core.Module.Map
         private IPublisher<MapPreviewMovedPayload> _pubMove;
         private IPublisher<MapFurnitureAddedPayload> _pubAdded;
         private IPublisher<MapPlacementStoppedPayload> _pubStop;
+        private IPublisher<MapPlayerRemovalModeChangedPayload> _pubRemovalMode;
 
         private GridData _grid;
+        private MapPlacementValidator _placementValidator;
         private int _mapId;
         private int _currentObjectId = -1;
         private int _currentDbIndex = -1;
         private int _changeCount;
+        private bool _isPlayerRemovalMode;
         private Vector3Int _lastCell = new(int.MinValue, 0, 0);
+        private Vector3 _lastPreviewWorld = new(float.PositiveInfinity, 0f, 0f);
+        private readonly Dictionary<string, FreePlacementRecord> _freePlacements = new();
+        private string _selectedInstanceId;
+        private PlacementPositionMode _selectedPositionMode;
+        private Vector3Int _selectedGridOrigin;
+        private float _selectedUniformScale = 1f;
 
         private IObjectCatalog _catalog;
+        private IMapObjectInstanceRegistry _instanceRegistry;
+        private MapAuthoringController _authoring;
         private IMapSaveSource _saveSource;
         private List<MapPlacementSaveData> _persistedPlacements;
+        private IReadOnlyList<IMapPlacementRemovalPolicy> _removalPolicies;
 
         #region DI - Constructor
         [Inject]
@@ -44,18 +58,27 @@ namespace Core.Module.Map
             IPublisher<MapPreviewMovedPayload> pubMove,
             IPublisher<MapFurnitureAddedPayload> pubAdded,
             IPublisher<MapPlacementStoppedPayload> pubStop,
+            IPublisher<MapPlayerRemovalModeChangedPayload> pubRemovalMode,
             IObjectCatalog catalog,
+            IMapObjectInstanceRegistry instanceRegistry,
+            MapAuthoringController authoring,
             ObjectDatabaseSO database,
-            IMapSaveSource saveSource)
+            IMapSaveSource saveSource,
+            IReadOnlyList<IMapPlacementRemovalPolicy> removalPolicies)
         {
             _pubStart = pubStart;
             _pubMove = pubMove;
             _pubAdded = pubAdded;
             _pubStop = pubStop;
+            _pubRemovalMode = pubRemovalMode;
             _catalog = catalog;
+            _instanceRegistry = instanceRegistry;
+            _authoring = authoring;
             _database = database;
             _saveSource = saveSource;
             _persistedPlacements = saveSource?.MapPlacements;
+            _removalPolicies = removalPolicies;
+            _authoring.Initialize(this, database);
         }
         #endregion
 
@@ -77,12 +100,19 @@ namespace Core.Module.Map
             }
 
             _grid = new GridData();
-            _mapId = 0;
+            _placementValidator = new MapPlacementValidator(
+                _database, _grid, _freePlacements, WorldToCell);
+            _mapId = _authoring.Layout != null ? _authoring.Layout.MapId : 0;
         }
 
         private void Start()
         {
-            RestoreSavedPlacements();
+            RestoreLayoutPlacements(_authoring.IsAuthoringMode
+                ? _authoring.WorkingEntries
+                : _authoring.Layout != null ? _authoring.Layout.Objects : null);
+
+            if (!_authoring.IsAuthoringMode)
+                RestoreSavedPlacements();
         }
         #endregion
 
@@ -94,6 +124,8 @@ namespace Core.Module.Map
         public int CurrentObjectId => _currentObjectId;
 
         public bool HasActivePlacement => _currentDbIndex >= 0;
+
+        public bool IsPlayerRemovalMode => _isPlayerRemovalMode;
 
         public PlacementInputMode CurrentPlacementInputMode => HasActivePlacement
             ? _database.Objects[_currentDbIndex].PlacementInputMode
@@ -109,6 +141,7 @@ namespace Core.Module.Map
         public void StartPlacement(int objectId)
         {
             if (HasActivePlacement) StopPlacement();
+            else SetPlayerRemovalMode(false);
 
             if (!_database.TryGetById(objectId, out ObjectData data, out int index))
             {
@@ -125,20 +158,36 @@ namespace Core.Module.Map
             _currentObjectId = data.ID;
             _currentDbIndex = index;
             _lastCell = new Vector3Int(int.MinValue, 0, 0);
+            _lastPreviewWorld = new Vector3(float.PositiveInfinity, 0f, 0f);
 
             _pubStart.Publish(new MapPlacementStartedPayload(
                 data.ID,
                 prefab,
                 data.Size,
+                data.PositionMode,
                 data.RotationMode));
         }
 
         public void StopPlacement()
         {
-            if (!HasActivePlacement) return;
-            _currentObjectId = -1;
-            _currentDbIndex = -1;
-            _pubStop.Publish(default);
+            if (HasActivePlacement)
+            {
+                _currentObjectId = -1;
+                _currentDbIndex = -1;
+                _pubStop.Publish(default);
+            }
+
+            SetPlayerRemovalMode(false);
+        }
+
+        public void SetPlayerRemovalMode(bool active)
+        {
+            if (active && _authoring.IsAuthoringMode) return;
+            if (_isPlayerRemovalMode == active) return;
+
+            if (active && HasActivePlacement) StopPlacement();
+            _isPlayerRemovalMode = active;
+            _pubRemovalMode.Publish(new MapPlayerRemovalModeChangedPayload(active));
         }
         #endregion
 
@@ -147,51 +196,86 @@ namespace Core.Module.Map
         {
             if (!HasActivePlacement) return;
 
-            var cell = WorldToCell(worldHit);
-            if (cell == _lastCell) return;
-            _lastCell = cell;
-
             var data = _database.Objects[_currentDbIndex];
-            bool valid = _grid.CanPlaceObjectAt(cell, data.Size) && IsTilemapPlacementValid(cell, data.Size);
-            var snapped = CellToWorld(cell);
+            Vector3Int cell = WorldToCell(worldHit);
+            Vector3 position;
+            bool valid;
 
-            _pubMove.Publish(new MapPreviewMovedPayload(snapped, cell, valid));
+            if (data.PositionMode == PlacementPositionMode.Free)
+            {
+                position = GetFreePosition(data, worldHit);
+                cell = WorldToCell(position);
+                if ((position - _lastPreviewWorld).sqrMagnitude < 0.0001f) return;
+                _lastPreviewWorld = position;
+                valid = _placementValidator.CanPlaceFree(data, position)
+                    && IsPlacementSurfaceValid(cell, Vector2Int.one);
+            }
+            else
+            {
+                if (cell == _lastCell) return;
+                _lastCell = cell;
+                position = CellToWorld(cell);
+                valid = _placementValidator.CanPlaceGrid(data, cell)
+                    && IsPlacementSurfaceValid(cell, data.Size);
+            }
+
+            _pubMove.Publish(new MapPreviewMovedPayload(position, cell, valid));
         }
 
         public bool AddFurniture(Vector3 worldHit)
         {
             if (!HasActivePlacement) return false;
 
-            var cell = WorldToCell(worldHit);
             var data = _database.Objects[_currentDbIndex];
+            var cell = WorldToCell(worldHit);
 
-            if (!_grid.CanPlaceObjectAt(cell, data.Size) || !IsTilemapPlacementValid(cell, data.Size)) return false;
             if (!_catalog.TryGet(data.ID, out var prefab))
             {
                 Debug.LogError($"[MapService] Prefab ID {data.ID} is not preloaded in the catalog.");
                 return false;
             }
 
-            _grid.AddObjectAt(cell, data.Size, data.ID, data.Kind, _changeCount);
-            _changeCount++;
+            string instanceId = CreateInstanceId();
+            Vector3 placedWorld;
 
-            var snapped = CellToWorld(cell);
-            _pubAdded.Publish(new MapFurnitureAddedPayload(
-                data.ID,
-                prefab,
-                snapped,
-                cell,
-                _changeCount,
-                data.RotationMode));
-
-            _persistedPlacements?.Add(new MapPlacementSaveData
+            if (data.PositionMode == PlacementPositionMode.Free)
             {
-                objectId = data.ID,
-                cellX = cell.x,
-                cellY = cell.y,
-                cellZ = cell.z
-            });
-            _saveSource?.SaveMap();
+                placedWorld = GetFreePosition(data, worldHit);
+                cell = WorldToCell(placedWorld);
+                if (!IsPlacementSurfaceValid(cell, Vector2Int.one) ||
+                    !PlaceFreeObjectAt(data, prefab, placedWorld, instanceId, 1f)) return false;
+            }
+            else
+            {
+                placedWorld = CellToWorld(cell);
+                if (!IsPlacementSurfaceValid(cell, data.Size) ||
+                    !PlaceGridObjectAt(data, prefab, cell, instanceId, 1f)) return false;
+            }
+
+            if (_authoring.IsAuthoringMode)
+            {
+                if (data.PositionMode == PlacementPositionMode.Free)
+                    _authoring.RecordFreePlacement(instanceId, data.ID, placedWorld);
+                else
+                    _authoring.RecordGridPlacement(instanceId, data.ID, cell);
+            }
+            else
+            {
+                _persistedPlacements?.Add(new MapPlacementSaveData
+                {
+                    instanceId = instanceId,
+                    objectId = data.ID,
+                    positionMode = data.PositionMode,
+                    cellX = cell.x,
+                    cellY = cell.y,
+                    cellZ = cell.z,
+                    worldX = placedWorld.x,
+                    worldY = placedWorld.y,
+                    worldZ = placedWorld.z,
+                    uniformScale = 1f
+                });
+                _saveSource?.SaveMap();
+            }
 
             return true;
         }
@@ -204,32 +288,247 @@ namespace Core.Module.Map
                 return existing.Kind == kind;
 
             if (!_database.TryGetFirstByKind(kind, out ObjectData data) ||
-                !_catalog.TryGet(data.ID, out var prefab) ||
-                !_grid.CanPlaceObjectAt(originCell, data.Size))
+                !_catalog.TryGet(data.ID, out var prefab))
             {
                 Debug.LogWarning($"[MapService] Could not rebuild missing {kind} at {originCell}.");
                 return false;
             }
 
-            _grid.AddObjectAt(originCell, data.Size, data.ID, data.Kind, _changeCount);
-            _changeCount++;
-            _persistedPlacements?.Add(new MapPlacementSaveData
+            string instanceId = CreateInstanceId();
+            if (!PlaceGridObjectAt(data, prefab, originCell, instanceId, 1f))
             {
-                objectId = data.ID,
-                cellX = originCell.x,
-                cellY = originCell.y,
-                cellZ = originCell.z
-            });
+                Debug.LogWarning($"[MapService] Could not rebuild missing {kind} at {originCell}.");
+                return false;
+            }
 
-            _pubAdded.Publish(new MapFurnitureAddedPayload(
-                data.ID,
-                prefab,
-                CellToWorld(originCell),
-                originCell,
-                _changeCount,
-                data.RotationMode));
-            _saveSource?.SaveMap();
+            if (_authoring.IsAuthoringMode)
+            {
+                _authoring.RecordGridPlacement(instanceId, data.ID, originCell);
+            }
+            else
+            {
+                _persistedPlacements?.Add(new MapPlacementSaveData
+                {
+                    instanceId = instanceId,
+                    objectId = data.ID,
+                    positionMode = PlacementPositionMode.Grid,
+                    cellX = originCell.x,
+                    cellY = originCell.y,
+                    cellZ = originCell.z,
+                    uniformScale = 1f
+                });
+                _saveSource?.SaveMap();
+            }
             return true;
+        }
+
+        public bool RemovePlayerObject(Vector3 worldHit)
+        {
+            if (_authoring.IsAuthoringMode || !_isPlayerRemovalMode || _persistedPlacements == null)
+                return false;
+
+            if (TryFindFreePlacement(worldHit, out string freeInstanceId))
+            {
+                int saveIndex = FindPersistedPlacementIndex(freeInstanceId);
+                if (saveIndex < 0 ||
+                    !_freePlacements.TryGetValue(freeInstanceId, out FreePlacementRecord free) ||
+                    !_database.TryGetById(free.ObjectId, out ObjectData data, out _)) return false;
+
+                var context = new MapPlacementRemovalContext(
+                    freeInstanceId,
+                    free.ObjectId,
+                    data.Kind,
+                    PlacementPositionMode.Free,
+                    default,
+                    free.WorldPosition);
+                if (!CanRemovePlayerPlacement(context)) return false;
+
+                _freePlacements.Remove(freeInstanceId);
+                _instanceRegistry.RemoveAndDestroy(freeInstanceId);
+                CompletePlayerRemoval(saveIndex, context);
+                return true;
+            }
+
+            Vector3Int cell = WorldToCell(worldHit);
+            if (!_grid.TryGetPlacementAt(cell, out PlacementData placement)) return false;
+
+            int persistedIndex = FindPersistedPlacementIndex(placement.InstanceId);
+            if (persistedIndex < 0 || placement.OcupiedPositions == null ||
+                placement.OcupiedPositions.Count == 0) return false;
+
+            Vector3Int originCell = placement.OcupiedPositions[0];
+            var gridContext = new MapPlacementRemovalContext(
+                placement.InstanceId,
+                placement.ID,
+                placement.Kind,
+                PlacementPositionMode.Grid,
+                originCell,
+                CellToWorld(originCell));
+            if (!CanRemovePlayerPlacement(gridContext) ||
+                !_grid.RemoveObjectAt(cell, out _)) return false;
+
+            _instanceRegistry.RemoveAndDestroy(originCell);
+            CompletePlayerRemoval(persistedIndex, gridContext);
+            return true;
+        }
+
+        public bool RemoveAuthoringObject(Vector3 worldHit)
+        {
+            if (!_authoring.IsAuthoringMode) return false;
+
+            if (TryFindFreePlacement(worldHit, out string freeInstanceId))
+            {
+                _freePlacements.Remove(freeInstanceId);
+                _instanceRegistry.RemoveAndDestroy(freeInstanceId);
+                _authoring.RecordRemoval(freeInstanceId);
+                _changeCount++;
+                return true;
+            }
+
+            Vector3Int cell = WorldToCell(worldHit);
+            if (!_grid.RemoveObjectAt(cell, out PlacementData removed)) return false;
+            Vector3Int originCell = removed.OcupiedPositions[0];
+            _instanceRegistry.RemoveAndDestroy(originCell);
+            _authoring.RecordRemoval(removed.InstanceId);
+            _changeCount++;
+            return true;
+        }
+
+        public bool SelectAuthoringObject(Vector3 worldHit)
+        {
+            if (!_authoring.IsAuthoringMode) return false;
+
+            if (TryFindFreePlacement(worldHit, out string freeInstanceId))
+            {
+                FreePlacementRecord free = _freePlacements[freeInstanceId];
+                if (!_database.TryGetById(free.ObjectId, out ObjectData data, out _)) return false;
+                SetSelected(freeInstanceId, PlacementPositionMode.Free, default, free.UniformScale, data.name);
+                return true;
+            }
+
+            Vector3Int cell = WorldToCell(worldHit);
+            if (!_grid.TryGetPlacementAt(cell, out PlacementData grid))
+            {
+                ClearSelection();
+                return false;
+            }
+
+            if (!_database.TryGetById(grid.ID, out ObjectData gridData, out _)) return false;
+            Vector3Int origin = grid.OcupiedPositions[0];
+            SetSelected(grid.InstanceId, PlacementPositionMode.Grid, origin, grid.UniformScale, gridData.name);
+            return true;
+        }
+
+        public bool MoveSelectedAuthoringObject(Vector3 worldHit)
+        {
+            if (!_authoring.IsAuthoringMode || string.IsNullOrEmpty(_selectedInstanceId)) return false;
+
+            if (_selectedPositionMode == PlacementPositionMode.Free)
+            {
+                if (!_freePlacements.TryGetValue(_selectedInstanceId, out FreePlacementRecord free) ||
+                    !_database.TryGetById(free.ObjectId, out ObjectData data, out _) ||
+                    !_instanceRegistry.TryGet(_selectedInstanceId, out GameObject instance)) return false;
+
+                Vector3 position = GetFreePosition(data, worldHit);
+                if (!_placementValidator.CanPlaceFree(data, position)) return false;
+                free.WorldPosition = position;
+                _freePlacements[_selectedInstanceId] = free;
+                instance.transform.position = position;
+                _authoring.UpdateSelectedFreePosition(position);
+                return true;
+            }
+
+            Vector3Int nextOrigin = WorldToCell(worldHit);
+            if (nextOrigin == _selectedGridOrigin) return true;
+            if (!_grid.RemoveObjectAt(_selectedGridOrigin, out PlacementData removed)) return false;
+            if (!_database.TryGetById(removed.ID, out ObjectData gridData, out _) ||
+                !_placementValidator.CanPlaceGrid(gridData, nextOrigin))
+            {
+                RestoreRemovedGridPlacement(removed, _selectedGridOrigin);
+                return false;
+            }
+
+            _grid.AddObjectAt(
+                nextOrigin, gridData.Size, removed.ID, removed.Kind,
+                removed.PlacedObjectIndex, removed.InstanceId, _selectedUniformScale);
+            if (_instanceRegistry.TryGetAtOrigin(_selectedGridOrigin, out GameObject gridInstance))
+                gridInstance.transform.position = CellToWorld(nextOrigin);
+            _instanceRegistry.MoveGridRegistration(_selectedGridOrigin, nextOrigin);
+            _selectedGridOrigin = nextOrigin;
+            _authoring.UpdateSelectedGridPosition(nextOrigin);
+            return true;
+        }
+
+        public void SetSelectedAuthoringScale(float uniformScale)
+        {
+            if (!_authoring.IsAuthoringMode || string.IsNullOrEmpty(_selectedInstanceId)) return;
+            uniformScale = Mathf.Clamp(uniformScale, 0.25f, 4f);
+            float scaleRatio = uniformScale / _selectedUniformScale;
+            _selectedUniformScale = uniformScale;
+
+            if (_selectedPositionMode == PlacementPositionMode.Free)
+            {
+                if (_freePlacements.TryGetValue(_selectedInstanceId, out FreePlacementRecord free))
+                {
+                    free.UniformScale = uniformScale;
+                    _freePlacements[_selectedInstanceId] = free;
+                }
+                if (_instanceRegistry.TryGet(_selectedInstanceId, out GameObject freeInstance))
+                    freeInstance.transform.localScale *= scaleRatio;
+            }
+            else if (_grid.RemoveObjectAt(_selectedGridOrigin, out PlacementData grid))
+            {
+                if (_database.TryGetById(grid.ID, out ObjectData data, out _))
+                    _grid.AddObjectAt(
+                        _selectedGridOrigin, data.Size, grid.ID, grid.Kind,
+                        grid.PlacedObjectIndex, grid.InstanceId, uniformScale);
+                if (_instanceRegistry.TryGetAtOrigin(_selectedGridOrigin, out GameObject gridInstance))
+                    gridInstance.transform.localScale *= scaleRatio;
+            }
+
+            _authoring.UpdateSelectedScale(uniformScale);
+        }
+
+        public void ClearAllPlacements()
+        {
+            StopPlacement();
+            _grid.Clear();
+            _freePlacements.Clear();
+            ClearSelection();
+            _instanceRegistry.ClearAndDestroy();
+            _changeCount = 0;
+        }
+
+        public void ReloadAuthoringLayout()
+        {
+            if (!_authoring.IsAuthoringMode) return;
+            ClearAllPlacements();
+            RestoreLayoutPlacements(_authoring.WorkingEntries);
+        }
+
+        private void RestoreLayoutPlacements(IReadOnlyList<MapLayoutEntry> entries)
+        {
+            if (entries == null) return;
+
+            for (int i = 0; i < entries.Count; i++)
+            {
+                MapLayoutEntry entry = entries[i];
+                if (!_database.TryGetById(entry.ObjectId, out ObjectData data, out _) ||
+                    !_catalog.TryGet(entry.ObjectId, out var prefab))
+                {
+                    Debug.LogWarning($"[MapService] Skipped invalid layout object {entry.ObjectId} at index {i}.");
+                    continue;
+                }
+
+                string instanceId = EnsureInstanceId(entry.InstanceId);
+                float uniformScale = NormalizeScale(entry.UniformScale);
+                bool placed = entry.PositionMode == PlacementPositionMode.Free
+                    ? PlaceFreeObjectAt(data, prefab, entry.WorldPosition, instanceId, uniformScale)
+                    : PlaceGridObjectAt(data, prefab, entry.OriginCell, instanceId, uniformScale);
+
+                if (!placed)
+                    Debug.LogWarning($"[MapService] Skipped overlapping layout object {entry.ObjectId} at index {i}.");
+            }
         }
 
         private void RestoreSavedPlacements()
@@ -240,6 +539,7 @@ namespace Core.Module.Map
                 return;
             }
 
+            bool migratedInstanceId = false;
             for (int i = 0; i < _persistedPlacements.Count; i++)
             {
                 MapPlacementSaveData saved = _persistedPlacements[i];
@@ -251,24 +551,181 @@ namespace Core.Module.Map
                     continue;
                 }
 
-                var cell = new Vector3Int(saved.cellX, saved.cellY, saved.cellZ);
-                if (!_grid.CanPlaceObjectAt(cell, data.Size))
+                string instanceId = EnsureInstanceId(saved.instanceId);
+                if (saved.instanceId != instanceId)
                 {
-                    Debug.LogWarning($"[MapService] Skipped overlapping saved object {saved.objectId} at {cell}.");
+                    saved.instanceId = instanceId;
+                    migratedInstanceId = true;
+                }
+                if (saved.positionMode == PlacementPositionMode.Free)
+                {
+                    var worldPosition = new Vector3(saved.worldX, saved.worldY, saved.worldZ);
+                    PlaceFreeObjectAt(data, prefab, worldPosition, instanceId, NormalizeScale(saved.uniformScale));
                     continue;
                 }
 
-                _grid.AddObjectAt(cell, data.Size, data.ID, data.Kind, _changeCount);
-                _changeCount++;
-                _pubAdded.Publish(new MapFurnitureAddedPayload(
-                    data.ID,
-                    prefab,
-                    CellToWorld(cell),
-                    cell,
-                    _changeCount,
-                    data.RotationMode));
+                var cell = new Vector3Int(saved.cellX, saved.cellY, saved.cellZ);
+                if (!PlaceGridObjectAt(data, prefab, cell, instanceId, NormalizeScale(saved.uniformScale)))
+                    Debug.LogWarning($"[MapService] Skipped overlapping saved object {saved.objectId} at {cell}.");
             }
+
+            if (migratedInstanceId) _saveSource?.SaveMap();
         }
+
+        private bool PlaceGridObjectAt(
+            ObjectData data,
+            GameObject prefab,
+            Vector3Int cell,
+            string instanceId,
+            float uniformScale)
+        {
+            if (!_placementValidator.CanPlaceGrid(data, cell)) return false;
+
+            _grid.AddObjectAt(cell, data.Size, data.ID, data.Kind, _changeCount, instanceId, uniformScale);
+            _changeCount++;
+            _pubAdded.Publish(new MapFurnitureAddedPayload(
+                data.ID,
+                prefab,
+                CellToWorld(cell),
+                cell,
+                instanceId,
+                PlacementPositionMode.Grid,
+                uniformScale,
+                _changeCount,
+                data.RotationMode));
+            return true;
+        }
+
+        private bool PlaceFreeObjectAt(
+            ObjectData data,
+            GameObject prefab,
+            Vector3 worldPosition,
+            string instanceId,
+            float uniformScale)
+        {
+            if (string.IsNullOrEmpty(instanceId) ||
+                _freePlacements.ContainsKey(instanceId) ||
+                !_placementValidator.CanPlaceFree(data, worldPosition)) return false;
+
+            _freePlacements.Add(instanceId, new FreePlacementRecord(data.ID, worldPosition, uniformScale));
+            _changeCount++;
+            _pubAdded.Publish(new MapFurnitureAddedPayload(
+                data.ID,
+                prefab,
+                worldPosition,
+                default,
+                instanceId,
+                PlacementPositionMode.Free,
+                uniformScale,
+                _changeCount,
+                data.RotationMode));
+            return true;
+        }
+
+        private Vector3 GetFreePosition(ObjectData data, Vector3 worldHit)
+        {
+            worldHit.y = 0f;
+            float step = data.FreeSnapStep;
+            if (step <= 0f) return worldHit;
+
+            worldHit.x = Mathf.Round(worldHit.x / step) * step;
+            worldHit.z = Mathf.Round(worldHit.z / step) * step;
+            return worldHit;
+        }
+
+        private bool TryFindFreePlacement(Vector3 worldHit, out string instanceId)
+        {
+            instanceId = null;
+            float closestSqr = _freeEraseRadius * _freeEraseRadius;
+            foreach (KeyValuePair<string, FreePlacementRecord> pair in _freePlacements)
+            {
+                Vector2 delta = new(pair.Value.WorldPosition.x - worldHit.x, pair.Value.WorldPosition.z - worldHit.z);
+                float sqrDistance = delta.sqrMagnitude;
+                if (sqrDistance > closestSqr) continue;
+                closestSqr = sqrDistance;
+                instanceId = pair.Key;
+            }
+            return !string.IsNullOrEmpty(instanceId);
+        }
+
+        private int FindPersistedPlacementIndex(string instanceId)
+        {
+            if (string.IsNullOrEmpty(instanceId) || _persistedPlacements == null) return -1;
+            return _persistedPlacements.FindIndex(saved =>
+                saved != null && saved.instanceId == instanceId);
+        }
+
+        private bool CanRemovePlayerPlacement(in MapPlacementRemovalContext context)
+        {
+            if (_removalPolicies == null) return true;
+
+            for (int i = 0; i < _removalPolicies.Count; i++)
+            {
+                IMapPlacementRemovalPolicy policy = _removalPolicies[i];
+                if (policy != null && !policy.CanRemove(context))
+                {
+                    Debug.LogWarning($"[MapService] Removal of {context.InstanceId} was rejected by {policy.GetType().Name}.");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void CompletePlayerRemoval(
+            int persistedIndex,
+            in MapPlacementRemovalContext context)
+        {
+            _persistedPlacements.RemoveAt(persistedIndex);
+            _changeCount++;
+
+            if (_removalPolicies != null)
+            {
+                for (int i = 0; i < _removalPolicies.Count; i++)
+                    _removalPolicies[i]?.OnRemoved(context);
+            }
+
+            _saveSource?.SaveMap();
+        }
+
+        private static string CreateInstanceId() => Guid.NewGuid().ToString("N");
+
+        private static string EnsureInstanceId(string instanceId)
+        {
+            return string.IsNullOrEmpty(instanceId) ? CreateInstanceId() : instanceId;
+        }
+
+        private void SetSelected(
+            string instanceId,
+            PlacementPositionMode positionMode,
+            Vector3Int gridOrigin,
+            float uniformScale,
+            string label)
+        {
+            _selectedInstanceId = instanceId;
+            _selectedPositionMode = positionMode;
+            _selectedGridOrigin = gridOrigin;
+            _selectedUniformScale = NormalizeScale(uniformScale);
+            _authoring.SetSelection(instanceId, label, _selectedUniformScale);
+        }
+
+        private void ClearSelection()
+        {
+            _selectedInstanceId = null;
+            _selectedGridOrigin = default;
+            _selectedUniformScale = 1f;
+            _authoring.ClearSelection();
+        }
+
+        private void RestoreRemovedGridPlacement(PlacementData removed, Vector3Int origin)
+        {
+            if (!_database.TryGetById(removed.ID, out ObjectData data, out _)) return;
+            _grid.AddObjectAt(
+                origin, data.Size, removed.ID, removed.Kind,
+                removed.PlacedObjectIndex, removed.InstanceId, removed.UniformScale);
+        }
+
+        private static float NormalizeScale(float scale) => scale > 0f ? scale : 1f;
 
         private bool IsTilemapPlacementValid(Vector3Int cell, Vector2Int size)
         {
@@ -309,6 +766,11 @@ namespace Core.Module.Map
                 }
             }
             return true;
+        }
+
+        private bool IsPlacementSurfaceValid(Vector3Int cell, Vector2Int size)
+        {
+            return _authoring.IsAuthoringMode || IsTilemapPlacementValid(cell, size);
         }
         #endregion
 

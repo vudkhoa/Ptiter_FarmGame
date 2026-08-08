@@ -19,6 +19,7 @@ namespace Core.Module.Map
             builder.RegisterMessageBroker<MapPreviewMovedPayload>(options);
             builder.RegisterMessageBroker<MapFurnitureAddedPayload>(options);
             builder.RegisterMessageBroker<MapPlacementStoppedPayload>(options);
+            builder.RegisterMessageBroker<MapPlayerRemovalModeChangedPayload>(options);
             return builder;
         }
 
@@ -52,6 +53,8 @@ namespace Core.Module.Map
             builder.RegisterComponentInHierarchy<MapPointerBridge>();
             builder.RegisterComponentInHierarchy<MapPreviewView>();
             builder.RegisterComponentInHierarchy<MapPlacementCancelButton>();
+            builder.RegisterComponentInHierarchy<MapPlayerRemoveButton>();
+            builder.RegisterComponentInHierarchy<MapAuthoringController>();
 
             return builder;
         }

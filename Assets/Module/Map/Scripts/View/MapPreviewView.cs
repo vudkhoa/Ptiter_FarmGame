@@ -2,6 +2,7 @@ using MessagePipe;
 using System;
 using UnityEngine;
 using VContainer;
+using VContainer.Unity;
 
 namespace Core.Module.Map
 {
@@ -20,6 +21,8 @@ namespace Core.Module.Map
         private MaterialPropertyBlock _block;
         private IDisposable _subscriptions;
         private IMapObjectInstanceRegistry _instanceRegistry;
+        private IObjectResolver _resolver;
+        private bool _showGridCursor;
 
         #region DI - Constructor
         [Inject]
@@ -28,9 +31,11 @@ namespace Core.Module.Map
             ISubscriber<MapPreviewMovedPayload> moveSub,
             ISubscriber<MapFurnitureAddedPayload> addedSub,
             ISubscriber<MapPlacementStoppedPayload> stopSub,
-            IMapObjectInstanceRegistry instanceRegistry)
+            IMapObjectInstanceRegistry instanceRegistry,
+            IObjectResolver resolver)
         {
             _instanceRegistry = instanceRegistry;
+            _resolver = resolver;
             var bag = DisposableBag.CreateBuilder();
             startSub.Subscribe(OnStarted).AddTo(bag);
             moveSub.Subscribe(OnMoved).AddTo(bag);
@@ -64,30 +69,48 @@ namespace Core.Module.Map
             if (p.RotationMode == MapObjectRotationMode.MatchCameraRotation)
                 MatchCameraRotation(_ghost.transform);
             SwapToPreviewMaterial(_ghost);
-            _cursor.transform.localScale = new Vector3(p.Size.x, 1, p.Size.y);
-            _cursor.Renderer.GetPropertyBlock(_block);
-            _block.SetVector("_MainTex_ST", new Vector4(p.Size.x, p.Size.y, 0, 0));
-            _cursor.Renderer.SetPropertyBlock(_block);
-            _cursor.GameObject.SetActive(true);
+            _showGridCursor = p.PositionMode == PlacementPositionMode.Grid;
+            if (_showGridCursor)
+            {
+                _cursor.transform.localScale = new Vector3(p.Size.x, 1, p.Size.y);
+                _cursor.Renderer.GetPropertyBlock(_block);
+                _block.SetVector("_MainTex_ST", new Vector4(p.Size.x, p.Size.y, 0, 0));
+                _cursor.Renderer.SetPropertyBlock(_block);
+                _cursor.GameObject.SetActive(true);
+            }
+            else
+            {
+                _cursor.GameObject.SetActive(false);
+            }
         }
 
         private void OnMoved(MapPreviewMovedPayload p)
         {
             if (_ghost == null) return;
             _ghost.transform.position = new Vector3(p.SnappedWorld.x, p.SnappedWorld.y + _previewYOffset, p.SnappedWorld.z);
-            _cursor.transform.position = p.SnappedWorld;
-            _cursor.Renderer.GetPropertyBlock(_block);
-            _block.SetColor("_Color", p.IsValid ? Color.white : Color.red);
-            _cursor.Renderer.SetPropertyBlock(_block);
+            if (_showGridCursor)
+            {
+                _cursor.transform.position = p.SnappedWorld;
+                _cursor.Renderer.GetPropertyBlock(_block);
+                _block.SetColor("_Color", p.IsValid ? Color.white : Color.red);
+                _cursor.Renderer.SetPropertyBlock(_block);
+            }
         }
 
         private void OnAdded(MapFurnitureAddedPayload p)
         {
-            var go = Instantiate(p.Prefab, _spawnRoot);
+            // Runtime map objects may contain injected behaviours (for example a
+            // WindowOpenTrigger), so real placements must be created by VContainer.
+            // Preview ghosts intentionally continue using Unity Instantiate.
+            var go = _resolver.Instantiate(p.Prefab, _spawnRoot);
             go.transform.position = p.SnappedWorld;
+            go.transform.localScale *= p.UniformScale;
             if (p.RotationMode == MapObjectRotationMode.MatchCameraRotation)
                 MatchCameraRotation(go.transform);
-            _instanceRegistry.Register(p.Cell, go);
+            if (p.PositionMode == PlacementPositionMode.Grid)
+                _instanceRegistry.Register(p.Cell, go);
+            else
+                _instanceRegistry.Register(p.InstanceId, go);
         }
 
         private void OnStopped(MapPlacementStoppedPayload _)

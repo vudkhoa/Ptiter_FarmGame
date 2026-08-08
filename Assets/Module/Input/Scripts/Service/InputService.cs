@@ -70,6 +70,7 @@ namespace Core.Module.Input
         #region IInputService - Query API
         public Vector2 PointerScreen => _lastPointerScreen;
         public bool IsGameplayInputBlocked => GameplayInputBlockRegistry.IsBlocked;
+        public bool IsMultiTouchActive => UInput.touchCount > 1;
 
         public bool IsButtonHeld(int button)
         {

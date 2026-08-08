@@ -1,0 +1,340 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5229d7c122bb46d8947c86a9354dce70, type: 3}
+  m_Name: MapLayout
+  m_EditorClassIdentifier: Map::Core.Module.Map.MapLayoutSO
+  MapId: 0
+  Objects:
+  - InstanceId: 4b1be1040ccb4bf38e691937fb8d18c4
+    ObjectId: 103
+    PositionMode: 0
+    OriginCell: {x: -1, y: 0, z: -3}
+    WorldPosition: {x: 0, y: 0, z: 0}
+    UniformScale: 1
+  - InstanceId: 4d664f2831cc466c93dbbbac28128a12
+    ObjectId: 104
+    PositionMode: 0
+    OriginCell: {x: 8, y: 0, z: -1}
+    WorldPosition: {x: 0, y: 0, z: 0}
+    UniformScale: 1
+  - InstanceId: 829b12808b974e23a3ba63dfad879779
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 43.060238, y: 0, z: 36.82037}
+    UniformScale: 1
+  - InstanceId: 8f1ab58d1abf4afdbf60a57f2f4fced2
+    ObjectId: 2
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 38.7, y: 0, z: 28.4}
+    UniformScale: 1
+  - InstanceId: 468a8b2ef17d4d52923607026f60b709
+    ObjectId: 2
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 32.600002, y: 0, z: 28.4}
+    UniformScale: 1
+  - InstanceId: 2b51d4ac8fa3412db0a5601df14ddfe5
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 41.036697, y: 0, z: 29.178358}
+    UniformScale: 1
+  - InstanceId: a6dc7a5ad89b48fb8a340139fc861664
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 30.31305, y: 0, z: 37.24646}
+    UniformScale: 1
+  - InstanceId: d7f57416b16d4c5f8757a108fda08bf3
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 31.263126, y: 0, z: 37.355595}
+    UniformScale: 1
+  - InstanceId: 0ff39aaf44944cc8836dda2b90367064
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 47.680035, y: 0, z: 31.853497}
+    UniformScale: 1
+  - InstanceId: 3e6f9866883045c19999dd5961888a06
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 47.861195, y: 0, z: 32.83092}
+    UniformScale: 1
+  - InstanceId: 90f630ea779842788a512ea52e29a820
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 48.483387, y: 0, z: 31.988087}
+    UniformScale: 1
+  - InstanceId: f91cc85ba0bc4858959b506c3e785b71
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 52.849037, y: 0, z: 24.918983}
+    UniformScale: 1
+  - InstanceId: 14712aee8e07476b8e5fb3ea21890567
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 38.678566, y: 0, z: 12.569985}
+    UniformScale: 1
+  - InstanceId: 8bf3d3c167ef4cb699a7b6c36c23be35
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 32.9203, y: 0, z: 12.53529}
+    UniformScale: 1
+  - InstanceId: 1e35f0e57f6142918fca1aa3bb5504bd
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 12.484509, y: 0, z: 12.648572}
+    UniformScale: 1
+  - InstanceId: 020c7fab1be94041865302e32b3706c8
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 21.903378, y: 0, z: 5.3264728}
+    UniformScale: 1
+  - InstanceId: 7bfe03b68d4b42d7b1476a9dbb6c6cca
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 0.49268574, y: 0, z: 3.5714211}
+    UniformScale: 1
+  - InstanceId: 9d7fdb1e0e8642bca5508df0a5eb29e4
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: -0.22179322, y: 0, z: 3.7233362}
+    UniformScale: 1
+  - InstanceId: 9768049397e24d148524dae7a573d8ff
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 31.601585, y: 0, z: 3.7847517}
+    UniformScale: 1
+  - InstanceId: bb7e5406f3e4479bb4079f04bfe88017
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 36.814133, y: 0, z: 3.6367655}
+    UniformScale: 1
+  - InstanceId: d718d813db4e485c8e6e469683deb637
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 64.984276, y: 0, z: 12.619777}
+    UniformScale: 1
+  - InstanceId: 69ad814d2cad404ea91ebb661da6c0d7
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 64.38882, y: 0, z: 12.68801}
+    UniformScale: 0.9984879
+  - InstanceId: 03a233383a2c470e9031b1054aa8fa18
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 73.73525, y: 0, z: 3.7694962}
+    UniformScale: 1
+  - InstanceId: 2236a1c872664f21b7afecbec690c27e
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 33.93115, y: 0, z: 46.16711}
+    UniformScale: 1.8316532
+  - InstanceId: ab9584f6cfb041ee9b3380ad5c46c0d3
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 32.81112, y: 0, z: 46.28689}
+    UniformScale: 1
+  - InstanceId: 0dce0341f90b43c9abcc189877b65515
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 33.559658, y: 0, z: 47.22653}
+    UniformScale: 1.4082662
+  - InstanceId: f92341836cf64475829df849bd4095f7
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 33.622643, y: 0, z: 45.60775}
+    UniformScale: 1
+  - InstanceId: 022e13913ca7408197bb70440e5b3106
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 34.04159, y: 0, z: 45.950283}
+    UniformScale: 1.3175403
+  - InstanceId: 8a3ebb7a4d2747a899cc4ea3c7e1e357
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 35.159157, y: 0, z: 47.67936}
+    UniformScale: 1
+  - InstanceId: 8085b2961fb94b8f9f36f3b1acbeb9f5
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 34.9766, y: 0, z: 47.133766}
+    UniformScale: 1
+  - InstanceId: 8fd2cad461b54bf691b3923afa3c5ab5
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 33.06802, y: 0, z: 47.15536}
+    UniformScale: 1.3326613
+  - InstanceId: 8a305d014bdd4664906f3b9c3a7c273e
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 35.21885, y: 0, z: 46.09623}
+    UniformScale: 1
+  - InstanceId: c7dd8410abff4744992198326383d049
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 47.924595, y: 0, z: 3.7571766}
+    UniformScale: 1.3477823
+  - InstanceId: 17bdcd94dc8c41f3b47993a841c4001b
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 27.088926, y: 0, z: 46.1051}
+    UniformScale: 1
+  - InstanceId: 82dddc0e7c344196a3a0dd2c7dc2b30e
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 17.207266, y: 0, z: 42.084156}
+    UniformScale: 1
+  - InstanceId: 97fb396f7f644a949848238bf4e24350
+    ObjectId: 3
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 50.927746, y: 0, z: 47.048412}
+    UniformScale: 1.452117
+  - InstanceId: 118d9a4373db4a5b866e4fd0d29fb84b
+    ObjectId: 1
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 58.809673, y: 0, z: 41.42979}
+    UniformScale: 1
+  - InstanceId: c002ba16abbe4d9fb52568023ae5fa42
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 18.741165, y: 0, z: 32.974075}
+    UniformScale: 2.0115926
+  - InstanceId: f3bf44c084124e06b62bd8c8a88345c1
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 18.736776, y: 0, z: 33.861473}
+    UniformScale: 1
+  - InstanceId: 732e9b0fb3f24c99ade75f05ea95d4eb
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 17.975965, y: 0, z: 33.13252}
+    UniformScale: 1
+  - InstanceId: 6c2c6f96fc51410c9ed17f59e65a4f78
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 19.693016, y: 0, z: 33.511864}
+    UniformScale: 1
+  - InstanceId: 53b67d8931c14abda887d66342e57788
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 18.582289, y: 0, z: 32.305553}
+    UniformScale: 1
+  - InstanceId: a7331e76b7984a7aa81d2a07cb76e089
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 17.964006, y: 0, z: 33.91683}
+    UniformScale: 1
+  - InstanceId: fd22658f54e341cbb7538a7ed34493c0
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 18.072645, y: 0, z: 32.815197}
+    UniformScale: 1
+  - InstanceId: c3bdd6ee4ed446a3a8ea9d08e4713237
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 19.285686, y: 0, z: 32.17686}
+    UniformScale: 1
+  - InstanceId: bde60fb3ce8d4a5aa2767b8978fb55ac
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 19.833178, y: 0, z: 32.788013}
+    UniformScale: 1
+  - InstanceId: 3123d6b746184b9f9f1b63cfa1d3a109
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 51.98189, y: 0, z: 47.129414}
+    UniformScale: 1
+  - InstanceId: a2405d29eaf047a2af90c0a76a273c8e
+    ObjectId: 5
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 61.79099, y: 0, z: 31.596655}
+    UniformScale: 1
+  - InstanceId: 336dc3410f0a4e90930322fa722903e8
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 61.275124, y: 0, z: 31.78147}
+    UniformScale: 1
+  - InstanceId: 5906c43942bf4ec28a9bcb4f677310ad
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 62.53611, y: 0, z: 31.513649}
+    UniformScale: 1
+  - InstanceId: 13875c33aa684182bdcdfb2b751800e7
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 62.194614, y: 0, z: 30.91727}
+    UniformScale: 1
+  - InstanceId: 4b5ef31c7ecc4308a769d5f41eb6ed74
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 61.9235, y: 0, z: 32.015785}
+    UniformScale: 1
+  - InstanceId: fd71f95ce90644af829face5b653a5b8
+    ObjectId: 4
+    PositionMode: 1
+    OriginCell: {x: 0, y: 0, z: 0}
+    WorldPosition: {x: 61.555576, y: 0, z: 31.170078}
+    UniformScale: 1
+  - InstanceId: 2e7be5af520a4b01b9b1473d0a209847
+    ObjectId: 6
+    PositionMode: 0
+    OriginCell: {x: 10, y: 0, z: -10}
+    WorldPosition: {x: 0, y: 0, z: 0}
+    UniformScale: 1

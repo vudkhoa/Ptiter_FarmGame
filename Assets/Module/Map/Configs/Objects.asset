@@ -13,14 +13,92 @@ MonoBehaviour:
   m_Name: Objects
   m_EditorClassIdentifier: Map::ObjectDatabaseSO
   Objects:
+  - name: Banana Tree
+    ID: 1
+    Size: {x: 1, y: 1}
+    Kind: 0
+    PlacementInputMode: 0
+    PositionMode: 1
+    FreeSnapStep: 0
+    PlacementLayer: 4
+    BlockedLayers: 2
+    ProvidedSurface: 0
+    AllowedSurfaces: 3
+    RotationMode: 1
+    Prefab:
+      m_AssetGUID: 94e74c8473c46084b95c06e08fedd847
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
+      m_EditorAssetChanged: 0
   - name: Bonsai
     ID: 2
     Size: {x: 1, y: 1}
     Kind: 0
     PlacementInputMode: 0
+    PositionMode: 0
+    FreeSnapStep: 0.1
+    PlacementLayer: 4
+    BlockedLayers: 2
+    ProvidedSurface: 0
+    AllowedSurfaces: 3
     RotationMode: 1
     Prefab:
       m_AssetGUID: ae52bbda48f03314fbe0c9838ac8a276
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - name: Bush
+    ID: 3
+    Size: {x: 1, y: 1}
+    Kind: 0
+    PlacementInputMode: 0
+    PositionMode: 1
+    FreeSnapStep: 0
+    PlacementLayer: 4
+    BlockedLayers: 2
+    ProvidedSurface: 0
+    AllowedSurfaces: 3
+    RotationMode: 1
+    Prefab:
+      m_AssetGUID: e2d88bfd4c4970d42b8e4788f1146614
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - name: Rock_1
+    ID: 4
+    Size: {x: 1, y: 1}
+    Kind: 0
+    PlacementInputMode: 0
+    PositionMode: 1
+    FreeSnapStep: 0
+    PlacementLayer: 4
+    BlockedLayers: 2
+    ProvidedSurface: 0
+    AllowedSurfaces: 3
+    RotationMode: 1
+    Prefab:
+      m_AssetGUID: fdb1dbab8b15a72479a152dad2078e14
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - name: Rock_2
+    ID: 5
+    Size: {x: 1, y: 1}
+    Kind: 0
+    PlacementInputMode: 0
+    PositionMode: 1
+    FreeSnapStep: 0
+    PlacementLayer: 4
+    BlockedLayers: 2
+    ProvidedSurface: 0
+    AllowedSurfaces: 3
+    RotationMode: 1
+    Prefab:
+      m_AssetGUID: a5a288aa3274b854f898676405737ac2
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
@@ -30,6 +108,12 @@ MonoBehaviour:
     Size: {x: 1, y: 1}
     Kind: 1
     PlacementInputMode: 1
+    PositionMode: 0
+    FreeSnapStep: 0
+    PlacementLayer: 2
+    BlockedLayers: 7
+    ProvidedSurface: 0
+    AllowedSurfaces: 1
     RotationMode: 0
     Prefab:
       m_AssetGUID: 5ffff12187c8c9c4089a03de8f4fc2c4
@@ -42,10 +126,70 @@ MonoBehaviour:
     Size: {x: 3, y: 3}
     Kind: 2
     PlacementInputMode: 0
+    PositionMode: 0
+    FreeSnapStep: 0
+    PlacementLayer: 2
+    BlockedLayers: 7
+    ProvidedSurface: 0
+    AllowedSurfaces: 1
     RotationMode: 1
     Prefab:
       m_AssetGUID: a3f534c1c5f309249aeff6196ffa60f8
       m_SubObjectName: 
       m_SubObjectType: 
       m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - name: Main House
+    ID: 103
+    Size: {x: 5, y: 5}
+    Kind: 0
+    PlacementInputMode: 0
+    PositionMode: 0
+    FreeSnapStep: 0
+    PlacementLayer: 2
+    BlockedLayers: 7
+    ProvidedSurface: 0
+    AllowedSurfaces: 1
+    RotationMode: 1
+    Prefab:
+      m_AssetGUID: 9906269cb329e4244ac0acac54e3fdf7
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - name: Storage
+    ID: 104
+    Size: {x: 3, y: 3}
+    Kind: 0
+    PlacementInputMode: 0
+    PositionMode: 0
+    FreeSnapStep: 0
+    PlacementLayer: 2
+    BlockedLayers: 7
+    ProvidedSurface: 0
+    AllowedSurfaces: 1
+    RotationMode: 1
+    Prefab:
+      m_AssetGUID: 9452e385f4d07d54bb7d1787cb989f3e
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
+  - name: Lake
+    ID: 6
+    Size: {x: 9, y: 7}
+    Kind: 0
+    PlacementInputMode: 0
+    PositionMode: 0
+    FreeSnapStep: 0
+    PlacementLayer: 1
+    BlockedLayers: 3
+    ProvidedSurface: 2
+    AllowedSurfaces: 1
+    RotationMode: 0
+    Prefab:
+      m_AssetGUID: 2d6f832f400f5344fa9a1d6a2236b1dc
+      m_SubObjectName:
+      m_SubObjectType:
+      m_SubObjectGUID:
       m_EditorAssetChanged: 0

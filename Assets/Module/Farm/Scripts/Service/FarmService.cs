@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using Core.Module.Time;
 using Core.Module.Storage;
+using Core.Module.Map;
 using MessagePipe;
 using UnityEngine;
 
 namespace Core.Module.Farm
 {
-    public class FarmService : IFarmService, IDisposable
+    public class FarmService : IFarmService, IMapPlacementRemovalPolicy, IDisposable
     {
         /// <summary>Sentinel so a slot whose entity is missing from the database never ripens.</summary>
         private const float MissingEntityFallbackTime = 9999f;
@@ -402,6 +403,28 @@ namespace Core.Module.Farm
         public FarmSlotSaveData GetSlotAt(Vector3Int cell)
         {
             return _slots.TryGetValue(cell, out var slot) ? slot : null;
+        }
+
+        public bool CanRemove(in MapPlacementRemovalContext context)
+        {
+            if (context.Kind != MapObjectKind.Soil && context.Kind != MapObjectKind.Barn)
+                return true;
+
+            FarmSlotSaveData slot = GetSlotAt(context.OriginCell);
+            return slot == null || string.IsNullOrEmpty(slot.entityId);
+        }
+
+        public void OnRemoved(in MapPlacementRemovalContext context)
+        {
+            if (context.Kind != MapObjectKind.Soil && context.Kind != MapObjectKind.Barn)
+                return;
+
+            if (!_slots.TryGetValue(context.OriginCell, out FarmSlotSaveData slot) ||
+                !string.IsNullOrEmpty(slot.entityId)) return;
+
+            _slots.Remove(context.OriginCell);
+            _activeSlotsList.Remove(slot);
+            _persistedSlotsList?.Remove(slot);
         }
 
         public void Dispose()

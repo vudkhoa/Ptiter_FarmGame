@@ -21,10 +21,15 @@ namespace Core.Module.Map
         [SerializeField] private float _maxRayDistance = 1000f;
         [SerializeField] private bool _useMathPlane = true;
 
+        [Header("Tap Gesture")]
+        [SerializeField, Min(1f)] private float _removalTapMaxMovementPixels = 20f;
+
         private IMapService _map;
         private IInputService _input;
+        private MapAuthoringController _authoring;
         private Vector2 _lastScreen;
         private bool _isPrimaryPressed;
+        private PointerTapTracker _removalTapTracker;
         private IDisposable _subscriptions;
 
         #region DI - Constructor
@@ -32,6 +37,7 @@ namespace Core.Module.Map
         public void Construct(
            IMapService map,
            IInputService input,
+           MapAuthoringController authoring,
            ISubscriber<PointerScreenPayload> screenSub,
            ISubscriber<PointerButtonDownPayload> btnDownSub,
            ISubscriber<PointerButtonUpPayload> btnUpSub,
@@ -39,6 +45,7 @@ namespace Core.Module.Map
         {
             _map = map;
             _input = input;
+            _authoring = authoring;
 
             var bag = DisposableBag.CreateBuilder();
             screenSub.Subscribe(OnScreen).AddTo(bag);
@@ -50,6 +57,18 @@ namespace Core.Module.Map
         #endregion
 
         #region Unity LifeCycle
+        private void Awake()
+        {
+            _removalTapTracker = new PointerTapTracker(_removalTapMaxMovementPixels);
+        }
+
+        private void Update()
+        {
+            if (_input != null &&
+                (_input.IsMultiTouchActive || _input.IsGameplayInputBlocked))
+                _removalTapTracker.Cancel();
+        }
+
         private void OnDestroy()
         {
             _subscriptions?.Dispose();
@@ -63,8 +82,23 @@ namespace Core.Module.Map
             if (_input.IsGameplayInputBlocked)
             {
                 _isPrimaryPressed = false;
+                _removalTapTracker.Cancel();
                 return;
             }
+
+            if (_map.IsPlayerRemovalMode)
+            {
+                _removalTapTracker.Move(_lastScreen);
+                return;
+            }
+
+            if (_authoring != null && _authoring.IsSelectMode && _isPrimaryPressed)
+            {
+                if (!IsPointerBlocked() && TryRaycast(_lastScreen, out var moveWorld))
+                    _map.MoveSelectedAuthoringObject(moveWorld);
+                return;
+            }
+
             if (!_map.HasActivePlacement) return;
             if (!TryRaycast(_lastScreen, out var world)) return;
 
@@ -72,7 +106,7 @@ namespace Core.Module.Map
 
             if (_isPrimaryPressed
                 && _map.CurrentPlacementInputMode == PlacementInputMode.Continuous
-                && !_input.IsPointerOverUI())
+                && !IsPointerBlocked())
             {
                 _map.AddFurniture(world);
             }
@@ -80,9 +114,30 @@ namespace Core.Module.Map
 
         private void OnButtonDown(PointerButtonDownPayload p)
         {
-            if (p.Button != 0 || !_map.HasActivePlacement) return;
-            if (_input.IsGameplayInputBlocked) return;
-            if (_input.IsPointerOverUI()) return;
+            if (p.Button != 0) return;
+            if (IsPointerBlocked()) return;
+
+            if (_authoring != null && _authoring.IsSelectMode)
+            {
+                _isPrimaryPressed = TryRaycast(_lastScreen, out var selectWorld)
+                    && _map.SelectAuthoringObject(selectWorld);
+                return;
+            }
+
+            if (_authoring != null && _authoring.IsEraseMode)
+            {
+                if (TryRaycast(_lastScreen, out var eraseWorld))
+                    _map.RemoveAuthoringObject(eraseWorld);
+                return;
+            }
+
+            if (_map.IsPlayerRemovalMode)
+            {
+                _removalTapTracker.Begin(_lastScreen);
+                return;
+            }
+
+            if (!_map.HasActivePlacement) return;
 
             _isPrimaryPressed = true;
             if (!TryRaycast(_lastScreen, out var world)) return;
@@ -96,13 +151,30 @@ namespace Core.Module.Map
         {
             if (p.Button != 0) return;
 
+            if (_input.IsGameplayInputBlocked)
+            {
+                _isPrimaryPressed = false;
+                _removalTapTracker.Cancel();
+                return;
+            }
+
+            if (_map.IsPlayerRemovalMode)
+            {
+                bool isRemovalTap = _removalTapTracker.Complete(_lastScreen);
+                if (isRemovalTap && !IsPointerBlocked()
+                    && TryRaycast(_lastScreen, out var removeWorld))
+                {
+                    _map.RemovePlayerObject(removeWorld);
+                }
+                return;
+            }
+
             bool wasPressed = _isPrimaryPressed;
             _isPrimaryPressed = false;
 
             if (!wasPressed || !_map.HasActivePlacement) return;
-            if (_input.IsGameplayInputBlocked) return;
             if (_map.CurrentPlacementInputMode != PlacementInputMode.Single) return;
-            if (_input.IsPointerOverUI()) return;
+            if (IsPointerBlocked()) return;
             if (TryRaycast(_lastScreen, out var world))
                 _map.AddFurniture(world);
         }
@@ -110,6 +182,13 @@ namespace Core.Module.Map
         private void OnKey(KeyDownPayload p)
         {
             if (p.Key == KeyCode.Escape) _map.StopPlacement();
+        }
+
+        private bool IsPointerBlocked()
+        {
+            return _input.IsGameplayInputBlocked
+                || _input.IsPointerOverUI()
+                || (_authoring != null && _authoring.IsPointerOverToolbar(_lastScreen));
         }
         #endregion
 

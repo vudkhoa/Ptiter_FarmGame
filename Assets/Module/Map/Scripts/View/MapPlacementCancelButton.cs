@@ -18,17 +18,19 @@ namespace Core.Module.Map
         public void Construct(
             IMapService map,
             ISubscriber<MapPlacementStartedPayload> startSub,
-            ISubscriber<MapPlacementStoppedPayload> stopSub)
+            ISubscriber<MapPlacementStoppedPayload> stopSub,
+            ISubscriber<MapPlayerRemovalModeChangedPayload> removalModeSub)
         {
             _map = map;
             _button.onClick.AddListener(CancelPlacement);
 
             var bag = DisposableBag.CreateBuilder();
-            startSub.Subscribe(_ => SetVisible(true)).AddTo(bag);
-            stopSub.Subscribe(_ => SetVisible(false)).AddTo(bag);
+            startSub.Subscribe(_ => RefreshVisibility()).AddTo(bag);
+            stopSub.Subscribe(_ => RefreshVisibility()).AddTo(bag);
+            removalModeSub.Subscribe(_ => RefreshVisibility()).AddTo(bag);
             _subscriptions = bag.Build();
 
-            SetVisible(_map.HasActivePlacement);
+            RefreshVisibility();
         }
 
         private void Awake()
@@ -50,6 +52,11 @@ namespace Core.Module.Map
         private void SetVisible(bool visible)
         {
             gameObject.SetActive(visible);
+        }
+
+        private void RefreshVisibility()
+        {
+            SetVisible(_map != null && (_map.HasActivePlacement || _map.IsPlayerRemovalMode));
         }
     }
 }

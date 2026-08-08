@@ -24,6 +24,31 @@ namespace Core.Module.Map
         Continuous = 1
     }
 
+    public enum PlacementPositionMode
+    {
+        Grid = 0,
+        Free = 1
+    }
+
+    [Flags]
+    public enum MapPlacementLayer
+    {
+        None = 0,
+        Surface = 1 << 0,
+        Gameplay = 1 << 1,
+        SolidDecor = 1 << 2,
+        OverlayDecor = 1 << 3
+    }
+
+    [Flags]
+    public enum MapSurfaceType
+    {
+        None = 0,
+        Land = 1 << 0,
+        Water = 1 << 1,
+        Any = Land | Water
+    }
+
     [CreateAssetMenu(fileName = "Objects", menuName = "Data/Map/Objects")]
     public class ObjectDatabaseSO : ScriptableObject
     {
@@ -74,6 +99,16 @@ namespace Core.Module.Map
         public Vector2Int Size;
         public MapObjectKind Kind;
         public PlacementInputMode PlacementInputMode;
+        public PlacementPositionMode PositionMode;
+        [Min(0f)] public float FreeSnapStep;
+        [Tooltip("Logical collision category. This is independent from Grid/Free positioning.")]
+        public MapPlacementLayer PlacementLayer;
+        [Tooltip("Placement layers that this object prevents from overlapping its footprint.")]
+        public MapPlacementLayer BlockedLayers;
+        [Tooltip("Surface created by this object. Use None for objects that do not replace the surface.")]
+        public MapSurfaceType ProvidedSurface;
+        [Tooltip("Surfaces on which this object may be placed.")]
+        public MapSurfaceType AllowedSurfaces;
         public MapObjectRotationMode RotationMode;
         public AssetReferenceGameObject Prefab;
     }
