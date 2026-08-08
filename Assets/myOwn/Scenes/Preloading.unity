@@ -234,6 +234,7 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
+  _audioSettings: {fileID: 11400000, guid: d948441866284bb2b372ad5ec795e443, type: 2}
 --- !u!1 &542634137
 GameObject:
   m_ObjectHideFlags: 0
