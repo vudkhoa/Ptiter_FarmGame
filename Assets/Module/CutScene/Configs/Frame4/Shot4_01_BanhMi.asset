@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 333d33a7b8d0d184faade8f3cdb476b6, type: 3}
-  m_Name: BreadFrame1Task
+  m_Name: Shot4_01_BanhMi
   m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.ShowImageTaskSO
-  taskName: Frame 1
+  taskName: Shot4_01_BanhMi
   startDelay: 0
   sprite:
-    m_AssetGUID: 3b7d1e94c5a04f28ab6d0e17c9f42001
-    m_SubObjectName: frame_bg
+    m_AssetGUID: 76efdfbffbb14f03915e22136ff51a5b
+    m_SubObjectName: shot4_banhmi
     m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
-    m_SubObjectGUID: 
+    m_SubObjectGUID:
     m_EditorAssetChanged: 0
-  slot: 0
-  imageId: frame1
+  slot: 1
+  imageId: shot4_banhmi
   fadeDuration: 0.4
   ease: 6
   overrideLayout: 1
-  anchoredPosition: {x: -580.3, y: 236.6}
-  size: {x: 597, y: 448}
-  rotationZ: 12.06
+  anchoredPosition: {x: 565.8, y: -177.2}
+  size: {x: 380, y: 247}
+  rotationZ: 18.15

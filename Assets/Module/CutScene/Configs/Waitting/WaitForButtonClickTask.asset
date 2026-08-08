@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a2e80ef3337d144b26df7f77183afa, type: 3}
   m_Name: WaitForButtonClickTask
   m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.WaitForButtonClickTaskSO
-  taskName: close
+  taskName: Watting
   startDelay: 0
   buttonId: 0

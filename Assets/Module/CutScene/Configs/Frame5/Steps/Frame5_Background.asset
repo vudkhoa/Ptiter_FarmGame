@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cdfba9485713849bf9b580dae8c779, type: 3}
+  m_Name: Frame5_Background
+  m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.CutsceneStepSO
+  stepId: Frame5_Background.asset
+  runMode: 1
+  tasks:
+  - {fileID: 11400000, guid: 3b7d1e94c5a04f28ab6d0e17c9f41005, type: 2}
