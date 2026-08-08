@@ -15,6 +15,21 @@ MonoBehaviour:
   m_GroupName: CutScene
   m_GUID: e132add79c9be4343834c59a5f6e4cc7
   m_SerializeEntries:
+  - m_GUID: e3481384b61541428148baefef370e32
+    m_Address: Shot1_06_Hold
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3f1ee94ba9e44f4791def773de4756ec
+    m_Address: Shot2_Hold
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d68d7c2e105c4ec28fdf8b4214fb22d7
+    m_Address: Shot3_07_Hold
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0b8bad365e3929f41b56deacedd88949
     m_Address: Frame2_Pig
     m_ReadOnly: 0
@@ -22,6 +37,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 122d56c416fc4b1a974c42a0f1678ff0
     m_Address: Frame5_Ranking
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d71cf01e0cf44ca9365b5e2aed5ace6
+    m_Address: Shot1_02_Clouds
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -155,6 +175,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7fc31eab6af041cfb59bf01b1ec38297
+    m_Address: Shot1_05_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 845d43f49d93ff7478c5b416038030ae
     m_Address: Shot3_06_Breath
     m_ReadOnly: 0
@@ -192,6 +217,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9dcaf2e7fce1412382f9bfaf22241737
     m_Address: BreadPigBgTask
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a77f55a200f94824a23116da21ca288f
+    m_Address: Shot2_Idle
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -235,6 +265,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d3927ab561764edfac54e9e7d92779a3
+    m_Address: shot1_clouds
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d3c4a77d1ede46118c2540e580d4fd9c
     m_Address: shot1_harvester
     m_ReadOnly: 0
@@ -246,7 +281,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d9efd1935a854259a6f40668689a8890
-    m_Address: Shot1_02_Harvester
+    m_Address: Shot1_03_Harvester
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -271,7 +306,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: eb500ed62ded4fc7be37c79b52e42130
-    m_Address: Shot1_03_Rice
+    m_Address: Shot1_04_Rice
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

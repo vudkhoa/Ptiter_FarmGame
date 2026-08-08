@@ -29,4 +29,3 @@ MonoBehaviour:
   riseEase: 6
   fallEase: 4
   swellScale: 0.028
-  duration: 5

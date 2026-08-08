@@ -23,7 +23,7 @@ MonoBehaviour:
     m_EditorAssetChanged: 0
   slot: 1
   imageId: pig_piglet
-  fadeDuration: 0.4
+  fadeDuration: 0.55
   ease: 6
   overrideLayout: 1
   anchoredPosition: {x: -400.4, y: -99.1}

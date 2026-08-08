@@ -16,3 +16,5 @@ MonoBehaviour:
   runMode: 1
   tasks:
   - {fileID: 11400000, guid: 3a5069a4c9fb4f63ab391776b1839406, type: 2}
+  - {fileID: 11400000, guid: a77f55a200f94824a23116da21ca288f, type: 2}
+  - {fileID: 11400000, guid: 3f1ee94ba9e44f4791def773de4756ec, type: 2}

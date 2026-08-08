@@ -23,7 +23,7 @@ MonoBehaviour:
     m_EditorAssetChanged: 1
   slot: 1
   imageId: shot3_rim
-  fadeDuration: 0
+  fadeDuration: 0.4
   ease: 6
   overrideLayout: 1
   anchoredPosition: {x: 41.8, y: -257.7}

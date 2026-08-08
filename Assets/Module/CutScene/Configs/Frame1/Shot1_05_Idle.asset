@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f00f4975fc3a48f7b60d5605978e5ade, type: 3}
+  m_Name: Shot1_05_Idle
+  m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.LoopMotionTaskSO
+  taskName: Shot 1 - may troi, lua dung dua
+  startDelay: 0
+  targets:
+  - imageId: shot1_clouds
+    pivot: {x: 0.5, y: 0.5}
+    rotationDegrees: 0
+    positionOffset: {x: 5, y: 1.5}
+    scaleAmount: 0
+    cycleSeconds: 22
+    phase: 0.0
+    ease: 4
+    spinDegreesPerSecond: 0
+  - imageId: shot1_rice
+    pivot: {x: 0.5, y: 0}
+    rotationDegrees: 0.55
+    positionOffset: {x: 0, y: 0}
+    scaleAmount: 0
+    cycleSeconds: 3.4
+    phase: 0.2
+    ease: 4
+    spinDegreesPerSecond: 0
+  - imageId: shot1_harvester
+    pivot: {x: 0.5, y: 0}
+    rotationDegrees: 0.45
+    positionOffset: {x: 0, y: 0}
+    scaleAmount: 0.004
+    cycleSeconds: 2.6
+    phase: 0.35
+    ease: 4
+    spinDegreesPerSecond: 0

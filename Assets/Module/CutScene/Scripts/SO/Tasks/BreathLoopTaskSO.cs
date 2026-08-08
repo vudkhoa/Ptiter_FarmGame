@@ -9,10 +9,14 @@ namespace Core.Module.Cutscene
 {
     /// <summary>
     /// Nhịp thở nền cho một shot: kéo nhiều Image bằng CHUNG một đường cong, loop vô hạn.
-    /// Task trả về NGAY để cutscene chạy tiếp sang frame khác — nhịp vẫn thở nền
-    /// cho tới khi ảnh được thu hồi lúc đóng popup.
-    /// Shot 3 cần quầng lò, viền vai thợ và sắc ám toàn khung đập cùng lúc, nên tất cả
-    /// phải nằm trên một Sequence duy nhất chứ không phải mỗi lớp một tween.
+    /// Task trả về NGAY để cutscene chạy tiếp sang frame khác — nhịp vẫn thở nền cho tới khi
+    /// ảnh được thu hồi lúc đóng popup. Muốn giữ khung lại cho người chơi kịp nhìn thì nối
+    /// thêm một WaitTaskSO phía sau trong step.
+    ///
+    /// Shot 3 cần quầng lò, viền vai thợ và sắc ám toàn khung đập cùng lúc, nên tất cả phải
+    /// nằm trên một Sequence duy nhất chứ không phải mỗi lớp một tween.
+    ///
+    /// Skip không đụng gì tới nhịp: đây là hiệu ứng nền, cứ để nó chạy tiếp.
     /// </summary>
     [CreateAssetMenu(fileName = "BreathLoopTask", menuName = "GDD/Cutscene/Task/Breath Loop")]
     public sealed class BreathLoopTaskSO : CutsceneTaskSO
@@ -60,16 +64,21 @@ namespace Core.Module.Cutscene
             // State chỉ sống trong closure của tween — SO không giữ gì, đúng luật CutsceneTaskSO.
             var images = new Image[count];
             var baseScales = new Vector3[count];
+            var startAlphas = new float[count];
             Image anchor = null;
 
             for (int i = 0; i < count; i++)
             {
-                Image image = Resolve(ctx, refs[i]);
+                BreathTargetRef target = refs[i];
+                if (target == null) continue;
+
+                Image image = ctx.State.GetImageById(target.imageId);
                 if (image == null) continue;
 
                 images[i] = image;
                 baseScales[i] = image.rectTransform.localScale;
-                image.canvasRenderer.SetAlpha(refs[i].restAlpha);
+                // Ghi lại alpha ShowImage vừa fade lên, để lịm dần xuống đáy nhịp thay vì cắt phụt.
+                startAlphas[i] = image.canvasRenderer.GetAlpha();
                 anchor ??= image;
             }
 
@@ -81,11 +90,14 @@ namespace Core.Module.Cutscene
             float rise = cycleSeconds * riseRatio;
             float fall = cycleSeconds - rise;
             float swell = swellScale;
-            float current = 0f;
+            float breath = 0f;
+            float settle = 0f;
 
-            void Apply(float breath)
+            void ApplyBreath(float value)
             {
-                current = breath;
+                // Gán ngược cho getter bên dưới: đoạn sau trong Sequence đọc lại biến này
+                // làm giá trị khởi đầu của nó, nên đây không phải dòng thừa.
+                breath = value;
 
                 for (int i = 0; i < count; i++)
                 {
@@ -95,26 +107,47 @@ namespace Core.Module.Cutscene
                     BreathTargetRef target = refs[i];
 
                     // SetAlpha đi thẳng vào CanvasRenderer nên không bắt Canvas dựng lại mesh mỗi frame.
-                    // Lerp giữa sàn và đỉnh — không nhân thẳng breath, để lớp không tắt hẳn ở đáy nhịp.
-                    image.canvasRenderer.SetAlpha(Mathf.Lerp(target.restAlpha, target.peakAlpha, breath));
+                    // Lerp giữa sàn và đỉnh — không nhân thẳng value, để lớp không tắt hẳn ở đáy nhịp.
+                    image.canvasRenderer.SetAlpha(Mathf.Lerp(target.restAlpha, target.peakAlpha, value));
 
                     if (target.swell)
-                        image.rectTransform.localScale = baseScales[i] * (1f + breath * swell);
+                        image.rectTransform.localScale = baseScales[i] * (1f + value * swell);
                 }
             }
 
+            void ApplySettle(float value)
+            {
+                settle = value;
+
+                for (int i = 0; i < count; i++)
+                {
+                    Image image = images[i];
+                    if (image == null) continue;
+
+                    image.canvasRenderer.SetAlpha(Mathf.Lerp(startAlphas[i], refs[i].restAlpha, value));
+                }
+            }
+
+            // Vào nhịp: ảnh đang sáng hết cỡ sau cú fade của ShowImage, mà đáy nhịp thường tối hơn
+            // nhiều — nhảy thẳng xuống là thấy giật ngay lúc frame vừa hiện. Cho nó lịm xuống đúng
+            // bằng một hơi thở ra rồi nhịp mới bắt đầu.
+            DOTween.To(() => settle, ApplySettle, 1f, fall)
+                   .SetEase(fallEase)
+                   .SetTarget(anchor.gameObject)
+                   .SetLink(anchor.gameObject);
+
             DOTween.Sequence()
-                   .Append(DOTween.To(() => current, Apply, 1f, rise).SetEase(riseEase))
-                   .Append(DOTween.To(() => current, Apply, 0f, fall).SetEase(fallEase))
+                   .Append(DOTween.To(() => breath, ApplyBreath, 1f, rise).SetEase(riseEase))
+                   .Append(DOTween.To(() => breath, ApplyBreath, 0f, fall).SetEase(fallEase))
                    .SetLoops(-1)
+                   // false = delay thật, không phải interval chèn đầu Sequence — chèn interval thì
+                   // vòng lặp nào cũng đứng hình chừng đó giây.
+                   .SetDelay(fall, false)
                    .SetTarget(anchor.gameObject)
                    .SetLink(anchor.gameObject);
 
             return UniTask.CompletedTask;
         }
-
-        /// <summary>Bấm skip: không đụng gì. Nhịp là hiệu ứng nền, cứ để nó thở tiếp.</summary>
-        public override void Complete(CutsceneContext ctx) { }
 
         /// <summary>
         /// Đóng popup / thu hồi ảnh: phải tự giết tween.
@@ -128,7 +161,10 @@ namespace Core.Module.Cutscene
 
             for (int i = 0; i < refs.Length; i++)
             {
-                Image image = Resolve(ctx, refs[i]);
+                BreathTargetRef target = refs[i];
+                if (target == null) continue;
+
+                Image image = ctx.State.GetImageById(target.imageId);
                 if (image == null) continue;
 
                 DOTween.Kill(image.gameObject);
@@ -138,12 +174,6 @@ namespace Core.Module.Cutscene
                 // ảnh sẽ tàng hình dù đã fade color.a lên 1.
                 image.canvasRenderer.SetAlpha(1f);
             }
-        }
-
-        private static Image Resolve(CutsceneContext ctx, BreathTargetRef target)
-        {
-            if (target == null || string.IsNullOrEmpty(target.imageId)) return null;
-            return ctx.State.GetImageById(target.imageId);
         }
     }
 }

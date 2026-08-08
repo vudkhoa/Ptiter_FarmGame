@@ -23,7 +23,7 @@ MonoBehaviour:
     m_EditorAssetChanged: 0
   slot: 1
   imageId: frame4
-  fadeDuration: 0.4
+  fadeDuration: 0.6
   ease: 6
   overrideLayout: 1
   anchoredPosition: {x: 565.8, y: -177.2}
