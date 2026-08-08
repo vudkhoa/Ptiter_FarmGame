@@ -13,6 +13,7 @@ using Core.Module.Quest;
 using Core.Module.Loading;
 using Core.Module.Currency;
 using Core.Module.Currency.Integration.Quest;
+using Core.Module.Audio;
 using myOwn.Firebase;
 
 namespace MyOwn.ServiceHarness
@@ -27,6 +28,8 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private FarmDatabaseReference _farmDatabaseRef;
         [SerializeField] private QuestCatalogReference _questCatalogRef;
         [SerializeField] private CutsceneCatalogReference _cutsceneCatalogRef;
+        [SerializeField] private AudioSettingsSO _audioSettings;
+        [SerializeField] private AudioCatalogSO _audioCatalog;
 
         protected override void Awake()
         {
@@ -44,6 +47,7 @@ namespace MyOwn.ServiceHarness
 
             // Each module declares its own brokers + global services in {Module}ModuleInstaller.cs.
             builder.RegisterInputModule(options)
+                   .RegisterAudioModule(_audioSettings, _audioCatalog)
                    .RegisterMapModule(options)
                    .RegisterTimeModule(options)
                    .RegisterStorageModule(options)
