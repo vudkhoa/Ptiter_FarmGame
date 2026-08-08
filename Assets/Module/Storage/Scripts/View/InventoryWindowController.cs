@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using BrunoMikoski.UIManager;
+using Core.Module.Input;
 using MessagePipe;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using VContainer;
 
@@ -16,6 +18,7 @@ namespace Core.Module.Storage.View
         IOnWindowClosed
     {
         private const int ItemsPerPage = 12;
+        private const float TabRevealDistance = 140f;
 
         [Header("Data")]
         [SerializeField] private InventoryCatalogSO _catalog;
@@ -23,7 +26,8 @@ namespace Core.Module.Storage.View
         [Header("Navigation")]
         [SerializeField] private Button _allTab;
         [SerializeField] private Button _farmTab;
-        [SerializeField] private Button _decorationTab;
+        [FormerlySerializedAs("_decorationTab")]
+        [SerializeField] private Button _foodTab;
         [SerializeField] private Button _previousPage;
         [SerializeField] private Button _nextPage;
         [SerializeField] private Button _closeButton;
@@ -48,7 +52,7 @@ namespace Core.Module.Storage.View
         private int _pageIndex;
         private InventoryTabMotion _allTabMotion;
         private InventoryTabMotion _farmTabMotion;
-        private InventoryTabMotion _decorationTabMotion;
+        private InventoryTabMotion _foodTabMotion;
         private bool _tabMotionInitialized;
         private bool _constructed;
 
@@ -66,6 +70,8 @@ namespace Core.Module.Storage.View
 
         public void OnBeforeWindowOpen()
         {
+            EnsureModalInputBlocker();
+            GameplayInputBlockRegistry.Add(this);
             _category = InventoryCategory.All;
             _pageIndex = 0;
             _selected = null;
@@ -75,14 +81,43 @@ namespace Core.Module.Storage.View
             Render();
         }
 
-        public void OnWindowClosed() => UnregisterButtons();
+        public void OnWindowClosed()
+        {
+            GameplayInputBlockRegistry.Remove(this);
+            UnregisterButtons();
+        }
+
+        private void EnsureModalInputBlocker()
+        {
+            const string blockerName = "Modal Input Blocker";
+            Transform existing = transform.Find(blockerName);
+            GameObject blocker = existing != null
+                ? existing.gameObject
+                : new GameObject(
+                    blockerName,
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image));
+
+            RectTransform rect = blocker.transform as RectTransform;
+            rect.SetParent(transform, false);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(10000f, 10000f);
+            rect.SetAsFirstSibling();
+
+            Image image = blocker.GetComponent<Image>();
+            image.color = Color.clear;
+            image.raycastTarget = true;
+            image.maskable = false;
+        }
 
         private void RegisterButtons()
         {
             UnregisterButtons();
             _allTab?.onClick.AddListener(ShowAll);
             _farmTab?.onClick.AddListener(ShowFarm);
-            _decorationTab?.onClick.AddListener(ShowDecoration);
+            _foodTab?.onClick.AddListener(ShowFood);
             _previousPage?.onClick.AddListener(PreviousPage);
             _nextPage?.onClick.AddListener(NextPage);
             _closeButton?.onClick.AddListener(Close);
@@ -92,7 +127,7 @@ namespace Core.Module.Storage.View
         {
             _allTab?.onClick.RemoveListener(ShowAll);
             _farmTab?.onClick.RemoveListener(ShowFarm);
-            _decorationTab?.onClick.RemoveListener(ShowDecoration);
+            _foodTab?.onClick.RemoveListener(ShowFood);
             _previousPage?.onClick.RemoveListener(PreviousPage);
             _nextPage?.onClick.RemoveListener(NextPage);
             _closeButton?.onClick.RemoveListener(Close);
@@ -100,7 +135,7 @@ namespace Core.Module.Storage.View
 
         private void ShowAll() => SetCategory(InventoryCategory.All);
         private void ShowFarm() => SetCategory(InventoryCategory.FarmProduce);
-        private void ShowDecoration() => SetCategory(InventoryCategory.Decoration);
+        private void ShowFood() => SetCategory(InventoryCategory.Food);
 
         private void SetCategory(InventoryCategory category)
         {
@@ -116,25 +151,25 @@ namespace Core.Module.Storage.View
             if (_tabMotionInitialized ||
                 _allTab == null ||
                 _farmTab == null ||
-                _decorationTab == null)
+                _foodTab == null)
                 return;
 
             RectTransform allRect = _allTab.transform as RectTransform;
             RectTransform farmRect = _farmTab.transform as RectTransform;
             if (allRect == null || farmRect == null) return;
 
-            float expandedX = allRect.anchoredPosition.x;
             float collapsedX = farmRect.anchoredPosition.x;
+            float expandedX = collapsedX - TabRevealDistance;
 
             _allTabMotion = GetOrAddTabMotion(_allTab);
             _farmTabMotion = GetOrAddTabMotion(_farmTab);
-            _decorationTabMotion = GetOrAddTabMotion(_decorationTab);
+            _foodTabMotion = GetOrAddTabMotion(_foodTab);
 
             _allTabMotion.Initialize(
                 expandedX, collapsedX, 0.15f, DG.Tweening.Ease.OutQuad);
             _farmTabMotion.Initialize(
                 expandedX, collapsedX, 0.15f, DG.Tweening.Ease.OutQuad);
-            _decorationTabMotion.Initialize(
+            _foodTabMotion.Initialize(
                 expandedX, collapsedX, 0.15f, DG.Tweening.Ease.OutQuad);
             _tabMotionInitialized = true;
         }
@@ -157,8 +192,8 @@ namespace Core.Module.Storage.View
                 _category == InventoryCategory.All, animate);
             _farmTabMotion.SetActive(
                 _category == InventoryCategory.FarmProduce, animate);
-            _decorationTabMotion.SetActive(
-                _category == InventoryCategory.Decoration, animate);
+            _foodTabMotion.SetActive(
+                _category == InventoryCategory.Food, animate);
         }
 
         private void PreviousPage()
@@ -251,6 +286,7 @@ namespace Core.Module.Storage.View
 
         protected override void OnDestroy()
         {
+            GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
             for (int i = 0; i < _subscriptions.Count; i++)
                 _subscriptions[i]?.Dispose();

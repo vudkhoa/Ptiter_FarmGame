@@ -5,6 +5,7 @@ namespace Core.Module.Input
     public interface IInputService
     {
         Vector2 PointerScreen { get; }
+        bool IsGameplayInputBlocked { get; }
         bool IsMultiTouchActive { get; }
         bool IsPointerOverUI();
         bool IsButtonHeld(int button);

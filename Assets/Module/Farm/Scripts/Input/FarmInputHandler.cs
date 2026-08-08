@@ -58,7 +58,9 @@ namespace Core.Module.Farm
 
         private void Update()
         {
-            if (_inputService != null && _inputService.IsMultiTouchActive)
+            if (_inputService != null &&
+                (_inputService.IsMultiTouchActive ||
+                 _inputService.IsGameplayInputBlocked))
                 _tapTracker.Cancel();
         }
 
@@ -74,6 +76,11 @@ namespace Core.Module.Farm
             if (payload.Button != 0) return;
 
             _tapTracker.Cancel();
+
+            // Full-screen modal windows such as Quest and Inventory own input
+            // while they are open. Gameplay windows (for example the farm
+            // selector) deliberately do not register as blockers.
+            if (_inputService.IsGameplayInputBlocked) return;
             if (_inputService.IsPointerOverUI()) return;
             if (_mapService.HasActivePlacement || _mapService.IsPlayerRemovalMode) return;
 
@@ -82,12 +89,24 @@ namespace Core.Module.Farm
 
         private void OnPointerScreen(PointerScreenPayload payload)
         {
+            if (_inputService.IsGameplayInputBlocked)
+            {
+                _tapTracker.Cancel();
+                return;
+            }
+
             _tapTracker.Move(payload.ScreenPosition);
         }
 
         private void OnPointerUp(PointerButtonUpPayload payload)
         {
             if (payload.Button != 0) return;
+            if (_inputService.IsGameplayInputBlocked)
+            {
+                _tapTracker.Cancel();
+                return;
+            }
+
             if (!_tapTracker.Complete(_inputService.PointerScreen)) return;
             if (_inputService.IsPointerOverUI()) return;
             if (_mapService.HasActivePlacement || _mapService.IsPlayerRemovalMode) return;

@@ -4,6 +4,7 @@ namespace Core.Module.Storage
     {
         All = 0,
         FarmProduce = 1,
-        Decoration = 2
+        Decoration = 2,
+        Food = 3
     }
 }

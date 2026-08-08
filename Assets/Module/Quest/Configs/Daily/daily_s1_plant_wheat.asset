@@ -16,7 +16,7 @@ MonoBehaviour:
   category: 0
   questName: "Gieo l\xFAa m\xEC"
   description: "Gieo 3 c\xE2y l\xFAa m\xEC."
-  icon: {fileID: 21300000, guid: 63530adf69ca6f74a90badfa9d7de08c, type: 3}
+  icon: {fileID: 21300000, guid: d81d9b8522c051c408605cffe83920ce, type: 3}
   objectives:
   - objectiveId: daily_s1_plant_wheat_objective
     objectiveType: 1

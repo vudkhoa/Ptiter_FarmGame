@@ -16,7 +16,7 @@ MonoBehaviour:
   category: 0
   questName: "Gieo c\xE2y tr\u1ED3ng"
   description: "Gieo b\u1EA5t k\u1EF3 5 c\xE2y tr\u1ED3ng."
-  icon: {fileID: 21300000, guid: 63530adf69ca6f74a90badfa9d7de08c, type: 3}
+  icon: {fileID: 21300000, guid: d81d9b8522c051c408605cffe83920ce, type: 3}
   objectives:
   - objectiveId: daily_s3_plant_crops_objective
     objectiveType: 1

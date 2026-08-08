@@ -14,7 +14,7 @@ namespace MyOwn.ServiceHarness
     public class PlayerData
     {
         public string PlayerId;
-        public int SaveVersion = 3;
+        public int SaveVersion = 4;
         public long LastSaveUtcTicks;
 
         public int Coins = 1000;
@@ -26,6 +26,7 @@ namespace MyOwn.ServiceHarness
         public List<FarmSlotSaveData> FarmSlots = new List<FarmSlotSaveData>();
         public List<MapPlacementSaveData> MapPlacements = new List<MapPlacementSaveData>();
         public DailyQuestSaveData DailyQuest;
+        public ProgressQuestSaveData QuestProgress = new ProgressQuestSaveData();
         public List<PendingQuestRewardSaveData> PendingQuestRewards =
             new List<PendingQuestRewardSaveData>();
         public List<string> GrantedQuestRewardTransactions = new List<string>();

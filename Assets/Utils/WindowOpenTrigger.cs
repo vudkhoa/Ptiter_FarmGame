@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BrunoMikoski.UIManager;
+using Core.Module.Input;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
@@ -22,15 +23,18 @@ namespace Shared.Utils
         private static readonly HashSet<WindowOpenTrigger> OpenTriggers =
             new HashSet<WindowOpenTrigger>();
         private IObjectResolver _resolver;
+        private IInputService _inputService;
         private bool _windowEventsSubscribed;
 
         [Inject]
         public void Construct(
             IObjectResolver resolver,
-            WindowsManager windowsManager)
+            WindowsManager windowsManager,
+            IInputService inputService)
         {
             _resolver = resolver;
             _windowsManager = windowsManager;
+            _inputService = inputService;
         }
 
         public void Configure(
@@ -77,7 +81,7 @@ namespace Shared.Utils
         // Unity invokes this only after a press/release on the same Collider.
         private void OnMouseUpAsButton()
         {
-            if (_button != null || HasOpenTrigger())
+            if (_button != null || IsGameplayInputBlocked() || HasOpenTrigger())
                 return;
 
             Open();
@@ -102,6 +106,8 @@ namespace Shared.Utils
                 return;
             }
 
+            if (IsGameplayInputBlocked()) return;
+
             SubscribeWindowEvents();
             if (!_windowsManager.Open(_window)) return;
 
@@ -116,6 +122,17 @@ namespace Shared.Utils
         private static bool HasOpenTrigger()
         {
             return OpenTriggers.Count > 0;
+        }
+
+        private bool IsGameplayInputBlocked()
+        {
+            if (_inputService != null)
+                return _inputService.IsGameplayInputBlocked;
+
+            if (_resolver == null || !_resolver.TryResolve(out _inputService))
+                return false;
+
+            return _inputService.IsGameplayInputBlocked;
         }
 
         private void SubscribeWindowEvents()

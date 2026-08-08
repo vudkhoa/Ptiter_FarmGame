@@ -14,6 +14,7 @@ namespace Core.Module.Currency
             builder.RegisterMessageBroker<CurrencyBalanceSetRequestedPayload>(options);
             builder.RegisterMessageBroker<CurrencyTransactionProcessedPayload>(options);
             builder.RegisterMessageBroker<CurrencyChangedPayload>(options);
+            builder.RegisterMessageBroker<CurrencyCreditedPayload>(options);
             return builder;
         }
 

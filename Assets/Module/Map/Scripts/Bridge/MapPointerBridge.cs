@@ -64,7 +64,8 @@ namespace Core.Module.Map
 
         private void Update()
         {
-            if (_input != null && _input.IsMultiTouchActive)
+            if (_input != null &&
+                (_input.IsMultiTouchActive || _input.IsGameplayInputBlocked))
                 _removalTapTracker.Cancel();
         }
 
@@ -78,6 +79,12 @@ namespace Core.Module.Map
         private void OnScreen(PointerScreenPayload p)
         {
             _lastScreen = p.ScreenPosition;
+            if (_input.IsGameplayInputBlocked)
+            {
+                _isPrimaryPressed = false;
+                _removalTapTracker.Cancel();
+                return;
+            }
 
             if (_map.IsPlayerRemovalMode)
             {
@@ -144,6 +151,13 @@ namespace Core.Module.Map
         {
             if (p.Button != 0) return;
 
+            if (_input.IsGameplayInputBlocked)
+            {
+                _isPrimaryPressed = false;
+                _removalTapTracker.Cancel();
+                return;
+            }
+
             if (_map.IsPlayerRemovalMode)
             {
                 bool isRemovalTap = _removalTapTracker.Complete(_lastScreen);
@@ -172,7 +186,8 @@ namespace Core.Module.Map
 
         private bool IsPointerBlocked()
         {
-            return _input.IsPointerOverUI()
+            return _input.IsGameplayInputBlocked
+                || _input.IsPointerOverUI()
                 || (_authoring != null && _authoring.IsPointerOverToolbar(_lastScreen));
         }
         #endregion

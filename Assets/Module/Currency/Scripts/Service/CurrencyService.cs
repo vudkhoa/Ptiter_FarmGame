@@ -14,6 +14,7 @@ namespace Core.Module.Currency
         private readonly ICurrencyRepository _repository;
         private readonly IPublisher<CurrencyTransactionProcessedPayload> _processedPublisher;
         private readonly IPublisher<CurrencyChangedPayload> _changedPublisher;
+        private readonly IPublisher<CurrencyCreditedPayload> _creditedPublisher;
         private readonly IDisposable _transactionSubscription;
         private readonly IDisposable _setBalanceSubscription;
 
@@ -24,11 +25,13 @@ namespace Core.Module.Currency
             ISubscriber<CurrencyTransactionRequestedPayload> transactionSubscriber,
             ISubscriber<CurrencyBalanceSetRequestedPayload> setBalanceSubscriber,
             IPublisher<CurrencyTransactionProcessedPayload> processedPublisher,
-            IPublisher<CurrencyChangedPayload> changedPublisher)
+            IPublisher<CurrencyChangedPayload> changedPublisher,
+            IPublisher<CurrencyCreditedPayload> creditedPublisher)
         {
             _repository = repository;
             _processedPublisher = processedPublisher;
             _changedPublisher = changedPublisher;
+            _creditedPublisher = creditedPublisher;
             _transactionSubscription =
                 transactionSubscriber.Subscribe(OnTransactionRequested);
             _setBalanceSubscription =
@@ -105,12 +108,22 @@ namespace Core.Module.Currency
 
             if (mutation.Success)
             {
+                int appliedDelta = mutation.CurrentBalance - mutation.PreviousBalance;
                 _changedPublisher.Publish(new CurrencyChangedPayload(
                     payload.TransactionId,
                     mutation.PreviousBalance,
                     mutation.CurrentBalance,
-                    mutation.CurrentBalance - mutation.PreviousBalance,
+                    appliedDelta,
                     payload.Reason));
+                if (!mutation.AlreadyApplied &&
+                    payload.Type == CurrencyTransactionType.Credit &&
+                    appliedDelta > 0)
+                {
+                    _creditedPublisher.Publish(new CurrencyCreditedPayload(
+                        payload.TransactionId,
+                        appliedDelta,
+                        payload.Reason));
+                }
             }
             return result;
         }

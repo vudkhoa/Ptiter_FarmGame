@@ -11,9 +11,12 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private TMP_Text _points;
         [SerializeField] private TMP_Text _reward;
         [SerializeField] private Button _claimButton;
-        [SerializeField] private GameObject _locked;
         [SerializeField] private Image _statusBackground;
         [SerializeField] private TMP_Text _status;
+        [SerializeField] private Image _giftImage;
+        [SerializeField] private Sprite _lockedGiftSprite;
+        [SerializeField] private Sprite _claimableGiftSprite;
+        [SerializeField] private Sprite _claimedGiftSprite;
 
         private string _milestoneId;
         private Action<string> _claim;
@@ -39,8 +42,7 @@ namespace MyOwn.ServiceHarness
                 _claimButton.interactable = claimable;
                 _claimButton.onClick.AddListener(OnClaimClicked);
             }
-            if (_locked != null)
-                _locked.SetActive(data.ClaimState == DailyMilestoneClaimState.Locked);
+            UpdateGift(data.ClaimState);
             UpdateStatus(data.ClaimState);
         }
 
@@ -82,6 +84,30 @@ namespace MyOwn.ServiceHarness
         {
             if (_claimButton != null)
                 _claimButton.onClick.RemoveListener(OnClaimClicked);
+        }
+
+        private void UpdateGift(DailyMilestoneClaimState state)
+        {
+            if (_giftImage == null) return;
+
+            Sprite stateSprite;
+            switch (state)
+            {
+                case DailyMilestoneClaimState.Claimed:
+                    stateSprite = _claimedGiftSprite;
+                    break;
+                case DailyMilestoneClaimState.Locked:
+                    stateSprite = _lockedGiftSprite;
+                    break;
+                default:
+                    stateSprite = _claimableGiftSprite;
+                    break;
+            }
+
+            _giftImage.sprite = stateSprite != null
+                ? stateSprite
+                : _claimableGiftSprite;
+            _giftImage.enabled = _giftImage.sprite != null;
         }
     }
 }

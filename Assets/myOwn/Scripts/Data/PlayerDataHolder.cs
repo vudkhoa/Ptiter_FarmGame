@@ -26,6 +26,7 @@ namespace MyOwn.ServiceHarness
         IFarmSaveSource,
         IMapSaveSource,
         IDailyQuestRepository,
+        IProgressQuestRepository,
         ICurrencyRepository,
         IDisposable
     {
@@ -160,6 +161,26 @@ namespace MyOwn.ServiceHarness
         public DailyQuestSaveData LoadDailyQuest()
         {
             return Clone(_data?.DailyQuest);
+        }
+
+        public ProgressQuestSaveData LoadProgressQuest()
+        {
+            return Clone(_data?.QuestProgress);
+        }
+
+        public UniTask<bool> SaveProgressQuestAsync(
+            ProgressQuestSaveData data,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_data == null || data == null) return UniTask.FromResult(false);
+
+            ProgressQuestSaveData previous = _data.QuestProgress;
+            _data.QuestProgress = Clone(data);
+            if (SaveImmediate()) return UniTask.FromResult(true);
+
+            _data.QuestProgress = previous;
+            return UniTask.FromResult(false);
         }
 
         public IReadOnlyList<PendingQuestRewardSaveData> LoadPendingQuestRewards()
