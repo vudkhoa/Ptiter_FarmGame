@@ -102,7 +102,6 @@ namespace MyOwn.ServiceHarness
 
         public void OnBeforeWindowOpen()
         {
-            EnsureModalInputBlocker();
             GameplayInputBlockRegistry.Add(this);
             RegisterButtons();
             ShowTab(0);
@@ -229,31 +228,6 @@ namespace MyOwn.ServiceHarness
             _dailyQuestService.ClaimMilestoneAsync(
                 milestoneId,
                 this.GetCancellationTokenOnDestroy()).Forget();
-        }
-
-        private void EnsureModalInputBlocker()
-        {
-            const string blockerName = "Modal Input Blocker";
-            Transform existing = transform.Find(blockerName);
-            GameObject blocker = existing != null
-                ? existing.gameObject
-                : new GameObject(
-                    blockerName,
-                    typeof(RectTransform),
-                    typeof(CanvasRenderer),
-                    typeof(Image));
-
-            RectTransform rect = blocker.transform as RectTransform;
-            rect.SetParent(transform, false);
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(10000f, 10000f);
-            rect.SetAsFirstSibling();
-
-            Image image = blocker.GetComponent<Image>();
-            image.color = Color.clear;
-            image.raycastTarget = true;
-            image.maskable = false;
         }
 
         private void UpdateDailyMilestoneFill(DailyQuestViewState state)

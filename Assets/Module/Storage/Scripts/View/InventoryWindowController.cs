@@ -70,7 +70,6 @@ namespace Core.Module.Storage.View
 
         public void OnBeforeWindowOpen()
         {
-            EnsureModalInputBlocker();
             GameplayInputBlockRegistry.Add(this);
             _category = InventoryCategory.All;
             _pageIndex = 0;
@@ -85,31 +84,6 @@ namespace Core.Module.Storage.View
         {
             GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
-        }
-
-        private void EnsureModalInputBlocker()
-        {
-            const string blockerName = "Modal Input Blocker";
-            Transform existing = transform.Find(blockerName);
-            GameObject blocker = existing != null
-                ? existing.gameObject
-                : new GameObject(
-                    blockerName,
-                    typeof(RectTransform),
-                    typeof(CanvasRenderer),
-                    typeof(Image));
-
-            RectTransform rect = blocker.transform as RectTransform;
-            rect.SetParent(transform, false);
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(10000f, 10000f);
-            rect.SetAsFirstSibling();
-
-            Image image = blocker.GetComponent<Image>();
-            image.color = Color.clear;
-            image.raycastTarget = true;
-            image.maskable = false;
         }
 
         private void RegisterButtons()

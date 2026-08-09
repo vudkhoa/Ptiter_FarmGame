@@ -81,7 +81,7 @@ namespace Shared.Utils
         // Unity invokes this only after a press/release on the same Collider.
         private void OnMouseUpAsButton()
         {
-            if (_button != null || IsGameplayInputBlocked() || HasOpenTrigger())
+            if (_button != null || IsAnotherWindowOpen())
                 return;
 
             Open();
@@ -106,7 +106,7 @@ namespace Shared.Utils
                 return;
             }
 
-            if (IsGameplayInputBlocked()) return;
+            if (IsAnotherWindowOpen()) return;
 
             SubscribeWindowEvents();
             if (!_windowsManager.Open(_window)) return;
@@ -124,8 +124,11 @@ namespace Shared.Utils
             return OpenTriggers.Count > 0;
         }
 
-        private bool IsGameplayInputBlocked()
+        private bool IsAnotherWindowOpen()
         {
+            if (GameplayInputBlockRegistry.IsBlocked || HasOpenTrigger())
+                return true;
+
             if (_inputService != null)
                 return _inputService.IsGameplayInputBlocked;
 

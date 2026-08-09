@@ -139,6 +139,7 @@ MonoBehaviour:
   _background: {fileID: 7218515798748883053}
   _icon: {fileID: 1868962319933690975}
   _amount: {fileID: 5720860581442298013}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &75229787035102840
@@ -417,6 +418,7 @@ MonoBehaviour:
   _background: {fileID: 7272714249197285803}
   _icon: {fileID: 172546881578415604}
   _amount: {fileID: 7737095546979676223}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &535088955367503627
@@ -568,7 +570,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279510625
+    rgba: 4280233065
   m_fontColor: {r: 0.4117647, g: 0.17254902, b: 0.12156863, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -855,7 +857,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279510625
+    rgba: 4280233065
   m_fontColor: {r: 0.4117647, g: 0.17254902, b: 0.12156863, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -1785,6 +1787,7 @@ MonoBehaviour:
   _background: {fileID: 279551719624080866}
   _icon: {fileID: 8261793935555747653}
   _amount: {fileID: 4281262393831519567}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &1934864680744292712
@@ -2119,7 +2122,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4279510625
+    rgba: 4280233065
   m_fontColor: {r: 0.4117647, g: 0.17254902, b: 0.12156863, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -2321,6 +2324,7 @@ MonoBehaviour:
   _background: {fileID: 1946000460026735677}
   _icon: {fileID: 1723561806661585358}
   _amount: {fileID: 8409014247388986827}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &2788046346313810126
@@ -3274,10 +3278,10 @@ RectTransform:
   - {fileID: 3043628051962189295}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1920, y: 1080}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &5175641401310644006
 Canvas:
@@ -5205,6 +5209,7 @@ MonoBehaviour:
   _background: {fileID: 1705939973157593971}
   _icon: {fileID: 585491997140969701}
   _amount: {fileID: 2369383249201401998}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &4947347146108998533
@@ -5346,6 +5351,7 @@ MonoBehaviour:
   _background: {fileID: 5453804750871320708}
   _icon: {fileID: 5016085194975909040}
   _amount: {fileID: 3503453411934365981}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &5687441018558373268
@@ -5624,6 +5630,7 @@ MonoBehaviour:
   _background: {fileID: 1892201730091195698}
   _icon: {fileID: 3905075812996024149}
   _amount: {fileID: 4195258133523234529}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &5702332400843901396
@@ -6039,6 +6046,7 @@ MonoBehaviour:
   _background: {fileID: 3075593542136913732}
   _icon: {fileID: 3685360546281070601}
   _amount: {fileID: 5625448166426774227}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &6170837609546243982
@@ -6331,6 +6339,7 @@ MonoBehaviour:
   _background: {fileID: 3344180140384417835}
   _icon: {fileID: 4658934705374252431}
   _amount: {fileID: 4012305276756775478}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &6867472134780403866
@@ -7646,6 +7655,7 @@ MonoBehaviour:
   _background: {fileID: 1057160322019325888}
   _icon: {fileID: 5483971092013863009}
   _amount: {fileID: 7182148851262872888}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &8487135455679749570
@@ -7924,6 +7934,7 @@ MonoBehaviour:
   _background: {fileID: 4402660215137821552}
   _icon: {fileID: 5021928671811910151}
   _amount: {fileID: 107305722762617426}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &8614358597944110930
@@ -8065,6 +8076,7 @@ MonoBehaviour:
   _background: {fileID: 6206356712040804308}
   _icon: {fileID: 8496886436375620522}
   _amount: {fileID: 8211225389291151985}
+  _fallbackLabel: {fileID: 0}
   _normalSprite: {fileID: 21300000, guid: ddab4efbe8d27814ea5b2e8308abcb86, type: 3}
   _selectedSprite: {fileID: 21300000, guid: 565020fcbd1cee3418fc288afdf3da05, type: 3}
 --- !u!1 &8757399842227026498
