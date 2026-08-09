@@ -101,6 +101,11 @@ namespace Core.Module.Farm
         private void OnPointerUp(PointerButtonUpPayload payload)
         {
             if (payload.Button != 0) return;
+            if (PointerReleaseSuppression.IsPrimaryReleaseSuppressed)
+            {
+                _tapTracker.Cancel();
+                return;
+            }
             if (_inputService.IsGameplayInputBlocked)
             {
                 _tapTracker.Cancel();

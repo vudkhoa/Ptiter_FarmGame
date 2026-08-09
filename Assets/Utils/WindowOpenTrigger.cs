@@ -83,7 +83,10 @@ namespace Shared.Utils
         {
             // Legacy collider mouse callbacks are independent from uGUI's
             // raycast pipeline. Give UI controls priority when both overlap.
-            if (_button != null || IsPointerOverUI() || IsAnotherWindowOpen())
+            if (_button != null ||
+                PointerReleaseSuppression.IsPrimaryReleaseSuppressed ||
+                IsPointerOverUI() ||
+                IsAnotherWindowOpen())
                 return;
 
             Open();

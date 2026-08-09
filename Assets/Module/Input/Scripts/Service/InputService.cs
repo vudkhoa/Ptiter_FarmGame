@@ -119,7 +119,10 @@ namespace Core.Module.Input
             for (int i = 0; i < _heldButtons.Length; i++)
             {
                 if (UInput.GetMouseButtonDown(i))
+                {
+                    if (i == 0) PointerReleaseSuppression.BeginPrimaryPress();
                     _pubButtonDown.Publish(new PointerButtonDownPayload(i));
+                }
 
                 if (UInput.GetMouseButtonUp(i))
                     _pubButtonUp.Publish(new PointerButtonUpPayload(i));
