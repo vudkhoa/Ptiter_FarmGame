@@ -346,6 +346,7 @@ namespace Core.Module.Map
                 _freePlacements.Remove(freeInstanceId);
                 _instanceRegistry.RemoveAndDestroy(freeInstanceId);
                 CompletePlayerRemoval(saveIndex, context);
+                SetPlayerRemovalMode(false);
                 return true;
             }
 
@@ -369,7 +370,46 @@ namespace Core.Module.Map
 
             _instanceRegistry.RemoveAndDestroy(originCell);
             CompletePlayerRemoval(persistedIndex, gridContext);
+            SetPlayerRemovalMode(false);
             return true;
+        }
+
+        public bool CanRemovePlayerObject(Vector3 worldHit)
+        {
+            if (_authoring.IsAuthoringMode || HasActivePlacement || _persistedPlacements == null)
+                return false;
+
+            if (TryFindFreePlacement(worldHit, out string freeInstanceId))
+            {
+                if (FindPersistedPlacementIndex(freeInstanceId) < 0 ||
+                    !_freePlacements.TryGetValue(freeInstanceId, out FreePlacementRecord free) ||
+                    !_database.TryGetById(free.ObjectId, out ObjectData data, out _)) return false;
+
+                var context = new MapPlacementRemovalContext(
+                    freeInstanceId,
+                    free.ObjectId,
+                    data.Kind,
+                    PlacementPositionMode.Free,
+                    default,
+                    free.WorldPosition);
+                return CanRemovePlayerPlacement(context);
+            }
+
+            Vector3Int cell = WorldToCell(worldHit);
+            if (!_grid.TryGetPlacementAt(cell, out PlacementData placement) ||
+                FindPersistedPlacementIndex(placement.InstanceId) < 0 ||
+                placement.OcupiedPositions == null || placement.OcupiedPositions.Count == 0)
+                return false;
+
+            Vector3Int originCell = placement.OcupiedPositions[0];
+            var gridContext = new MapPlacementRemovalContext(
+                placement.InstanceId,
+                placement.ID,
+                placement.Kind,
+                PlacementPositionMode.Grid,
+                originCell,
+                CellToWorld(originCell));
+            return CanRemovePlayerPlacement(gridContext);
         }
 
         public bool RemoveAuthoringObject(Vector3 worldHit)

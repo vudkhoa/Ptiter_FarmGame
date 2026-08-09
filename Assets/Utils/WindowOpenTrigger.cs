@@ -81,7 +81,9 @@ namespace Shared.Utils
         // Unity invokes this only after a press/release on the same Collider.
         private void OnMouseUpAsButton()
         {
-            if (_button != null || IsGameplayInputBlocked() || HasOpenTrigger())
+            if (_button != null ||
+                PointerReleaseSuppression.IsPrimaryReleaseSuppressed ||
+                IsGameplayInputBlocked() || HasOpenTrigger())
                 return;
 
             Open();
