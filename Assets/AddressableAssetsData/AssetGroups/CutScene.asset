@@ -15,33 +15,128 @@ MonoBehaviour:
   m_GroupName: CutScene
   m_GUID: e132add79c9be4343834c59a5f6e4cc7
   m_SerializeEntries:
+  - m_GUID: e3481384b61541428148baefef370e32
+    m_Address: Shot1_06_Hold
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3f1ee94ba9e44f4791def773de4756ec
+    m_Address: Shot2_Hold
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d68d7c2e105c4ec28fdf8b4214fb22d7
+    m_Address: Shot3_07_Hold
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0b8bad365e3929f41b56deacedd88949
+    m_Address: Frame2_Pig
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 122d56c416fc4b1a974c42a0f1678ff0
+    m_Address: Frame5_Ranking
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d71cf01e0cf44ca9365b5e2aed5ace6
+    m_Address: Shot1_02_Clouds
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28b08ffe569445e1856d01b5b643d759
+    m_Address: bread_pig_piglet
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28e8a39cefcf8c14ab729017a61795e0
+    m_Address: Shot3_04_RimLight
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 38fb5f5658714f9aa3216018189149de
+    m_Address: Frame1_Field
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 39dbf42f716869a4ca41118762d9c812
+    m_Address: shot3_background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3a5069a4c9fb4f63ab391776b1839406
+    m_Address: BreadPigFarmerTask
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f41001
+    m_Address: BreadFrame1Task
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f41002
+    m_Address: BreadFrame2Task
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f41003
+    m_Address: BreadFrame3Task
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f41004
+    m_Address: BreadFrame4Task
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f41005
+    m_Address: BreadFrame5Task
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42001
-    m_Address: frame_01
+    m_Address: frame_bg
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42002
-    m_Address: frame_02
+  - m_GUID: 3fc36ae70b0140bf982be6d61e1c01cf
+    m_Address: BreadPigHayTask
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42003
-    m_Address: frame_03
+  - m_GUID: 4297bfb0f62d4906b8e6edd889716eee
+    m_Address: BreadPigCornerTask
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42004
-    m_Address: frame_04
+  - m_GUID: 42e6ac80c87e440bade40ecfb51a8737
+    m_Address: Shot1_01_Background
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42005
-    m_Address: frame_05
+  - m_GUID: 4bad9673ad5b4102a7f42e959a3b4023
+    m_Address: bread_pig_hay
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42006
-    m_Address: frame_06
+  - m_GUID: 4bbd049881a64f18b2c0bdd60a20e61c
+    m_Address: shot1_background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4c986e607ec44ed497fa4c998ac82bc0
+    m_Address: Frame4_BanhMi
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5722f0c1d10c4e6ab24f25d5b5d5966d
+    m_Address: bread_pig_boy
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b4ac594b77e46cd926bb11df96206b4
+    m_Address: Shot4_01_BanhMi
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -50,8 +145,178 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5d806346615c88e48ba57f1334992979
+    m_Address: shot3_rimlight
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 62839771d0a14c54cb192ee7ab7f3122
+    m_Address: shot3_glow
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6fc5e6960b47bed4db30816abd8f6f21
+    m_Address: Shot3_02_Glow
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 705478814c844db8bf52b086761b25c3
+    m_Address: BreadPigPigletTask
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 76efdfbffbb14f03915e22136ff51a5b
+    m_Address: shot4_banhmi
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7ea6fa60118a4674a6012e8338e84a4a
+    m_Address: BreadPigSleepTask
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7fc31eab6af041cfb59bf01b1ec38297
+    m_Address: Shot1_05_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 845d43f49d93ff7478c5b416038030ae
+    m_Address: Shot3_06_Breath
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8732ca14cd67e7d4c9d595f8969c5ad2
+    m_Address: Shot3_03_Chef
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 873a64b99f2146819cbe90969cf10fa7
+    m_Address: bread_pig_sleep
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8f545507bd5c4c99a88d36ebbaf5a9b2
+    m_Address: shot5_ranking
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 914baa18e2c6ed748a7ee110239ebf8b
+    m_Address: shot3_wash
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 98b0ad293fdccf44fa47c6e8c0e8b12a
+    m_Address: Frame1_Background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 99eb72c719f02eb49813d61f0d43ca0d
     m_Address: img_test
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9dcaf2e7fce1412382f9bfaf22241737
+    m_Address: BreadPigBgTask
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a77f55a200f94824a23116da21ca288f
+    m_Address: Shot2_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a7e3c26627912df42b7235206a2f2fd2
+    m_Address: shot3_chef
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab3fce16784184849a4b47de58a1defb
+    m_Address: Shot3_05_Wash
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7bdb5b1b338ef5428664e13f759d402
+    m_Address: Frame3_Background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b92f4ce7acddb414bb20988c398bdc75
+    m_Address: Frame3_Fire
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bfc4c9917fcbb8c4fa7835b562cbace9
+    m_Address: Shot3_01_Background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c122054a73d2b5248b154c9ca4ac3248
+    m_Address: Frame2_Background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c7515d6952d0f164e990e39d7b97b96c
+    m_Address: Frame5_Background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c7cc38e5cb2144c58002f20a96a4764c
+    m_Address: shot1_rice
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d3927ab561764edfac54e9e7d92779a3
+    m_Address: shot1_clouds
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d3c4a77d1ede46118c2540e580d4fd9c
+    m_Address: shot1_harvester
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d86cbba5fb1043bc8a10f3109a1dfe18
+    m_Address: bread_pig_corner
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d9efd1935a854259a6f40668689a8890
+    m_Address: Shot1_03_Harvester
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: db5b76f50fc1c1f4fbdda796bc32ab68
+    m_Address: Assets/Module/CutScene/Configs/Waitting/Steps/Waitting.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0640042913d4e068b52f6c8418926c3
+    m_Address: bread_pig_bg
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e45e68edc69aaea45aa68f302f2d9c71
+    m_Address: Frame2_Farmer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb2550f969af46af9dd60e8bb0d39929
+    m_Address: Shot5_01_Ranking
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb500ed62ded4fc7be37c79b52e42130
+    m_Address: Shot1_04_Rice
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb7247ee4d106b14f96571b346eeee8c
+    m_Address: Frame4_Background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f65bfc35c205dd04eb3798cee65ea84d
+    m_Address: Assets/Module/CutScene/Configs/Waitting/WaitForButtonClickTask.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

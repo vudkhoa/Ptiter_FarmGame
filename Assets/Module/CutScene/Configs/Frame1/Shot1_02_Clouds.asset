@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 333d33a7b8d0d184faade8f3cdb476b6, type: 3}
+  m_Name: Shot1_02_Clouds
+  m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.ShowImageTaskSO
+  taskName: Shot 1 - lop may
+  startDelay: 0.05
+  sprite:
+    m_AssetGUID: d3927ab561764edfac54e9e7d92779a3
+    m_SubObjectName: shot1_clouds
+    m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+    m_SubObjectGUID:
+    m_EditorAssetChanged: 0
+  slot: 0
+  imageId: shot1_clouds
+  fadeDuration: 0.55
+  ease: 6
+  overrideLayout: 1
+  anchoredPosition: {x: -580.3, y: 236.6}
+  size: {x: 592, y: 444}
+  rotationZ: 12.06

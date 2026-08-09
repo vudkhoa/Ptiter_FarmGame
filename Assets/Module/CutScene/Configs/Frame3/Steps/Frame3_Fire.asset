@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cdfba9485713849bf9b580dae8c779, type: 3}
+  m_Name: Frame3_Fire
+  m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.CutsceneStepSO
+  stepId: frame3_fire
+  runMode: 1
+  tasks:
+  - {fileID: 11400000, guid: bfc4c9917fcbb8c4fa7835b562cbace9, type: 2}
+  - {fileID: 11400000, guid: 8732ca14cd67e7d4c9d595f8969c5ad2, type: 2}
+  - {fileID: 11400000, guid: 6fc5e6960b47bed4db30816abd8f6f21, type: 2}
+  - {fileID: 11400000, guid: 28e8a39cefcf8c14ab729017a61795e0, type: 2}
+  - {fileID: 11400000, guid: ab3fce16784184849a4b47de58a1defb, type: 2}
+  - {fileID: 11400000, guid: 845d43f49d93ff7478c5b416038030ae, type: 2}
+  - {fileID: 11400000, guid: d68d7c2e105c4ec28fdf8b4214fb22d7, type: 2}

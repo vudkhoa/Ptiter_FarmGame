@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Audio
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Audio
+  m_GUID: 1cee7cc573801594db6bc6be634e282b
+  m_SerializeEntries:
+  - m_GUID: 0a3fb2d483265784189ebcc1b8dc5523
+    m_Address: sfx_harvest__valenspire__plant_harvest_03
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1257114bdaf185749af1ecb2e492a85a
+    m_Address: AudioCatalog
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c9148e7a77eb3c44adb48dd797f93f0
+    m_Address: kuzu420-oink-oink-228771
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5a28a14099c8504498e1f6361fb0caa2
+    m_Address: sfx_pigsound_kuzu420-oink-oink-228771
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8747f5594afbcfc4fa98bef22b164d6c
+    m_Address: sfx_shovel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 998e61cbf7eaff743b7e06ffc54ce2f7
+    m_Address: bgmusic2_meowyear-emerald-daydreams-177251
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 99e04e72783f37b44bd6b2afe59ae7c7
+    m_Address: sfx_claimreward_tithuh-click-level-up-524643
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a74469ac53ed28549bc26c9617316040
+    m_Address: Ui_click_kenneysound
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0892ebe7eb13eb4c83cab8c4d673ef4
+    m_Address: bgmusic4_romarecord1973-dreams-of-beauty-125097
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b2d6f5d4e8f80fd4b96fa8b1d2140c0e
+    m_Address: bgmusic1_Etirwer (Looped)
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d948441866284bb2b372ad5ec795e443
+    m_Address: AudioSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2072d1ef4afa2745aae678c47943936
+    m_Address: bgmusic3_juliush-dancing-in-love-guitar-pop-music-188801
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 921e3904ace7fff4ab65ff693ddec476, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 531a8f034043db942ad2d381e5f08524, type: 2}
+    - {fileID: 11400000, guid: 4257c5401ecea0a418626458e4056149, type: 2}
