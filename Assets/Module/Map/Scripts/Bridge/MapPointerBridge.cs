@@ -90,9 +90,10 @@ namespace Core.Module.Map
             if (_map.CanRemovePlayerObject(_removeOptionHoldWorld))
             {
                 PointerReleaseSuppression.SuppressPrimaryRelease();
+                Vector2 optionScreenPosition = GetCellScreenCenter(_removeOptionHoldWorld);
                 _removeOptionPublisher.Publish(new MapPlayerRemoveOptionPayload(
                     true,
-                    _removeOptionHoldScreen,
+                    optionScreenPosition,
                     _removeOptionHoldWorld));
             }
         }
@@ -261,6 +262,15 @@ namespace Core.Module.Map
             _isRemoveOptionHoldTracking = false;
             if (hideOption)
                 _removeOptionPublisher?.Publish(new MapPlayerRemoveOptionPayload(false, default, default));
+        }
+
+        private Vector2 GetCellScreenCenter(Vector3 world)
+        {
+            Vector3Int cell = _map.WorldToCell(world);
+            Vector3 cellCornerA = _map.CellToWorld(cell);
+            Vector3 cellCornerB = _map.CellToWorld(cell + new Vector3Int(1, 0, 1));
+            Vector3 cellCenter = (cellCornerA + cellCornerB) * 0.5f;
+            return _camera.WorldToScreenPoint(cellCenter);
         }
 
         private bool TryRaycast(Vector2 screen, out Vector3 world)
