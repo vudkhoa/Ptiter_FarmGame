@@ -334,6 +334,7 @@ MonoBehaviour:
   _maxRayDistance: 1000
   _useMathPlane: 1
   _removalTapMaxMovementPixels: 20
+  _removeOptionHoldSeconds: 0.55
 --- !u!4 &44125397 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6361854648154500075, guid: e9d95adbce2c9154ea0e303ef248d401, type: 3}
@@ -1309,10 +1310,10 @@ MonoBehaviour:
   _camera: {fileID: 0}
   _motionSettings:
     _enabled: 1
-    _placementDuration: 0.28
-    _placementStartScale: 0.15
-    _placementDrop: 0.12
-    _placementScaleEase: 27
+    _placementDuration: 0.11
+    _placementStartScale: 0.8
+    _placementDrop: 0.035
+    _placementScaleEase: 9
     _placementMoveEase: 9
     _removalDuration: 0.22
     _removalAnticipationRatio: 0.2

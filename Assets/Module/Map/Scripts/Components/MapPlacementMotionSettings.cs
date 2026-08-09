@@ -10,10 +10,10 @@ namespace Core.Module.Map
         [SerializeField] private bool _enabled = true;
 
         [Header("Placement")]
-        [SerializeField, Min(0f)] private float _placementDuration = 0.28f;
-        [SerializeField, Range(0f, 1f)] private float _placementStartScale = 0.15f;
-        [SerializeField, Min(0f)] private float _placementDrop = 0.12f;
-        [SerializeField] private Ease _placementScaleEase = Ease.OutBack;
+        [SerializeField, Min(0f)] private float _placementDuration = 0.11f;
+        [SerializeField, Range(0f, 1f)] private float _placementStartScale = 0.8f;
+        [SerializeField, Min(0f)] private float _placementDrop = 0.035f;
+        [SerializeField] private Ease _placementScaleEase = Ease.OutCubic;
         [SerializeField] private Ease _placementMoveEase = Ease.OutCubic;
 
         [Header("Removal")]

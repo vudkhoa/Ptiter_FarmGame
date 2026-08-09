@@ -39,6 +39,8 @@ namespace Core.Module.Map
         private Vector3Int _lastCell = new(int.MinValue, 0, 0);
         private Vector3 _lastPreviewWorld = new(float.PositiveInfinity, 0f, 0f);
         private readonly Dictionary<string, FreePlacementRecord> _freePlacements = new();
+        // Explicit author-painted mask; never inferred from sprite bounds or pivots.
+        private readonly HashSet<Vector3Int> _decorBlockedCells = new();
         private string _selectedInstanceId;
         private PlacementPositionMode _selectedPositionMode;
         private Vector3Int _selectedGridOrigin;
@@ -100,8 +102,9 @@ namespace Core.Module.Map
             }
 
             _grid = new GridData();
+            ReloadDecorBlockersFromAuthoring();
             _placementValidator = new MapPlacementValidator(
-                _database, _grid, _freePlacements, WorldToCell);
+                _database, _grid, _freePlacements, WorldToCell, _decorBlockedCells.Contains);
             _mapId = _authoring.Layout != null ? _authoring.Layout.MapId : 0;
         }
 
@@ -529,6 +532,26 @@ namespace Core.Module.Map
             _authoring.UpdateSelectedScale(uniformScale);
         }
 
+        public bool SetDecorBlocker(Vector3 worldHit, bool blocked)
+        {
+            if (!_authoring.IsAuthoringMode) return false;
+
+            Vector3Int cell = WorldToCell(worldHit);
+            bool changed = blocked
+                ? _decorBlockedCells.Add(cell)
+                : _decorBlockedCells.Remove(cell);
+            if (!changed) return false;
+
+            _authoring.RecordDecorBlocker(cell, blocked);
+            return true;
+        }
+
+        public void ClearAllDecorBlockers()
+        {
+            if (!_authoring.IsAuthoringMode) return;
+            _decorBlockedCells.Clear();
+        }
+
         public void ClearAllPlacements()
         {
             StopPlacement();
@@ -543,7 +566,17 @@ namespace Core.Module.Map
         {
             if (!_authoring.IsAuthoringMode) return;
             ClearAllPlacements();
+            ReloadDecorBlockersFromAuthoring();
             RestoreLayoutPlacements(_authoring.WorkingEntries);
+        }
+
+        private void ReloadDecorBlockersFromAuthoring()
+        {
+            _decorBlockedCells.Clear();
+            if (_authoring?.WorkingDecorBlockedCells == null) return;
+
+            foreach (Vector3Int cell in _authoring.WorkingDecorBlockedCells)
+                _decorBlockedCells.Add(new Vector3Int(cell.x, 0, cell.z));
         }
 
         private void RestoreLayoutPlacements(IReadOnlyList<MapLayoutEntry> entries)
