@@ -7,6 +7,12 @@ namespace Core.Module.Map
     {
         private readonly Dictionary<Vector3Int, GameObject> _instances = new();
         private readonly Dictionary<string, GameObject> _freeInstances = new();
+        private MapPlacementMotionSettings _motionSettings = new();
+
+        public void ConfigureMotion(MapPlacementMotionSettings settings)
+        {
+            _motionSettings = settings ?? new MapPlacementMotionSettings();
+        }
 
         public void Register(Vector3Int originCell, GameObject instance)
         {
@@ -49,7 +55,7 @@ namespace Core.Module.Map
         {
             if (!_instances.TryGetValue(originCell, out GameObject instance)) return false;
             _instances.Remove(originCell);
-            if (instance != null) Object.Destroy(instance);
+            AnimateAndDestroy(instance);
             return true;
         }
 
@@ -58,7 +64,7 @@ namespace Core.Module.Map
             if (string.IsNullOrEmpty(instanceId) ||
                 !_freeInstances.TryGetValue(instanceId, out GameObject instance)) return false;
             _freeInstances.Remove(instanceId);
-            if (instance != null) Object.Destroy(instance);
+            AnimateAndDestroy(instance);
             return true;
         }
 
@@ -73,15 +79,28 @@ namespace Core.Module.Map
         {
             foreach (GameObject instance in _instances.Values)
             {
-                if (instance != null) Object.Destroy(instance);
+                DestroyImmediately(instance);
             }
             _instances.Clear();
 
             foreach (GameObject instance in _freeInstances.Values)
             {
-                if (instance != null) Object.Destroy(instance);
+                DestroyImmediately(instance);
             }
             _freeInstances.Clear();
+        }
+
+        private void AnimateAndDestroy(GameObject instance)
+        {
+            if (instance == null) return;
+            MapPlacementMotion.PlayRemoval(instance, _motionSettings);
+        }
+
+        private static void DestroyImmediately(GameObject instance)
+        {
+            if (instance == null) return;
+            MapPlacementMotion.Stop(instance);
+            Object.Destroy(instance);
         }
     }
 }
