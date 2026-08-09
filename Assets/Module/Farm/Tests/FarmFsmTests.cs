@@ -730,6 +730,38 @@ namespace Core.Module.Farm.Tests
             Assert.IsFalse(service.CanRemove(context));
         }
 
+        [Test]
+        public void Test_RemovePolicy_AllowsBarnWithAnimalAndCleansAnimalSlot()
+        {
+            var cell = new Vector3Int(7, 0, 3);
+            var animalSlot = new FarmSlotSaveData
+            {
+                cellX = cell.x,
+                cellY = cell.y,
+                cellZ = cell.z,
+                entityId = "chicken",
+                state = FarmSlotState.Growing,
+                growthTimeSec = 5f,
+                isFed = true
+            };
+            var savedSlots = new List<FarmSlotSaveData> { animalSlot };
+            var service = CreateFarmService(savedSlots);
+            var context = new MapPlacementRemovalContext(
+                "barn-instance", 202, MapObjectKind.Barn,
+                PlacementPositionMode.Grid, cell, Vector3.zero);
+
+            Assert.IsTrue(service.CanRemove(context));
+
+            service.OnRemoved(context);
+
+            Assert.IsNull(service.GetSlotAt(cell));
+            Assert.AreEqual(0, service.ActiveSlots.Count);
+            Assert.AreEqual(0, savedSlots.Count);
+            Assert.AreEqual(1, _slotChangedPub.Published.Count);
+            Assert.IsNull(_slotChangedPub.Published[0].Slot.entityId);
+            Assert.AreEqual(FarmSlotState.Empty, _slotChangedPub.Published[0].Slot.state);
+        }
+
         #endregion
     }
 }

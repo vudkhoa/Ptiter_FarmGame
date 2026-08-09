@@ -3,6 +3,26 @@ using UnityEngine;
 namespace Core.Module.Input
 {
     /// <summary>
+    /// Prevents a long-press release from also being handled as a regular world tap.
+    /// The suppression stays active until the next primary-pointer press begins so
+    /// every release listener observes the same state regardless of callback order.
+    /// </summary>
+    public static class PointerReleaseSuppression
+    {
+        public static bool IsPrimaryReleaseSuppressed { get; private set; }
+
+        public static void SuppressPrimaryRelease()
+        {
+            IsPrimaryReleaseSuppressed = true;
+        }
+
+        public static void BeginPrimaryPress()
+        {
+            IsPrimaryReleaseSuppressed = false;
+        }
+    }
+
+    /// <summary>
     /// Classifies a primary-pointer gesture as a tap when it stays within
     /// the configured screen-space movement tolerance.
     /// </summary>

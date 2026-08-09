@@ -56,7 +56,7 @@ namespace Core.Module.Map
 
         private void RefreshVisibility()
         {
-            SetVisible(_map != null && (_map.HasActivePlacement || _map.IsPlayerRemovalMode));
+            SetVisible(_map != null && _map.HasActivePlacement);
         }
     }
 }

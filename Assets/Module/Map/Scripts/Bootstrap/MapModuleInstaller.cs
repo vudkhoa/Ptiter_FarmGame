@@ -20,6 +20,7 @@ namespace Core.Module.Map
             builder.RegisterMessageBroker<MapFurnitureAddedPayload>(options);
             builder.RegisterMessageBroker<MapPlacementStoppedPayload>(options);
             builder.RegisterMessageBroker<MapPlayerRemovalModeChangedPayload>(options);
+            builder.RegisterMessageBroker<MapPlayerRemoveOptionPayload>(options);
             return builder;
         }
 
