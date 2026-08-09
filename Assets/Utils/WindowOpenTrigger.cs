@@ -81,7 +81,9 @@ namespace Shared.Utils
         // Unity invokes this only after a press/release on the same Collider.
         private void OnMouseUpAsButton()
         {
-            if (_button != null || IsAnotherWindowOpen())
+            // Legacy collider mouse callbacks are independent from uGUI's
+            // raycast pipeline. Give UI controls priority when both overlap.
+            if (_button != null || IsPointerOverUI() || IsAnotherWindowOpen())
                 return;
 
             Open();
@@ -122,6 +124,18 @@ namespace Shared.Utils
         private static bool HasOpenTrigger()
         {
             return OpenTriggers.Count > 0;
+        }
+
+        private bool IsPointerOverUI()
+        {
+            if (_inputService != null)
+                return _inputService.IsPointerOverUI();
+
+            if (_resolver == null ||
+                !_resolver.TryResolve(out _inputService))
+                return false;
+
+            return _inputService.IsPointerOverUI();
         }
 
         private bool IsAnotherWindowOpen()

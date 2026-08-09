@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using Core.Module.Quest;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -34,6 +35,11 @@ namespace MyOwn.ServiceHarness
 
         private string _milestoneId;
         private Action<string> _claim;
+        private Tween _claimFeedback;
+
+        public string MilestoneId => _milestoneId;
+        public RectTransform RewardAnchor =>
+            _starIcon != null ? _starIcon.rectTransform : transform as RectTransform;
 
         public void Bind(ProgressMilestoneViewData data, Action<string> claim)
         {
@@ -49,6 +55,9 @@ namespace MyOwn.ServiceHarness
             }
 
             gameObject.SetActive(true);
+            if (_boardImage != null &&
+                (_claimFeedback == null || !_claimFeedback.IsActive()))
+                transform.localScale = Vector3.one;
             if (_requirement != null)
                 _requirement.text =
                     $"TÍCH {FormatNumber(data.RequiredCoins)} XU";
@@ -121,6 +130,25 @@ namespace MyOwn.ServiceHarness
                 _claim?.Invoke(_milestoneId);
         }
 
+        public void PlayClaimFeedback()
+        {
+            RectTransform target = transform as RectTransform;
+            if (target == null) return;
+
+            _claimFeedback?.Kill(false);
+            target.localScale = Vector3.one;
+            _claimFeedback = target
+                .DOPunchScale(
+                    Vector3.one * 0.06f,
+                    0.20f,
+                    4,
+                    0.35f)
+                .SetUpdate(true)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy)
+                .OnComplete(() => _claimFeedback = null);
+        }
+
         private static string FormatNumber(int value)
         {
             return value.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"));
@@ -128,6 +156,8 @@ namespace MyOwn.ServiceHarness
 
         private void OnDestroy()
         {
+            _claimFeedback?.Kill(false);
+            _claimFeedback = null;
             if (_claimButton != null)
                 _claimButton.onClick.RemoveListener(OnClaimClicked);
         }

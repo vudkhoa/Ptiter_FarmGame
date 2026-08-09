@@ -1,4 +1,5 @@
 using Core.Module.Quest;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,10 +18,14 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private Sprite _defaultRewardSprite;
         [SerializeField] private Sprite _completedRewardSprite;
 
+        private Tween _progressTween;
+
         public void Bind(DailyQuestTaskViewData data)
         {
             if (data == null)
             {
+                _progressTween?.Kill(false);
+                _progressTween = null;
                 gameObject.SetActive(false);
                 return;
             }
@@ -52,8 +57,15 @@ namespace MyOwn.ServiceHarness
             if (_progressFill != null)
             {
                 int requiredAmount = Mathf.Max(1, data.RequiredAmount);
-                _progressFill.fillAmount = Mathf.Clamp01(
+                float targetFill = Mathf.Clamp01(
                     (float)data.CurrentAmount / requiredAmount);
+                _progressTween?.Kill(false);
+                _progressTween = _progressFill
+                    .DOFillAmount(targetFill, 0.35f)
+                    .SetEase(Ease.OutCubic)
+                    .SetUpdate(true)
+                    .SetTarget(this)
+                    .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
             }
 
             if (_reward != null) _reward.text = data.CoinReward.ToString();
@@ -62,6 +74,12 @@ namespace MyOwn.ServiceHarness
                     data.IsCompleted && _completedRewardSprite != null
                         ? _completedRewardSprite
                         : _defaultRewardSprite;
+        }
+
+        private void OnDestroy()
+        {
+            _progressTween?.Kill(false);
+            _progressTween = null;
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BrunoMikoski.UIManager;
 using Core.Module.Input;
+using DG.Tweening;
 using MessagePipe;
 using TMPro;
 using UnityEngine;
@@ -35,6 +36,7 @@ namespace Core.Module.Storage.View
 
         [Header("Items")]
         [SerializeField] private InventoryItemView[] _itemSlots;
+        [SerializeField] private RectTransform _itemsContent;
 
         [Header("Details")]
         [SerializeField] private GameObject _emptyDetails;
@@ -53,6 +55,11 @@ namespace Core.Module.Storage.View
         private InventoryTabMotion _allTabMotion;
         private InventoryTabMotion _farmTabMotion;
         private InventoryTabMotion _foodTabMotion;
+        private CanvasGroup _itemsCanvasGroup;
+        private Sequence _itemsTransition;
+        private Tween _detailsTransition;
+        private Vector2 _itemsRestingPosition;
+        private bool _motionInitialized;
         private bool _tabMotionInitialized;
         private bool _constructed;
 
@@ -76,6 +83,7 @@ namespace Core.Module.Storage.View
             _selected = null;
             RegisterButtons();
             EnsureTabMotionInitialized();
+            EnsureMotionInitialized();
             UpdateTabMotion(false);
             Render();
         }
@@ -84,6 +92,7 @@ namespace Core.Module.Storage.View
         {
             GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
+            KillMotion();
         }
 
         private void RegisterButtons()
@@ -113,11 +122,17 @@ namespace Core.Module.Storage.View
 
         private void SetCategory(InventoryCategory category)
         {
+            if (_category == category) return;
+
+            int direction = GetCategoryOrder(category) >
+                            GetCategoryOrder(_category)
+                ? 1
+                : -1;
             _category = category;
             _pageIndex = 0;
             _selected = null;
             UpdateTabMotion(true);
-            Render();
+            PlayItemsTransition(direction);
         }
 
         private void EnsureTabMotionInitialized()
@@ -172,18 +187,22 @@ namespace Core.Module.Storage.View
 
         private void PreviousPage()
         {
-            _pageIndex = Mathf.Max(0, _pageIndex - 1);
+            int targetPage = Mathf.Max(0, _pageIndex - 1);
+            if (targetPage == _pageIndex) return;
+            _pageIndex = targetPage;
             _selected = null;
-            Render();
+            PlayItemsTransition(-1);
         }
 
         private void NextPage()
         {
             int pageCount = Mathf.Max(1,
                 Mathf.CeilToInt(_visibleItems.Count / (float)ItemsPerPage));
-            _pageIndex = Mathf.Min(pageCount - 1, _pageIndex + 1);
+            int targetPage = Mathf.Min(pageCount - 1, _pageIndex + 1);
+            if (targetPage == _pageIndex) return;
+            _pageIndex = targetPage;
             _selected = null;
-            Render();
+            PlayItemsTransition(1);
         }
 
         private void OnInventoryChanged(InventoryChangedPayload payload)
@@ -196,8 +215,169 @@ namespace Core.Module.Storage.View
 
         private void SelectItem(InventoryItemDefinition definition)
         {
+            if (_selected == definition) return;
             _selected = definition;
             Render();
+            PlayDetailsFeedback();
+        }
+
+        private void EnsureMotionInitialized()
+        {
+            if (_motionInitialized) return;
+
+            if (_itemsContent == null)
+            {
+                _itemsContent = transform.Find(
+                    "Motion Root/Inventory Panel/Items Content")
+                    as RectTransform;
+            }
+
+            if (_itemsContent == null) return;
+
+            _itemsCanvasGroup = _itemsContent.GetComponent<CanvasGroup>();
+            if (_itemsCanvasGroup == null)
+            {
+                _itemsCanvasGroup =
+                    _itemsContent.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            _itemsRestingPosition = _itemsContent.anchoredPosition;
+            _motionInitialized = true;
+        }
+
+        private void PlayItemsTransition(int direction)
+        {
+            EnsureMotionInitialized();
+            if (!_motionInitialized || !gameObject.activeInHierarchy)
+            {
+                Render();
+                return;
+            }
+
+            _itemsTransition?.Kill(false);
+            _itemsContent.anchoredPosition = _itemsRestingPosition;
+            _itemsCanvasGroup.alpha = 1f;
+
+            float offset = 18f * Mathf.Sign(direction);
+            _itemsTransition = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+            _itemsTransition.Join(
+                TweenAnchoredPosition(
+                        _itemsContent,
+                        _itemsRestingPosition - Vector2.right * offset,
+                        0.07f)
+                    .SetEase(Ease.InQuad));
+            _itemsTransition.Join(
+                TweenCanvasGroupAlpha(_itemsCanvasGroup, 0f, 0.07f)
+                    .SetEase(Ease.InQuad));
+            _itemsTransition.AppendCallback(() =>
+            {
+                Render();
+                _itemsContent.anchoredPosition =
+                    _itemsRestingPosition + Vector2.right * offset;
+            });
+            _itemsTransition.Append(
+                TweenAnchoredPosition(
+                        _itemsContent,
+                        _itemsRestingPosition,
+                        0.10f)
+                    .SetEase(Ease.OutCubic));
+            _itemsTransition.Join(
+                TweenCanvasGroupAlpha(_itemsCanvasGroup, 1f, 0.10f)
+                    .SetEase(Ease.OutQuad));
+            _itemsTransition.OnComplete(() => _itemsTransition = null);
+        }
+
+        private void PlayDetailsFeedback()
+        {
+            if (_selectedDetails == null ||
+                !_selectedDetails.activeInHierarchy)
+                return;
+
+            RectTransform detailsRect =
+                _selectedDetails.transform as RectTransform;
+            if (detailsRect == null) return;
+
+            CanvasGroup group =
+                _selectedDetails.GetComponent<CanvasGroup>();
+            if (group == null)
+                group = _selectedDetails.AddComponent<CanvasGroup>();
+
+            _detailsTransition?.Kill(false);
+            detailsRect.localScale = Vector3.one * 0.92f;
+            group.alpha = 0f;
+
+            Sequence feedback = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+            feedback.Join(
+                detailsRect
+                    .DOScale(1f, 0.12f)
+                    .SetEase(Ease.OutCubic));
+            feedback.Join(
+                TweenCanvasGroupAlpha(group, 1f, 0.10f)
+                    .SetEase(Ease.OutQuad));
+            _detailsTransition = feedback;
+        }
+
+        private static int GetCategoryOrder(InventoryCategory category)
+        {
+            return category switch
+            {
+                InventoryCategory.All => 0,
+                InventoryCategory.FarmProduce => 1,
+                InventoryCategory.Food => 2,
+                _ => 0
+            };
+        }
+
+        private static Tween TweenAnchoredPosition(
+            RectTransform target,
+            Vector2 endValue,
+            float duration)
+        {
+            return DOTween.To(
+                () => target.anchoredPosition,
+                value => target.anchoredPosition = value,
+                endValue,
+                duration);
+        }
+
+        private static Tween TweenCanvasGroupAlpha(
+            CanvasGroup target,
+            float endValue,
+            float duration)
+        {
+            return DOTween.To(
+                () => target.alpha,
+                value => target.alpha = value,
+                endValue,
+                duration);
+        }
+
+        private void KillMotion()
+        {
+            _itemsTransition?.Kill(false);
+            _itemsTransition = null;
+            _detailsTransition?.Kill(false);
+            _detailsTransition = null;
+
+            if (_motionInitialized)
+            {
+                _itemsContent.anchoredPosition = _itemsRestingPosition;
+                _itemsCanvasGroup.alpha = 1f;
+            }
+
+            if (_selectedDetails != null)
+            {
+                _selectedDetails.transform.localScale = Vector3.one;
+                CanvasGroup group =
+                    _selectedDetails.GetComponent<CanvasGroup>();
+                if (group != null) group.alpha = 1f;
+            }
         }
 
         private void Render()
@@ -262,6 +442,7 @@ namespace Core.Module.Storage.View
         {
             GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
+            KillMotion();
             for (int i = 0; i < _subscriptions.Count; i++)
                 _subscriptions[i]?.Dispose();
             _subscriptions.Clear();

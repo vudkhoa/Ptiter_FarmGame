@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,6 +19,8 @@ namespace Core.Module.Storage.View
 
         private InventoryItemDefinition _definition;
         private Action<InventoryItemDefinition> _onSelected;
+        private Tween _selectionTween;
+        private bool _wasSelected;
 
         public void Bind(
             InventoryItemDefinition definition,
@@ -65,8 +68,32 @@ namespace Core.Module.Storage.View
                     : _normalSprite;
             }
 
+            UpdateSelectionMotion(visible && selected);
+
             if (visible)
                 _button?.onClick.AddListener(Select);
+        }
+
+        private void UpdateSelectionMotion(bool selected)
+        {
+            RectTransform rect = transform as RectTransform;
+            if (rect == null) return;
+
+            Vector3 targetScale = Vector3.one * (selected ? 1.04f : 1f);
+            if (_wasSelected == selected)
+            {
+                rect.localScale = targetScale;
+                return;
+            }
+
+            _wasSelected = selected;
+            _selectionTween?.Kill(false);
+            _selectionTween = rect
+                .DOScale(targetScale, 0.10f)
+                .SetEase(Ease.OutCubic)
+                .SetUpdate(true)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
         }
 
         private void EnsureFallbackLabel()
@@ -101,6 +128,8 @@ namespace Core.Module.Storage.View
 
         private void OnDestroy()
         {
+            _selectionTween?.Kill(false);
+            _selectionTween = null;
             _button?.onClick.RemoveListener(Select);
         }
     }
