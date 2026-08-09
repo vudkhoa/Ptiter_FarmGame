@@ -28,4 +28,4 @@ MonoBehaviour:
       itemLastKnownName: Main
       collectionLastKnownName: UIGroupCollection
   <CanReceiveFocus>k__BackingField: 1
-  windowControllerPrefab: {fileID: 1983816735685197586, guid: c04cf6e37a847654b88e7f1106974954, type: 3}
+  windowControllerPrefab: {fileID: 6825118944327906561, guid: c04cf6e37a847654b88e7f1106974954, type: 3}

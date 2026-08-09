@@ -82,7 +82,10 @@ namespace Core.Module.Settings.Editor
                 typeof(WindowControllerEvents),
                 typeof(SettingsWindowController));
             RectTransform rootRect = root.GetComponent<RectTransform>();
-            rootRect.sizeDelta = new Vector2(2400f, 1080f);
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
             root.GetComponent<Canvas>().overrideSorting = true;
 
             Button overlayButton = OverlayButton(root.transform);
