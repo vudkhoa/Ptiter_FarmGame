@@ -236,13 +236,19 @@ namespace Core.Module.Storage.Editor
                 typeof(WindowControllerEvents),
                 typeof(InventoryWindowController));
             RectTransform rootRect = root.GetComponent<RectTransform>();
-            // Match the final reference composition: the inventory occupies most
-            // of the scene while retaining enough map visibility around it.
-            rootRect.sizeDelta = new Vector2(2200, 1200);
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
             root.GetComponent<Canvas>().overrideSorting = true;
 
             Image overlay = ImageObject("Dimmer", root.transform, null,
-                Vector2.zero, new Vector2(2400, 1400)).GetComponent<Image>();
+                Vector2.zero, Vector2.zero).GetComponent<Image>();
+            RectTransform overlayRect = overlay.rectTransform;
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
             overlay.color = new Color(0, 0, 0, 0.28f);
 
             GameObject inventoryPanel = ImageObject(
