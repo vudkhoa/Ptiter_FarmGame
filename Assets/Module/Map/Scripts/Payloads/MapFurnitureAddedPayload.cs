@@ -13,6 +13,7 @@ namespace Core.Module.Map
         public readonly float UniformScale;
         public readonly int ChangeCount;       // ChangeCount sau khi increment
         public readonly MapObjectRotationMode RotationMode;
+        public readonly bool AnimatePlacement;
 
         public MapFurnitureAddedPayload(
             int objectId,
@@ -23,7 +24,8 @@ namespace Core.Module.Map
             PlacementPositionMode positionMode,
             float uniformScale,
             int changeCount,
-            MapObjectRotationMode rotationMode)
+            MapObjectRotationMode rotationMode,
+            bool animatePlacement)
         {
             ObjectId = objectId;
             Prefab = prefab;
@@ -34,6 +36,7 @@ namespace Core.Module.Map
             UniformScale = uniformScale;
             ChangeCount = changeCount;
             RotationMode = rotationMode;
+            AnimatePlacement = animatePlacement;
         }
     }
 }
