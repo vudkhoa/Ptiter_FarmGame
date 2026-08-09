@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using MessagePipe;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,9 +12,15 @@ namespace Core.Module.Map
     {
         [SerializeField] private Button _button;
 
+        [Header("Show Animation")]
+        [SerializeField, Min(0.01f)] private float _showDuration = 0.18f;
+        [SerializeField, Range(0.1f, 1f)] private float _showStartScale = 0.72f;
+
         private IMapService _map;
         private MapAuthoringController _authoring;
         private RectTransform _rectTransform;
+        private CanvasGroup _canvasGroup;
+        private Vector3 _restingScale;
         private Vector3 _selectedWorldPosition;
         private bool _hasSelection;
         private IDisposable _subscriptions;
@@ -45,10 +52,14 @@ namespace Core.Module.Map
         {
             if (_button == null) _button = GetComponent<Button>();
             _rectTransform = transform as RectTransform;
+            _canvasGroup = GetComponent<CanvasGroup>();
+            if (_canvasGroup == null) _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            _restingScale = _rectTransform != null ? _rectTransform.localScale : Vector3.one;
         }
 
         private void OnDestroy()
         {
+            DOTween.Kill(this);
             if (_button != null) _button.onClick.RemoveListener(RemoveSelected);
             _subscriptions?.Dispose();
         }
@@ -78,6 +89,7 @@ namespace Core.Module.Map
             _hasSelection = true;
             gameObject.SetActive(true);
             PositionNear(payload.ScreenPosition);
+            PlayShowAnimation();
         }
 
         private void PositionNear(Vector2 screenPosition)
@@ -96,7 +108,38 @@ namespace Core.Module.Map
         private void Hide()
         {
             _hasSelection = false;
+            DOTween.Kill(this);
+            if (_rectTransform != null) _rectTransform.localScale = _restingScale;
+            if (_canvasGroup != null)
+            {
+                _canvasGroup.alpha = 1f;
+                _canvasGroup.interactable = false;
+                _canvasGroup.blocksRaycasts = false;
+            }
             gameObject.SetActive(false);
+        }
+
+        private void PlayShowAnimation()
+        {
+            if (_rectTransform == null || _canvasGroup == null) return;
+
+            DOTween.Kill(this);
+            _rectTransform.localScale = _restingScale * _showStartScale;
+            _canvasGroup.alpha = 0f;
+            _canvasGroup.interactable = true;
+            _canvasGroup.blocksRaycasts = true;
+
+            DOTween.Sequence()
+                .Join(_rectTransform.DOScale(_restingScale, _showDuration)
+                    .SetEase(Ease.OutBack))
+                .Join(DOTween.To(
+                        () => _canvasGroup.alpha,
+                        value => _canvasGroup.alpha = value,
+                        1f,
+                        _showDuration * 0.7f)
+                    .SetEase(Ease.OutQuad))
+                .SetUpdate(true)
+                .SetTarget(this);
         }
     }
 }
