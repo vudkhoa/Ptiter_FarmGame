@@ -280,7 +280,10 @@ namespace Core.Module.Quest.Editor
                 typeof(WindowControllerEvents),
                 typeof(QuestWindowController));
             RectTransform rootRect = root.GetComponent<RectTransform>();
-            rootRect.sizeDelta = new Vector2(1800, 1200);
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.offsetMin = Vector2.zero;
+            rootRect.offsetMax = Vector2.zero;
             root.GetComponent<Canvas>().overrideSorting = true;
 
             GameObject daily = ImageObject(

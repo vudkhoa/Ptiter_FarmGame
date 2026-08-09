@@ -75,7 +75,9 @@ namespace MyOwn.ServiceHarness
             _launcherObject.transform.SetParent(transform, false);
             Canvas launcherCanvas = _launcherObject.GetComponent<Canvas>();
             launcherCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            launcherCanvas.sortingOrder = 100;
+            // Keep HUD launchers below UIManager popup windows and the shared
+            // modal raycast target.
+            launcherCanvas.sortingOrder = -100;
             CanvasScaler scaler = _launcherObject.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(2400f, 1080f);

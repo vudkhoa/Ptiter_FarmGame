@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BrunoMikoski.UIManager;
+using Core.Module.Input;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,7 +12,11 @@ namespace Core.Module.Cutscene
     /// View cutscene sống dưới WindowsManager, prefab chỉ Instantiate ở lần Play đầu tiên.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CutsceneWindowController : WindowController, ICutsceneView
+    public sealed class CutsceneWindowController :
+        WindowController,
+        ICutsceneView,
+        IOnBeforeWindowOpen,
+        IOnWindowClosed
     {
         [SerializeField] private SlotConfig[] _slots;
         [SerializeField] private NamedButton[] _buttons;
@@ -34,6 +39,16 @@ namespace Core.Module.Cutscene
         #endregion
 
         #region Public API
+        public void OnBeforeWindowOpen()
+        {
+            GameplayInputBlockRegistry.Add(this);
+        }
+
+        public void OnWindowClosed()
+        {
+            GameplayInputBlockRegistry.Remove(this);
+        }
+
         public Image AcquireImage(CutsceneImageSlot slot)
         {
             int idx = (int)slot;
@@ -151,6 +166,12 @@ namespace Core.Module.Cutscene
             rect.localScale = Vector3.one;
         }
         #endregion
+
+        protected override void OnDestroy()
+        {
+            GameplayInputBlockRegistry.Remove(this);
+            base.OnDestroy();
+        }
 
         [Serializable]
         private sealed class SlotConfig

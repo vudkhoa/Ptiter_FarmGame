@@ -86,8 +86,17 @@ namespace Core.Module.Input
 
         public bool IsPointerOverUI()
         {
-            return EventSystem.current != null
-                && EventSystem.current.IsPointerOverGameObject();
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null) return false;
+
+            for (int i = 0; i < UInput.touchCount; i++)
+            {
+                if (eventSystem.IsPointerOverGameObject(
+                        UInput.GetTouch(i).fingerId))
+                    return true;
+            }
+
+            return eventSystem.IsPointerOverGameObject();
         }
         #endregion
 

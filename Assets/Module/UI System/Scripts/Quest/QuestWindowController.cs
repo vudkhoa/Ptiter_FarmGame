@@ -1,11 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using BrunoMikoski.UIManager;
 using Core.Module.Input;
 using Core.Module.Quest;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using MessagePipe;
 using TMPro;
 using UnityEngine;
@@ -72,7 +72,12 @@ namespace MyOwn.ServiceHarness
             new List<QuestTaskItemView>();
         private readonly List<ProgressMilestoneView> _progressMilestoneViews =
             new List<ProgressMilestoneView>();
-        private Coroutine _toastRoutine;
+        private Sequence _tabTransition;
+        private Sequence _rewardTransition;
+        private Tween _dailyFillTween;
+        private RectTransform _pendingProgressRewardSource;
+        private GameObject _flyingStarReward;
+        private int _activeTabIndex = -1;
         private bool _isConstructed;
 
         [Inject]
@@ -102,9 +107,10 @@ namespace MyOwn.ServiceHarness
 
         public void OnBeforeWindowOpen()
         {
-            EnsureModalInputBlocker();
             GameplayInputBlockRegistry.Add(this);
             RegisterButtons();
+            KillTabTransition();
+            _activeTabIndex = -1;
             ShowTab(0);
             ResetTaskScroll();
             _dailyQuestService?.EnsureInitializedAsync(
@@ -119,6 +125,7 @@ namespace MyOwn.ServiceHarness
         {
             GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
+            KillMotion();
             if (_rewardToast != null) _rewardToast.SetActive(false);
         }
 
@@ -141,12 +148,28 @@ namespace MyOwn.ServiceHarness
 
         private void ShowTab(int index)
         {
-            if (_dailyPanel != null) _dailyPanel.SetActive(index == 0);
-            if (_progressPlaceholder != null) _progressPlaceholder.SetActive(index == 1);
-            if (_foodPlaceholder != null) _foodPlaceholder.SetActive(index == 2);
+            index = Mathf.Clamp(index, 0, 2);
+            if (_activeTabIndex == index) return;
+
+            int previousIndex = _activeTabIndex;
+            GameObject previousPanel = GetTabPanel(previousIndex);
+            GameObject nextPanel = GetTabPanel(index);
+            _activeTabIndex = index;
+
             UpdateTabVisuals(index);
             if (index == 0) Render();
             if (index == 1) RenderProgress();
+
+            if (previousIndex < 0 || previousPanel == null || nextPanel == null)
+            {
+                SetOnlyTabActive(index);
+                return;
+            }
+
+            PlayTabTransition(
+                previousPanel,
+                nextPanel,
+                index > previousIndex ? 1 : -1);
         }
 
         private void ShowDaily()
@@ -161,6 +184,119 @@ namespace MyOwn.ServiceHarness
             ResetProgressScroll();
         }
         private void ShowFood() => ShowTab(2);
+
+        private GameObject GetTabPanel(int index)
+        {
+            return index switch
+            {
+                0 => _dailyPanel,
+                1 => _progressPlaceholder,
+                2 => _foodPlaceholder,
+                _ => null
+            };
+        }
+
+        private void SetOnlyTabActive(int index)
+        {
+            SetPanelState(_dailyPanel, index == 0);
+            SetPanelState(_progressPlaceholder, index == 1);
+            SetPanelState(_foodPlaceholder, index == 2);
+        }
+
+        private static void SetPanelState(GameObject panel, bool active)
+        {
+            if (panel == null) return;
+            panel.SetActive(active);
+
+            RectTransform rect = panel.transform as RectTransform;
+            if (rect != null)
+                rect.anchoredPosition = Vector2.zero;
+
+            CanvasGroup group = panel.GetComponent<CanvasGroup>();
+            if (group != null) group.alpha = 1f;
+        }
+
+        private void PlayTabTransition(
+            GameObject previousPanel,
+            GameObject nextPanel,
+            int direction)
+        {
+            KillTabTransition();
+            SetOnlyTabActive(_activeTabIndex);
+
+            previousPanel.SetActive(true);
+            nextPanel.SetActive(true);
+
+            RectTransform previousRect =
+                previousPanel.transform as RectTransform;
+            RectTransform nextRect = nextPanel.transform as RectTransform;
+            if (previousRect == null || nextRect == null)
+            {
+                SetOnlyTabActive(_activeTabIndex);
+                return;
+            }
+
+            CanvasGroup previousGroup = GetOrAddCanvasGroup(previousPanel);
+            CanvasGroup nextGroup = GetOrAddCanvasGroup(nextPanel);
+            Vector2 previousRest = previousRect.anchoredPosition;
+            Vector2 nextRest = nextRect.anchoredPosition;
+            float offset = 18f * Mathf.Sign(direction);
+
+            previousGroup.alpha = 1f;
+            nextGroup.alpha = 0f;
+            nextRect.anchoredPosition =
+                nextRest + Vector2.right * offset;
+
+            _tabTransition = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+            _tabTransition.Insert(
+                0f,
+                previousRect
+                    .DOAnchorPos(
+                        previousRest - Vector2.right * offset,
+                        0.07f)
+                    .SetEase(Ease.InQuad));
+            _tabTransition.Insert(
+                0f,
+                previousGroup
+                    .DOFade(0f, 0.07f)
+                    .SetEase(Ease.InQuad));
+            _tabTransition.Insert(
+                0.07f,
+                nextRect
+                    .DOAnchorPos(nextRest, 0.10f)
+                    .SetEase(Ease.OutCubic));
+            _tabTransition.Insert(
+                0.07f,
+                nextGroup
+                    .DOFade(1f, 0.10f)
+                    .SetEase(Ease.OutQuad));
+            _tabTransition.OnComplete(() =>
+            {
+                previousRect.anchoredPosition = previousRest;
+                previousGroup.alpha = 1f;
+                previousPanel.SetActive(false);
+                nextRect.anchoredPosition = nextRest;
+                nextGroup.alpha = 1f;
+                _tabTransition = null;
+            });
+        }
+
+        private static CanvasGroup GetOrAddCanvasGroup(GameObject target)
+        {
+            CanvasGroup group = target.GetComponent<CanvasGroup>();
+            return group != null ? group : target.AddComponent<CanvasGroup>();
+        }
+
+        private void KillTabTransition()
+        {
+            _tabTransition?.Kill(false);
+            _tabTransition = null;
+            if (_activeTabIndex >= 0)
+                SetOnlyTabActive(_activeTabIndex);
+        }
 
         private void Render()
         {
@@ -231,31 +367,6 @@ namespace MyOwn.ServiceHarness
                 this.GetCancellationTokenOnDestroy()).Forget();
         }
 
-        private void EnsureModalInputBlocker()
-        {
-            const string blockerName = "Modal Input Blocker";
-            Transform existing = transform.Find(blockerName);
-            GameObject blocker = existing != null
-                ? existing.gameObject
-                : new GameObject(
-                    blockerName,
-                    typeof(RectTransform),
-                    typeof(CanvasRenderer),
-                    typeof(Image));
-
-            RectTransform rect = blocker.transform as RectTransform;
-            rect.SetParent(transform, false);
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(10000f, 10000f);
-            rect.SetAsFirstSibling();
-
-            Image image = blocker.GetComponent<Image>();
-            image.color = Color.clear;
-            image.raycastTarget = true;
-            image.maskable = false;
-        }
-
         private void UpdateDailyMilestoneFill(DailyQuestViewState state)
         {
             if (_dailyMilestoneFill == null) return;
@@ -272,9 +383,17 @@ namespace MyOwn.ServiceHarness
                 }
             }
 
-            _dailyMilestoneFill.fillAmount = finalMilestone > 0
+            float targetFill = finalMilestone > 0
                 ? Mathf.Clamp01((float)state.TotalPoints / finalMilestone)
                 : 0f;
+
+            _dailyFillTween?.Kill(false);
+            _dailyFillTween = _dailyMilestoneFill
+                .DOFillAmount(targetFill, 0.35f)
+                .SetEase(Ease.OutCubic)
+                .SetUpdate(true)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
         }
 
         private void UpdateTabVisuals(int activeIndex)
@@ -361,6 +480,17 @@ namespace MyOwn.ServiceHarness
 
         private void ClaimProgressMilestone(string milestoneId)
         {
+            _pendingProgressRewardSource = null;
+            for (int i = 0; i < _progressMilestoneViews.Count; i++)
+            {
+                ProgressMilestoneView view = _progressMilestoneViews[i];
+                if (view == null || view.MilestoneId != milestoneId) continue;
+
+                _pendingProgressRewardSource = view.RewardAnchor;
+                view.PlayClaimFeedback();
+                break;
+            }
+
             _progressQuestService.ClaimMilestoneAsync(
                 milestoneId,
                 this.GetCancellationTokenOnDestroy()).Forget();
@@ -369,31 +499,162 @@ namespace MyOwn.ServiceHarness
         private void OnRewardGranted(QuestRewardGrantedPayload payload)
         {
             if (payload.ReconciledAtStartup || _rewardToast == null) return;
-            if (_rewardToastText != null)
-                _rewardToastText.text = $"+{payload.Coins}";
-            if (_toastRoutine != null) StopCoroutine(_toastRoutine);
-            _toastRoutine = StartCoroutine(ShowRewardToast());
+            ShowRewardToast($"+{payload.Coins}");
         }
 
         private void OnProgressRewardClaimed(ProgressRewardClaimedPayload payload)
         {
-            ShowRewardToast($"+{payload.Stars} SAO");
+            PlayProgressStarReward();
         }
 
         private void ShowRewardToast(string text)
         {
             if (_rewardToast == null) return;
             if (_rewardToastText != null) _rewardToastText.text = text;
-            if (_toastRoutine != null) StopCoroutine(_toastRoutine);
-            _toastRoutine = StartCoroutine(ShowRewardToast());
+
+            _rewardTransition?.Kill(false);
+            _rewardToast.SetActive(true);
+            RectTransform toastRect =
+                _rewardToast.transform as RectTransform;
+            CanvasGroup toastGroup = GetOrAddCanvasGroup(_rewardToast);
+            if (toastRect == null) return;
+
+            toastRect.localScale = Vector3.one * 0.92f;
+            toastGroup.alpha = 0f;
+            _rewardTransition = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+            _rewardTransition.Join(
+                toastRect
+                    .DOScale(1f, 0.14f)
+                    .SetEase(Ease.OutCubic));
+            _rewardTransition.Join(
+                toastGroup
+                    .DOFade(1f, 0.10f)
+                    .SetEase(Ease.OutQuad));
+            _rewardTransition.AppendInterval(0.75f);
+            _rewardTransition.Append(
+                toastGroup
+                    .DOFade(0f, 0.15f)
+                    .SetEase(Ease.InQuad));
+            _rewardTransition.OnComplete(() =>
+            {
+                _rewardToast.SetActive(false);
+                toastRect.localScale = Vector3.one;
+                toastGroup.alpha = 1f;
+                _rewardTransition = null;
+            });
         }
 
-        private IEnumerator ShowRewardToast()
+        private void PlayProgressStarReward()
         {
-            _rewardToast.SetActive(true);
-            yield return new WaitForSecondsRealtime(1.5f);
-            _rewardToast.SetActive(false);
-            _toastRoutine = null;
+            if (!gameObject.activeInHierarchy ||
+                _progressStarIcon == null ||
+                _pendingProgressRewardSource == null)
+            {
+                _pendingProgressRewardSource = null;
+                return;
+            }
+
+            if (_flyingStarReward != null)
+                Destroy(_flyingStarReward);
+
+            _flyingStarReward = new GameObject(
+                "Flying Star Reward",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image));
+            RectTransform flyingRect =
+                _flyingStarReward.GetComponent<RectTransform>();
+            Image flyingImage = _flyingStarReward.GetComponent<Image>();
+            flyingRect.SetParent(transform, false);
+            flyingRect.position = _pendingProgressRewardSource.position;
+            flyingRect.sizeDelta = _progressStarIcon.rectTransform.rect.size;
+            flyingRect.localScale = Vector3.one;
+            flyingImage.sprite = _progressStarIcon.sprite;
+            flyingImage.preserveAspect = true;
+            flyingImage.raycastTarget = false;
+
+            Vector3 start = flyingRect.position;
+            Vector3 end = _progressStarIcon.rectTransform.position;
+            float peakY = Mathf.Max(start.y, end.y) + 70f;
+
+            _rewardTransition?.Kill(false);
+            _rewardTransition = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+            _rewardTransition.Insert(
+                0f,
+                flyingRect
+                    .DOMoveX(end.x, 0.45f)
+                    .SetEase(Ease.InOutCubic));
+            _rewardTransition.Insert(
+                0f,
+                flyingRect
+                    .DOMoveY(peakY, 0.20f)
+                    .SetEase(Ease.OutQuad));
+            _rewardTransition.Insert(
+                0.20f,
+                flyingRect
+                    .DOMoveY(end.y, 0.25f)
+                    .SetEase(Ease.InQuad));
+            _rewardTransition.Insert(
+                0f,
+                flyingRect
+                    .DOScale(1.12f, 0.12f)
+                    .SetEase(Ease.OutCubic));
+            _rewardTransition.Insert(
+                0.12f,
+                flyingRect
+                    .DOScale(0.55f, 0.33f)
+                    .SetEase(Ease.InCubic));
+            _rewardTransition.OnComplete(() =>
+            {
+                if (_flyingStarReward != null)
+                    Destroy(_flyingStarReward);
+                _flyingStarReward = null;
+
+                RectTransform starRect =
+                    _progressStarIcon.rectTransform;
+                starRect.DOKill(false);
+                starRect
+                    .DOPunchScale(
+                        Vector3.one * 0.10f,
+                        0.18f,
+                        4,
+                        0.35f)
+                    .SetUpdate(true)
+                    .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+                _rewardTransition = null;
+            });
+
+            _pendingProgressRewardSource = null;
+        }
+
+        private void KillMotion()
+        {
+            KillTabTransition();
+            _rewardTransition?.Kill(false);
+            _rewardTransition = null;
+            _dailyFillTween?.Kill(false);
+            _dailyFillTween = null;
+            _pendingProgressRewardSource = null;
+
+            if (_flyingStarReward != null)
+                Destroy(_flyingStarReward);
+            _flyingStarReward = null;
+
+            if (_rewardToast != null)
+            {
+                RectTransform toastRect =
+                    _rewardToast.transform as RectTransform;
+                if (toastRect != null) toastRect.localScale = Vector3.one;
+                CanvasGroup toastGroup =
+                    _rewardToast.GetComponent<CanvasGroup>();
+                if (toastGroup != null) toastGroup.alpha = 1f;
+            }
         }
 
         private static string FormatCountdown(TimeSpan remaining)
@@ -411,6 +672,7 @@ namespace MyOwn.ServiceHarness
         {
             GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
+            KillMotion();
             for (int i = 0; i < _subscriptions.Count; i++)
                 _subscriptions[i]?.Dispose();
             _subscriptions.Clear();
