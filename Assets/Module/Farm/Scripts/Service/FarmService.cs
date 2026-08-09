@@ -405,7 +405,10 @@ namespace Core.Module.Farm
 
         public bool CanRemove(in MapPlacementRemovalContext context)
         {
-            if (context.Kind != MapObjectKind.Soil && context.Kind != MapObjectKind.Barn)
+            if (context.Kind == MapObjectKind.Barn)
+                return true;
+
+            if (context.Kind != MapObjectKind.Soil)
                 return true;
 
             FarmSlotSaveData slot = GetSlotAt(context.OriginCell);
@@ -417,8 +420,20 @@ namespace Core.Module.Farm
             if (context.Kind != MapObjectKind.Soil && context.Kind != MapObjectKind.Barn)
                 return;
 
-            if (!_slots.TryGetValue(context.OriginCell, out FarmSlotSaveData slot) ||
-                !string.IsNullOrEmpty(slot.entityId)) return;
+            if (!_slots.TryGetValue(context.OriginCell, out FarmSlotSaveData slot)) return;
+            if (context.Kind == MapObjectKind.Soil && !string.IsNullOrEmpty(slot.entityId)) return;
+
+            // Removing a barn currently removes its animal as well. Publish an
+            // empty slot first so FarmVisualizer destroys the separate animal view.
+            slot.entityId = null;
+            slot.state = FarmSlotState.Empty;
+            slot.growthTimeSec = 0f;
+            slot.startTimeUtcTicks = 0L;
+            slot.lastUpdateUtcTicks = 0L;
+            slot.remainingHarvests = 0;
+            slot.isFed = false;
+            slot.isAdult = false;
+            _slotChangedPub.Publish(new FarmSlotChangedPayload(slot));
 
             _slots.Remove(context.OriginCell);
             _activeSlotsList.Remove(slot);
