@@ -20,16 +20,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 33300000000000000000000000000002
-    m_Address: c_sugarcane
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 33300000000000000000000000000003
-    m_Address: a_chicken
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3fc365db15ba8c34fb9b9f003857588a
     m_Address: a_pig
     m_ReadOnly: 0
