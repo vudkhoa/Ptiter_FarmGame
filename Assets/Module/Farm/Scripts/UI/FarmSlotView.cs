@@ -24,6 +24,9 @@ namespace Core.Module.Farm
         [Header("Crop Motion")]
         [SerializeField] private FarmCropMotionSettings _motionSettings = new();
 
+        [Header("Animal Motion")]
+        [SerializeField] private FarmAnimalMotionSettings _animalMotionSettings = new();
+
         private SpriteRenderer[] _cropRenderers;
         private Quaternion[] _rendererRestRotations;
         private Vector3 _spriteBaseLocalPosition;
@@ -180,6 +183,92 @@ namespace Core.Module.Farm
             }
 
             if (_isCrop) EnsureIdle();
+            else EnsureAnimalIdle();
+        }
+
+        public void PlayAnimalEnter()
+        {
+            if (_isCrop || !CanAnimateAnimal()) return;
+
+            StopMotion();
+            ResetRendererTransforms();
+            Transform target = _spriteRenderer.transform;
+            Vector3 finalPosition = _spriteBaseLocalPosition;
+            target.localScale = _spriteBaseLocalScale * _animalMotionSettings.EnterStartScale;
+            target.localPosition = finalPosition + Vector3.down * _animalMotionSettings.EnterDrop;
+
+            _motionTween = DOTween.Sequence()
+                .Join(target.DOScale(_spriteBaseLocalScale, _animalMotionSettings.EnterDuration)
+                    .SetEase(_animalMotionSettings.EnterEase))
+                .Join(target.DOLocalMove(finalPosition, _animalMotionSettings.EnterDuration)
+                    .SetEase(Ease.OutCubic))
+                .SetUpdate(true)
+                .SetTarget(this)
+                .OnComplete(FinishAnimalMotion);
+        }
+
+        public void PlayAnimalReaction()
+        {
+            PlayAnimalHop(
+                _animalMotionSettings != null ? _animalMotionSettings.ReactionDuration : 0f,
+                _animalMotionSettings != null ? _animalMotionSettings.ReactionHopHeight : 0f,
+                _animalMotionSettings != null ? _animalMotionSettings.ReactionPopScale : 1f,
+                null);
+        }
+
+        public void PlayAnimalCollect(Action onComplete)
+        {
+            PlayAnimalHop(
+                _animalMotionSettings != null ? _animalMotionSettings.CollectDuration : 0f,
+                _animalMotionSettings != null ? _animalMotionSettings.CollectHopHeight : 0f,
+                _animalMotionSettings != null ? _animalMotionSettings.CollectPopScale : 1f,
+                onComplete);
+        }
+
+        private void PlayAnimalHop(
+            float duration,
+            float hopHeight,
+            float popScale,
+            Action onComplete)
+        {
+            StopMotion();
+            if (_isCrop || !CanAnimateAnimal() || duration <= 0f)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            ResetRendererTransforms();
+            Transform target = _spriteRenderer.transform;
+            float halfDuration = duration * 0.5f;
+            var hop = DOTween.Sequence()
+                .Append(target.DOLocalMoveY(_spriteBaseLocalPosition.y + hopHeight, halfDuration)
+                    .SetEase(_animalMotionSettings.ReactionEase))
+                .Append(target.DOLocalMoveY(_spriteBaseLocalPosition.y, halfDuration)
+                    .SetEase(Ease.InQuad));
+            var pop = DOTween.Sequence()
+                .Append(target.DOScale(_spriteBaseLocalScale * popScale, halfDuration)
+                    .SetEase(Ease.OutQuad))
+                .Append(target.DOScale(_spriteBaseLocalScale, halfDuration)
+                    .SetEase(Ease.InQuad));
+
+            _motionTween = DOTween.Sequence()
+                .Join(hop)
+                .Join(pop)
+                .SetUpdate(true)
+                .SetTarget(this)
+                .OnComplete(() =>
+                {
+                    FinishAnimalMotion();
+                    onComplete?.Invoke();
+                });
+        }
+
+        private void FinishAnimalMotion()
+        {
+            _motionTween = null;
+            ResetRendererTransforms();
+            EnsureAnimalIdle();
         }
 
         public void PlayPlant()
@@ -306,6 +395,42 @@ namespace Core.Module.Farm
         {
             return _motionSettings != null && _motionSettings.Enabled &&
                    _spriteRenderer != null && _cropRenderers != null;
+        }
+
+        private bool CanAnimateAnimal()
+        {
+            return _animalMotionSettings != null && _animalMotionSettings.Enabled &&
+                   _spriteRenderer != null && _spriteRenderer.gameObject.activeSelf;
+        }
+
+        private void EnsureAnimalIdle()
+        {
+            if (_isCrop || !CanAnimateAnimal() || _motionTween != null || _idleTween != null)
+                return;
+
+            ResetRendererTransforms();
+            float phase = 0f;
+            float cycleDuration = _animalMotionSettings.IdleCycleDuration;
+            Transform target = _spriteRenderer.transform;
+
+            _idleTween = DOTween
+                .To(
+                    () => phase,
+                    value =>
+                    {
+                        phase = value;
+                        float wave = 0.5f - 0.5f * Mathf.Cos(value);
+                        float scale = Mathf.Lerp(1f, _animalMotionSettings.IdleScale, wave);
+                        float bob = Mathf.Sin(value) * _animalMotionSettings.IdleBobHeight;
+                        target.localScale = _spriteBaseLocalScale * scale;
+                        target.localPosition = _spriteBaseLocalPosition + Vector3.up * bob;
+                    },
+                    Mathf.PI * 2f,
+                    cycleDuration)
+                .SetEase(Ease.Linear)
+                .SetLoops(-1, LoopType.Restart)
+                .SetUpdate(true)
+                .SetTarget(this);
         }
 
         private void EnsureIdle()

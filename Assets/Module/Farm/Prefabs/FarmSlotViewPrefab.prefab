@@ -423,6 +423,41 @@ MonoBehaviour:
   _cropZSpacing: 0.5
   _cropSortingOrder: 1
   _animalSortingOrder: 1
+  _motionSettings:
+    _enabled: 1
+    _plantDuration: 0.28
+    _plantDrop: 0.12
+    _plantStartScale: 0.05
+    _plantStagger: 0.035
+    _plantEase: 27
+    _idleHalfCycleDuration: 1.2
+    _idleScale: 1.025
+    _idleSwayAngle: 2.5
+    _idleStagger: 0.08
+    _stageDuration: 0.24
+    _stagePopScale: 1.2
+    _stageStagger: 0.025
+    _stageEase: 27
+    _harvestDuration: 0.3
+    _harvestLift: 0.2
+    _harvestStagger: 0.03
+    _harvestEase: 26
+  _animalMotionSettings:
+    _enabled: 1
+    _enterDuration: 0.32
+    _enterStartScale: 0.35
+    _enterDrop: 0.12
+    _enterEase: 27
+    _idleCycleDuration: 1.8
+    _idleBobHeight: 0
+    _idleScale: 1.025
+    _reactionDuration: 0.32
+    _reactionHopHeight: 0.12
+    _reactionPopScale: 1.12
+    _reactionEase: 6
+    _collectDuration: 0.38
+    _collectHopHeight: 0.16
+    _collectPopScale: 1.16
 --- !u!1 &5442550082841017026
 GameObject:
   m_ObjectHideFlags: 0
