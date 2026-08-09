@@ -26,6 +26,9 @@ namespace Core.Module.Farm
 
         private readonly Dictionary<Vector3Int, FarmSlotView> _spawnedViews = new Dictionary<Vector3Int, FarmSlotView>();
         private readonly Dictionary<Vector3Int, FarmAnimalAnchor> _animalAnchors = new Dictionary<Vector3Int, FarmAnimalAnchor>();
+        private readonly HashSet<Vector3Int> _pendingPlantCells = new HashSet<Vector3Int>();
+        private readonly HashSet<Vector3Int> _pendingStageCells = new HashSet<Vector3Int>();
+        private readonly HashSet<Vector3Int> _harvestingCells = new HashSet<Vector3Int>();
 
         #region DI - Constructor
         [Inject]
@@ -34,15 +37,24 @@ namespace Core.Module.Farm
             FarmDatabaseSO database,
             IMapService mapService,
             IMapObjectInstanceRegistry mapObjectRegistry,
-            ISubscriber<FarmSlotChangedPayload> slotChangedSub)
+            ISubscriber<FarmSlotChangedPayload> slotChangedSub,
+            ISubscriber<FarmEntityPlantedPayload> plantedSub,
+            ISubscriber<FarmEntityStageChangedPayload> stageChangedSub,
+            ISubscriber<FarmEntityRipePayload> ripeSub,
+            ISubscriber<FarmEntityHarvestedPayload> harvestedSub)
         {
             _farmService = farmService;
             _database = database;
             _mapService = mapService;
             _mapObjectRegistry = mapObjectRegistry;
 
-            // Subscribe to state change events
-            _subscription = slotChangedSub.Subscribe(OnSlotChanged);
+            var bag = DisposableBag.CreateBuilder();
+            slotChangedSub.Subscribe(OnSlotChanged).AddTo(bag);
+            plantedSub.Subscribe(OnPlanted).AddTo(bag);
+            stageChangedSub.Subscribe(OnStageChanged).AddTo(bag);
+            ripeSub.Subscribe(OnRipe).AddTo(bag);
+            harvestedSub.Subscribe(OnHarvested).AddTo(bag);
+            _subscription = bag.Build();
         }
         #endregion
 
@@ -75,9 +87,50 @@ namespace Core.Module.Farm
             }
         }
 
+        private void OnPlanted(FarmEntityPlantedPayload payload)
+        {
+            if (payload.EntityType == FarmEntityType.Crop)
+                _pendingPlantCells.Add(payload.Cell);
+        }
+
+        private void OnStageChanged(FarmEntityStageChangedPayload payload)
+        {
+            if (payload.EntityType == FarmEntityType.Crop)
+                _pendingStageCells.Add(payload.Cell);
+        }
+
+        private void OnRipe(FarmEntityRipePayload payload)
+        {
+            if (payload.EntityType == FarmEntityType.Crop)
+                _pendingStageCells.Add(payload.Cell);
+        }
+
+        private void OnHarvested(FarmEntityHarvestedPayload payload)
+        {
+            if (!_spawnedViews.TryGetValue(payload.Cell, out FarmSlotView view) || view == null)
+                return;
+
+            _harvestingCells.Add(payload.Cell);
+            view.PlayHarvest(() =>
+            {
+                _harvestingCells.Remove(payload.Cell);
+                FarmSlotSaveData currentSlot = _farmService.GetSlotAt(payload.Cell);
+                if (currentSlot != null)
+                {
+                    UpdateVisualSlot(currentSlot);
+                }
+                else if (_spawnedViews.TryGetValue(payload.Cell, out FarmSlotView staleView))
+                {
+                    if (staleView != null) Destroy(staleView.gameObject);
+                    _spawnedViews.Remove(payload.Cell);
+                }
+            });
+        }
+
         private void UpdateVisualSlot(FarmSlotSaveData slot)
         {
             Vector3Int cell = new Vector3Int(slot.cellX, slot.cellY, slot.cellZ);
+            if (_harvestingCells.Contains(cell)) return;
 
             // 1. If the slot is completely empty and unplanted/unoccupied, destroy its visual view
             if (string.IsNullOrEmpty(slot.entityId) && slot.state == FarmSlotState.Empty)
@@ -104,6 +157,14 @@ namespace Core.Module.Farm
 
             // 3. Update the visual states (morphing sprites, sliders, bubbles)
             spawnedView.UpdateView(slot, _database);
+
+            if (_pendingPlantCells.Remove(cell))
+                spawnedView.PlayPlant();
+            else if (_pendingStageCells.Remove(cell))
+                spawnedView.PlayStageChange();
+
+            // Saved slots have no gameplay event to consume. UpdateView starts
+            // their idle loop directly, so they intentionally skip the plant pop.
         }
 
         private void EnsurePlacementForSavedSlot(FarmSlotSaveData slot)
