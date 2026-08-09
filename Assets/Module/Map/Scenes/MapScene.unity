@@ -333,6 +333,7 @@ MonoBehaviour:
     m_Bits: 8
   _maxRayDistance: 1000
   _useMathPlane: 1
+  _removalTapMaxMovementPixels: 20
 --- !u!4 &44125397 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6361854648154500075, guid: e9d95adbce2c9154ea0e303ef248d401, type: 3}
@@ -1004,6 +1005,7 @@ MonoBehaviour:
     m_Bits: 8
   _maxRayDistance: 1000
   _useMathPlane: 1
+  _tapMaxMovementPixels: 20
 --- !u!114 &945751121
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1164,7 +1166,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmVisualizer
   _slotViewPrefab: {fileID: 313763533857048325, guid: 00958c8747edcf945aba4b2df5241309, type: 3}
-  _offset: {x: 0, y: 0.6, z: 0}
+  _offset: {x: 0.5, y: 0, z: 0.5}
 --- !u!4 &1359646557
 Transform:
   m_ObjectHideFlags: 0
@@ -1303,8 +1305,21 @@ MonoBehaviour:
   _previewMaterial: {fileID: 2100000, guid: fb7391c3e6362034d9b00face058e337, type: 2}
   _cursor: {fileID: 1946227937}
   _spawnRoot: {fileID: 1606044949}
-  _previewYOffset: 0.06
+  _previewYOffset: 0
   _camera: {fileID: 0}
+  _motionSettings:
+    _enabled: 1
+    _placementDuration: 0.28
+    _placementStartScale: 0.15
+    _placementDrop: 0.12
+    _placementScaleEase: 27
+    _placementMoveEase: 9
+    _removalDuration: 0.22
+    _removalAnticipationRatio: 0.2
+    _removalOvershoot: 1.08
+    _removalLift: 0.08
+    _removalAnticipationEase: 6
+    _removalShrinkEase: 8
 --- !u!1 &1870457101
 GameObject:
   m_ObjectHideFlags: 0
