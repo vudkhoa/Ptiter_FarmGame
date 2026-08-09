@@ -16,6 +16,9 @@ namespace Core.Module.Map
         [SerializeField] private float _previewYOffset = 0.06f;
         [SerializeField] private Camera _camera;
 
+        [Header("Placement Motion")]
+        [SerializeField] private MapPlacementMotionSettings _motionSettings = new();
+
         private GameObject _ghost;
         private Material _previewMatInstance;
         private MaterialPropertyBlock _block;
@@ -31,10 +34,11 @@ namespace Core.Module.Map
             ISubscriber<MapPreviewMovedPayload> moveSub,
             ISubscriber<MapFurnitureAddedPayload> addedSub,
             ISubscriber<MapPlacementStoppedPayload> stopSub,
-            IMapObjectInstanceRegistry instanceRegistry,
+            MapObjectInstanceRegistry instanceRegistry,
             IObjectResolver resolver)
         {
             _instanceRegistry = instanceRegistry;
+            instanceRegistry.ConfigureMotion(_motionSettings);
             _resolver = resolver;
             var bag = DisposableBag.CreateBuilder();
             startSub.Subscribe(OnStarted).AddTo(bag);
@@ -111,6 +115,9 @@ namespace Core.Module.Map
                 _instanceRegistry.Register(p.Cell, go);
             else
                 _instanceRegistry.Register(p.InstanceId, go);
+
+            if (p.AnimatePlacement)
+                MapPlacementMotion.PlayPlacement(go, _motionSettings);
         }
 
         private void OnStopped(MapPlacementStoppedPayload _)

@@ -1,4 +1,6 @@
+using System;
 using Core.Module.Storage;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,23 +21,38 @@ namespace Core.Module.Farm
         [SerializeField] private int _cropSortingOrder = 1;
         [SerializeField] private int _animalSortingOrder = 1;
 
+        [Header("Crop Motion")]
+        [SerializeField] private FarmCropMotionSettings _motionSettings = new();
+
         private SpriteRenderer[] _cropRenderers;
+        private Quaternion[] _rendererRestRotations;
         private Vector3 _spriteBaseLocalPosition;
+        private Vector3 _spriteBaseLocalScale;
         private Camera _camera;
+        private Tween _motionTween;
+        private Tween _idleTween;
+        private bool _isCrop;
 
         private void Awake()
         {
             if (_spriteRenderer != null)
             {
                 _spriteBaseLocalPosition = _spriteRenderer.transform.localPosition;
+                _spriteBaseLocalScale = _spriteRenderer.transform.localScale;
                 _cropRenderers = new SpriteRenderer[4];
                 _cropRenderers[0] = _spriteRenderer;
+                _rendererRestRotations = new Quaternion[4];
+                _rendererRestRotations[0] = _spriteRenderer.transform.localRotation;
             }
 
             _camera = Camera.main;
             if (_useBillboard)
             {
-                if (_spriteRenderer != null) MatchCameraRotation(_spriteRenderer.transform);
+                if (_spriteRenderer != null)
+                {
+                    MatchCameraRotation(_spriteRenderer.transform);
+                    _rendererRestRotations[0] = _spriteRenderer.transform.localRotation;
+                }
                 if (_uiRoot != null) MatchCameraRotation(_uiRoot);
             }
         }
@@ -45,6 +62,7 @@ namespace Core.Module.Farm
             // 1. If slot data is null or completely empty (unplanted Soil / unoccupied Barn)
             if (slot == null || (slot.state == FarmSlotState.Empty && string.IsNullOrEmpty(slot.entityId)))
             {
+                StopMotion();
                 SetEntitySprite(null, false);
                 if (_progressBar != null) _progressBar.gameObject.SetActive(false);
                 if (_feedBubble != null) _feedBubble.SetActive(false);
@@ -57,6 +75,7 @@ namespace Core.Module.Farm
             if (entity == null) return;
 
             bool isAnimal = entity.entityType == FarmEntityType.Animal;
+            _isCrop = !isAnimal;
 
             // 2. Resolve Slot States
             switch (slot.state)
@@ -159,6 +178,233 @@ namespace Core.Module.Farm
                     }
                     break;
             }
+
+            if (_isCrop) EnsureIdle();
+        }
+
+        public void PlayPlant()
+        {
+            if (!_isCrop || !CanAnimate()) return;
+
+            StopMotion();
+            ResetRendererTransforms();
+            var sequence = DOTween.Sequence();
+
+            for (int i = 0; i < _cropRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = _cropRenderers[i];
+                if (renderer == null || !renderer.gameObject.activeSelf) continue;
+
+                Transform target = renderer.transform;
+                Vector3 finalPosition = GetRestPosition(i);
+                target.localScale = _spriteBaseLocalScale * _motionSettings.PlantStartScale;
+                target.localPosition = finalPosition + Vector3.down * _motionSettings.PlantDrop;
+                float delay = i * _motionSettings.PlantStagger;
+
+                sequence.Insert(delay,
+                    target.DOScale(_spriteBaseLocalScale, _motionSettings.PlantDuration)
+                        .SetEase(_motionSettings.PlantEase));
+                sequence.Insert(delay,
+                    target.DOLocalMove(finalPosition, _motionSettings.PlantDuration)
+                        .SetEase(Ease.OutCubic));
+            }
+
+            _motionTween = sequence
+                .SetUpdate(true)
+                .SetTarget(this)
+                .OnComplete(() =>
+                {
+                    _motionTween = null;
+                    EnsureIdle();
+                });
+        }
+
+        public void PlayStageChange()
+        {
+            if (!_isCrop || !CanAnimate()) return;
+
+            StopMotion();
+            ResetRendererTransforms();
+            var sequence = DOTween.Sequence();
+            float halfDuration = _motionSettings.StageDuration * 0.5f;
+
+            for (int i = 0; i < _cropRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = _cropRenderers[i];
+                if (renderer == null || !renderer.gameObject.activeSelf) continue;
+
+                Transform target = renderer.transform;
+                var pulse = DOTween.Sequence()
+                    .Append(target.DOScale(
+                        _spriteBaseLocalScale * _motionSettings.StagePopScale,
+                        halfDuration).SetEase(_motionSettings.StageEase))
+                    .Append(target.DOScale(
+                        _spriteBaseLocalScale,
+                        halfDuration).SetEase(Ease.OutQuad));
+                sequence.Insert(i * _motionSettings.StageStagger, pulse);
+            }
+
+            _motionTween = sequence
+                .SetUpdate(true)
+                .SetTarget(this)
+                .OnComplete(() =>
+                {
+                    _motionTween = null;
+                    EnsureIdle();
+                });
+        }
+
+        public void PlayHarvest(Action onComplete)
+        {
+            StopMotion();
+            if (!CanAnimate())
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            ResetRendererTransforms();
+            var sequence = DOTween.Sequence();
+            bool hasVisibleRenderer = false;
+
+            for (int i = 0; i < _cropRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = _cropRenderers[i];
+                if (renderer == null || !renderer.gameObject.activeSelf) continue;
+                hasVisibleRenderer = true;
+
+                Transform target = renderer.transform;
+                float delay = i * _motionSettings.HarvestStagger;
+                sequence.Insert(delay,
+                    target.DOScale(Vector3.zero, _motionSettings.HarvestDuration)
+                        .SetEase(_motionSettings.HarvestEase));
+                sequence.Insert(delay,
+                    target.DOLocalMoveY(
+                        GetRestPosition(i).y + _motionSettings.HarvestLift,
+                        _motionSettings.HarvestDuration)
+                        .SetEase(Ease.OutQuad));
+            }
+
+            if (!hasVisibleRenderer)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            _motionTween = sequence
+                .SetUpdate(true)
+                .SetTarget(this)
+                .OnComplete(() =>
+                {
+                    _motionTween = null;
+                    ResetRendererTransforms();
+                    onComplete?.Invoke();
+                });
+        }
+
+        private bool CanAnimate()
+        {
+            return _motionSettings != null && _motionSettings.Enabled &&
+                   _spriteRenderer != null && _cropRenderers != null;
+        }
+
+        private void EnsureIdle()
+        {
+            if (!_isCrop || !CanAnimate() || _motionTween != null || _idleTween != null) return;
+
+            ResetRendererTransforms();
+            if (!HasVisibleRenderer()) return;
+
+            float phase = 0f;
+            float cycleDuration = _motionSettings.IdleHalfCycleDuration * 4f;
+            float phasePerSecond = Mathf.PI * 2f / cycleDuration;
+            _idleTween = DOTween
+                .To(
+                    () => phase,
+                    value =>
+                    {
+                        phase = value;
+                        ApplyIdlePose(value, phasePerSecond);
+                    },
+                    Mathf.PI * 2f,
+                    cycleDuration)
+                .SetEase(Ease.Linear)
+                .SetLoops(-1, LoopType.Restart)
+                .SetUpdate(true)
+                .SetTarget(this);
+        }
+
+        private void ApplyIdlePose(float phase, float phasePerSecond)
+        {
+            for (int i = 0; i < _cropRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = _cropRenderers[i];
+                if (renderer == null || !renderer.gameObject.activeSelf) continue;
+
+                float localPhase = phase - i * _motionSettings.IdleStagger * phasePerSecond;
+                float breath = 0.5f - 0.5f * Mathf.Cos(localPhase);
+                float scale = Mathf.Lerp(1f, _motionSettings.IdleScale, breath);
+                float sway = Mathf.Sin(localPhase) * _motionSettings.IdleSwayAngle;
+
+                Transform target = renderer.transform;
+                target.localScale = _spriteBaseLocalScale * scale;
+                target.localRotation = GetRestRotation(i) * Quaternion.Euler(0f, 0f, sway);
+            }
+        }
+
+        private bool HasVisibleRenderer()
+        {
+            for (int i = 0; i < _cropRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = _cropRenderers[i];
+                if (renderer != null && renderer.gameObject.activeSelf) return true;
+            }
+
+            return false;
+        }
+
+        private void StopMotion()
+        {
+            _motionTween?.Kill();
+            _motionTween = null;
+            _idleTween?.Kill();
+            _idleTween = null;
+        }
+
+        private void ResetRendererTransforms()
+        {
+            if (_cropRenderers == null) return;
+            for (int i = 0; i < _cropRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = _cropRenderers[i];
+                if (renderer == null) continue;
+                renderer.transform.localScale = _spriteBaseLocalScale;
+                renderer.transform.localPosition = GetRestPosition(i);
+                renderer.transform.localRotation = GetRestRotation(i);
+            }
+        }
+
+        private Quaternion GetRestRotation(int index)
+        {
+            if (_rendererRestRotations == null || index < 0 || index >= _rendererRestRotations.Length)
+                return Quaternion.identity;
+            return _rendererRestRotations[index];
+        }
+
+        private Vector3 GetRestPosition(int index)
+        {
+            if (!_isCrop) return _spriteBaseLocalPosition;
+
+            float halfX = _cropXSpacing * 0.5f;
+            float halfZ = _cropZSpacing * 0.5f;
+            return index switch
+            {
+                0 => _spriteBaseLocalPosition + new Vector3(-halfX, 0f, -halfZ),
+                1 => _spriteBaseLocalPosition + new Vector3( halfX, 0f, -halfZ),
+                2 => _spriteBaseLocalPosition + new Vector3(-halfX, 0f,  halfZ),
+                3 => _spriteBaseLocalPosition + new Vector3( halfX, 0f,  halfZ),
+                _ => _spriteBaseLocalPosition
+            };
         }
 
         private void SetEntitySprite(Sprite sprite, bool showCropCluster)
@@ -169,7 +415,10 @@ namespace Core.Module.Farm
             {
                 _cropRenderers = new SpriteRenderer[4];
                 _cropRenderers[0] = _spriteRenderer;
+                _rendererRestRotations = new Quaternion[4];
+                _rendererRestRotations[0] = _spriteRenderer.transform.localRotation;
                 _spriteBaseLocalPosition = _spriteRenderer.transform.localPosition;
+                _spriteBaseLocalScale = _spriteRenderer.transform.localScale;
             }
 
             if (showCropCluster) EnsureCropRenderers();
@@ -192,29 +441,28 @@ namespace Core.Module.Farm
             {
                 _cropRenderers = new SpriteRenderer[4];
                 _cropRenderers[0] = _spriteRenderer;
+                _rendererRestRotations = new Quaternion[4];
                 _spriteBaseLocalPosition = _spriteRenderer.transform.localPosition;
+                _spriteBaseLocalScale = _spriteRenderer.transform.localScale;
+                _rendererRestRotations[0] = _spriteRenderer.transform.localRotation;
             }
-
-            float halfX = _cropXSpacing * 0.5f;
-            float halfZ = _cropZSpacing * 0.5f;
-            Vector3[] offsets =
-            {
-                new Vector3(-halfX, 0f, -halfZ),
-                new Vector3( halfX, 0f, -halfZ),
-                new Vector3(-halfX, 0f,  halfZ),
-                new Vector3( halfX, 0f,  halfZ)
-            };
 
             for (int i = 0; i < _cropRenderers.Length; i++)
             {
+                bool wasCreated = false;
                 if (_cropRenderers[i] == null)
                 {
                     _cropRenderers[i] = Instantiate(_spriteRenderer, _spriteRenderer.transform.parent);
                     _cropRenderers[i].name = $"CropSprite_{i + 1}";
+                    wasCreated = true;
                 }
 
-                _cropRenderers[i].transform.localPosition = _spriteBaseLocalPosition + offsets[i];
-                if (_useBillboard) MatchCameraRotation(_cropRenderers[i].transform);
+                _cropRenderers[i].transform.localPosition = GetRestPosition(i);
+                if (wasCreated)
+                {
+                    if (_useBillboard) MatchCameraRotation(_cropRenderers[i].transform);
+                    _rendererRestRotations[i] = _cropRenderers[i].transform.localRotation;
+                }
                 _cropRenderers[i].sortingOrder = _cropSortingOrder;
             }
         }
@@ -223,6 +471,11 @@ namespace Core.Module.Farm
         {
             if (_camera == null || target == null) return;
             target.rotation = _camera.transform.rotation;
+        }
+
+        private void OnDestroy()
+        {
+            StopMotion();
         }
     }
 }

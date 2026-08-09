@@ -186,6 +186,7 @@ GameObject:
   - component: {fileID: 8207382784432991621}
   - component: {fileID: 4018843466929202663}
   - component: {fileID: 7499076881604927428}
+  - component: {fileID: 1199047711604927428}
   m_Layer: 5
   m_Name: OpenCutSceneBtn
   m_TagString: Untagged
@@ -666,6 +667,7 @@ GameObject:
   - component: {fileID: 7916031422049273013}
   - component: {fileID: 7916031422049273014}
   - component: {fileID: 7916031422049273015}
+  - component: {fileID: 2199047711604927428}
   m_Layer: 5
   m_Name: Cancel Placement Button
   m_TagString: Untagged
@@ -938,6 +940,7 @@ GameObject:
   - component: {fileID: 8816031422049273013}
   - component: {fileID: 8816031422049273014}
   - component: {fileID: 8816031422049273015}
+  - component: {fileID: 3199047711604927428}
   m_Layer: 5
   m_Name: Remove Player Object Button
   m_TagString: Untagged
@@ -1003,6 +1006,45 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1199047711604927428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2428675810653099289}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &2199047711604927428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7916031422049273010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &3199047711604927428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8816031422049273010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
 --- !u!114 &8816031422049273014
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,0 +1,9 @@
+{
+    "name": "Audio",
+    "rootNamespace": "Core.Module.Audio",
+    "references": [
+        "Unity.ugui",
+        "VContainer"
+    ],
+    "autoReferenced": true
+}

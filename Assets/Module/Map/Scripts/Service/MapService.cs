@@ -243,13 +243,13 @@ namespace Core.Module.Map
                 placedWorld = GetFreePosition(data, worldHit);
                 cell = WorldToCell(placedWorld);
                 if (!IsPlacementSurfaceValid(cell, Vector2Int.one) ||
-                    !PlaceFreeObjectAt(data, prefab, placedWorld, instanceId, 1f)) return false;
+                    !PlaceFreeObjectAt(data, prefab, placedWorld, instanceId, 1f, true)) return false;
             }
             else
             {
                 placedWorld = CellToWorld(cell);
                 if (!IsPlacementSurfaceValid(cell, data.Size) ||
-                    !PlaceGridObjectAt(data, prefab, cell, instanceId, 1f)) return false;
+                    !PlaceGridObjectAt(data, prefab, cell, instanceId, 1f, true)) return false;
             }
 
             if (_authoring.IsAuthoringMode)
@@ -577,7 +577,8 @@ namespace Core.Module.Map
             GameObject prefab,
             Vector3Int cell,
             string instanceId,
-            float uniformScale)
+            float uniformScale,
+            bool animatePlacement = false)
         {
             if (!_placementValidator.CanPlaceGrid(data, cell)) return false;
 
@@ -592,7 +593,8 @@ namespace Core.Module.Map
                 PlacementPositionMode.Grid,
                 uniformScale,
                 _changeCount,
-                data.RotationMode));
+                data.RotationMode,
+                animatePlacement));
             return true;
         }
 
@@ -601,7 +603,8 @@ namespace Core.Module.Map
             GameObject prefab,
             Vector3 worldPosition,
             string instanceId,
-            float uniformScale)
+            float uniformScale,
+            bool animatePlacement = false)
         {
             if (string.IsNullOrEmpty(instanceId) ||
                 _freePlacements.ContainsKey(instanceId) ||
@@ -618,7 +621,8 @@ namespace Core.Module.Map
                 PlacementPositionMode.Free,
                 uniformScale,
                 _changeCount,
-                data.RotationMode));
+                data.RotationMode,
+                animatePlacement));
             return true;
         }
 
