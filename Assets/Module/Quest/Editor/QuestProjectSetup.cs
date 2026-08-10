@@ -28,6 +28,7 @@ namespace Core.Module.Quest.Editor
             EnsureFolders();
             ImportQuestTexturesAsSprites();
             BuildDailyContent();
+            FoodRecipeProjectSetup.Ensure();
             BuildQuestWindowPrefab(true);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -54,6 +55,7 @@ namespace Core.Module.Quest.Editor
             EnsureFolders();
             ImportQuestTexturesAsSprites();
             BuildDailyContent();
+            FoodRecipeProjectSetup.Ensure();
             if (AssetDatabase.LoadAssetAtPath<GameObject>(QuestWindowPrefabPath) == null)
                 BuildQuestWindowPrefab(false);
             AssetDatabase.SaveAssets();

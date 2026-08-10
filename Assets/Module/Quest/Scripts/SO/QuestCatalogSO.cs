@@ -9,6 +9,7 @@ namespace Core.Module.Quest
         public List<QuestDefinitionSO> quests = new List<QuestDefinitionSO>();
         public DailyQuestScheduleSO dailySchedule;
         public ProgressQuestConfigSO progressConfig;
+        public FoodRecipeConfigSO foodRecipeConfig;
 
         public QuestDefinitionSO GetQuestById(string questId)
         {
