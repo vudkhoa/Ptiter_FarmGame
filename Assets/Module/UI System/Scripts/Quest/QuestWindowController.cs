@@ -60,6 +60,9 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private ScrollRect _progressScroll;
         [SerializeField] private RectTransform _progressContent;
         [SerializeField] private ProgressMilestoneView _progressMilestoneTemplate;
+        [SerializeField] private RectTransform _progressLockOverlay;
+        [SerializeField] private Vector3 _progressBoardCycleOffsets =
+            new Vector3(0f, 24f, 45f);
 
         [Header("Reward feedback")]
         [SerializeField] private GameObject _rewardToast;
@@ -445,7 +448,12 @@ namespace MyOwn.ServiceHarness
             }
 
             if (_progressContent != null)
+            {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(_progressContent);
+                if (_progressPlaceholder == null ||
+                    _progressPlaceholder.activeInHierarchy)
+                    ConfigureProgressOverlays(milestoneCount);
+            }
         }
 
         private void EnsureProgressMilestoneViews(int count)
@@ -466,6 +474,63 @@ namespace MyOwn.ServiceHarness
 
             for (int i = 0; i < _progressMilestoneViews.Count; i++)
                 _progressMilestoneViews[i].gameObject.SetActive(i < count);
+
+            ConfigureProgressBambooTrack(count);
+        }
+
+        private void ConfigureProgressBambooTrack(int count)
+        {
+            RectTransform templateRect =
+                _progressMilestoneTemplate.transform as RectTransform;
+            HorizontalLayoutGroup layout =
+                _progressContent.GetComponent<HorizontalLayoutGroup>();
+            if (templateRect == null || layout == null) return;
+
+            float itemPitch = templateRect.rect.width + layout.spacing;
+            for (int i = 0; i < _progressMilestoneViews.Count; i++)
+            {
+                _progressMilestoneViews[i]?.ConfigureBambooTrack(
+                    i == 0,
+                    count,
+                    itemPitch);
+                _progressMilestoneViews[i]?.ConfigureBoardPosition(
+                    GetProgressBoardOffset(i));
+            }
+        }
+
+        private float GetProgressBoardOffset(int index)
+        {
+            return Mathf.Abs(index % 3) switch
+            {
+                1 => _progressBoardCycleOffsets.y,
+                2 => _progressBoardCycleOffsets.z,
+                _ => _progressBoardCycleOffsets.x
+            };
+        }
+
+        private void ConfigureProgressOverlays(int count)
+        {
+            if (_progressContent == null || _progressLockOverlay == null)
+                return;
+
+            if (count > 0 && _progressMilestoneViews.Count > 0)
+            {
+                _progressMilestoneViews[0]?.AttachBambooOverlay(
+                    _progressContent);
+            }
+
+            _progressLockOverlay.SetAsLastSibling();
+
+            for (int i = 0; i < _progressMilestoneViews.Count; i++)
+            {
+                ProgressMilestoneView view = _progressMilestoneViews[i];
+                if (view == null) continue;
+
+                if (i < count)
+                    view.AttachLockOverlay(_progressLockOverlay);
+                else
+                    view.HideDetachedLock();
+            }
         }
 
         private void ResetProgressScroll()
@@ -473,9 +538,26 @@ namespace MyOwn.ServiceHarness
             if (_progressScroll == null) return;
             Canvas.ForceUpdateCanvases();
             if (_progressContent != null)
+            {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(_progressContent);
+                ConfigureProgressOverlays(
+                    CountActiveProgressMilestones());
+            }
             _progressScroll.StopMovement();
             _progressScroll.horizontalNormalizedPosition = 0f;
+        }
+
+        private int CountActiveProgressMilestones()
+        {
+            int count = 0;
+            for (int i = 0; i < _progressMilestoneViews.Count; i++)
+            {
+                ProgressMilestoneView view = _progressMilestoneViews[i];
+                if (view != null && view.gameObject.activeSelf)
+                    count++;
+            }
+
+            return count;
         }
 
         private void ClaimProgressMilestone(string milestoneId)

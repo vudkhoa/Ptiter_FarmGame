@@ -22,3 +22,9 @@ MonoBehaviour:
   - milestoneId: progress_300
     requiredCoins: 300
     starReward: 30
+  - milestoneId: progress_400
+    requiredCoins: 400
+    starReward: 40
+  - milestoneId: progress_500
+    requiredCoins: 500
+    starReward: 50
