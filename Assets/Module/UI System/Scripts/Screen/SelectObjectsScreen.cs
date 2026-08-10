@@ -6,7 +6,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SelectObjectsScreen : WindowController
+public class SelectObjectsScreen :
+    WindowController,
+    IOnBeforeWindowOpen,
+    IOnWindowClosed
 {
     [SerializeField] private Button _btnClose;
     [SerializeField] private Button _bgClose;
@@ -29,7 +32,7 @@ public class SelectObjectsScreen : WindowController
         _bgClose?.onClick.AddListener(Close);
     }
 
-    public void OnAfterWindowClose()
+    public void OnWindowClosed()
     {
         _btnClose?.onClick.RemoveListener(Close);
         _bgClose?.onClick.RemoveListener(Close);
