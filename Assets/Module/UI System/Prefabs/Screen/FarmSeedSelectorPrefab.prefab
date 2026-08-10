@@ -370,6 +370,8 @@ GameObject:
   - component: {fileID: 7381245717186419362}
   - component: {fileID: 5167658983560496137}
   - component: {fileID: 360496818126718794}
+  - component: {fileID: 8900000000000000021}
+  - component: {fileID: 8900000000000000022}
   m_Layer: 5
   m_Name: FarmSeedSelectorPrefab
   m_TagString: Untagged
@@ -504,11 +506,39 @@ MonoBehaviour:
     collectionGUIDValueB: 3807423450203082926
     itemLastKnownName: FarmSeedSelectorScreen
     collectionLastKnownName: UIWindowCollection
-  transitionIn: {fileID: 0}
-  transitionOut: {fileID: 0}
+  transitionIn: {fileID: 8900000000000000021}
+  transitionOut: {fileID: 8900000000000000022}
   _itemContainer: {fileID: 9197400415286320001}
   _itemTemplate: {fileID: 8563094283776713552}
   _closeButton: {fileID: 7357978268687799897}
+--- !u!114 &8900000000000000021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2637125382873369837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b724ca05598d43f59f05ac0dcad4bff6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Core.Module.UI.Animation.PopupWindowOpenTransition
+  _motionRoot: {fileID: 98119989006556393}
+  _dimmer: {fileID: 0}
+--- !u!114 &8900000000000000022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2637125382873369837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02a90fb3ad81424f97fdc1b65cf91a4b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Core.Module.UI.Animation.PopupWindowCloseTransition
+  _motionRoot: {fileID: 98119989006556393}
+  _dimmer: {fileID: 0}
 --- !u!114 &360496818126718794
 MonoBehaviour:
   m_ObjectHideFlags: 0

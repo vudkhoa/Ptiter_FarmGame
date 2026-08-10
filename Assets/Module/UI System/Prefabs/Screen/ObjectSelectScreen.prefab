@@ -1697,6 +1697,8 @@ GameObject:
   - component: {fileID: 2522166233147107736}
   - component: {fileID: 2735210134164983319}
   - component: {fileID: 3026768407476453346}
+  - component: {fileID: 8900000000000000001}
+  - component: {fileID: 8900000000000000002}
   m_Layer: 5
   m_Name: ObjectSelectScreen
   m_TagString: Untagged
@@ -1785,7 +1787,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SelectObjectsScreen
   cacheInterfacesInstance: 0
-  disableInteractionWhileTransitioning: 0
+  disableInteractionWhileTransitioning: 1
   window:
     collectionItemGUIDValueA: 5720549407896800525
     collectionItemGUIDValueB: -2294679235002417486
@@ -1793,15 +1795,43 @@ MonoBehaviour:
     collectionGUIDValueB: 3807423450203082926
     itemLastKnownName: SelectObjectsScreen
     collectionLastKnownName: UIWindowCollection
-  transitionIn: {fileID: 0}
-  transitionOut: {fileID: 0}
+  transitionIn: {fileID: 8900000000000000001}
+  transitionOut: {fileID: 8900000000000000002}
   _btnClose: {fileID: 71348870472116853}
-  _bgClose: {fileID: 0}
+  _bgClose: {fileID: 3573968600712111201}
   _buttons:
   - {fileID: 5262591134176484106}
   - {fileID: 3032990800640284112}
   - {fileID: 1626683095708591299}
   _display: {fileID: 5391359295223797913}
+--- !u!114 &8900000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6408830156994073677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b724ca05598d43f59f05ac0dcad4bff6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Core.Module.UI.Animation.PopupWindowOpenTransition
+  _motionRoot: {fileID: 3907735166229408738}
+  _dimmer: {fileID: 1994094322485467015}
+--- !u!114 &8900000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6408830156994073677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02a90fb3ad81424f97fdc1b65cf91a4b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Core.Module.UI.Animation.PopupWindowCloseTransition
+  _motionRoot: {fileID: 3907735166229408738}
+  _dimmer: {fileID: 1994094322485467015}
 --- !u!114 &3026768407476453346
 MonoBehaviour:
   m_ObjectHideFlags: 0
