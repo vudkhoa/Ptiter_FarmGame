@@ -46,5 +46,7 @@ namespace Core.Module.Map
     {
         public int MapId;
         public List<MapLayoutEntry> Objects = new();
+        [Tooltip("Grid cells explicitly blocked for gameplay construction by authored decor.")]
+        public List<Vector3Int> DecorBlockedCells = new();
     }
 }

@@ -282,7 +282,7 @@ MonoBehaviour:
     ObjectId: 5
     PositionMode: 1
     OriginCell: {x: 0, y: 0, z: 0}
-    WorldPosition: {x: 19.285686, y: 0, z: 32.17686}
+    WorldPosition: {x: 19.2527, y: 0, z: 32.214676}
     UniformScale: 1
   - InstanceId: bde60fb3ce8d4a5aa2767b8978fb55ac
     ObjectId: 4
@@ -338,3 +338,32 @@ MonoBehaviour:
     OriginCell: {x: 10, y: 0, z: -10}
     WorldPosition: {x: 0, y: 0, z: 0}
     UniformScale: 1
+  DecorBlockedCells:
+  - {x: -18, y: 0, z: -3}
+  - {x: -18, y: 0, z: -2}
+  - {x: -18, y: 0, z: -1}
+  - {x: -17, y: 0, z: -3}
+  - {x: -17, y: 0, z: -1}
+  - {x: -16, y: 0, z: -3}
+  - {x: -16, y: 0, z: -1}
+  - {x: -15, y: 0, z: -3}
+  - {x: -15, y: 0, z: -2}
+  - {x: -15, y: 0, z: -1}
+  - {x: -3, y: 0, z: 10}
+  - {x: -3, y: 0, z: 11}
+  - {x: -3, y: 0, z: 12}
+  - {x: -2, y: 0, z: 10}
+  - {x: -2, y: 0, z: 11}
+  - {x: -2, y: 0, z: 12}
+  - {x: -1, y: 0, z: 10}
+  - {x: -1, y: 0, z: 11}
+  - {x: -1, y: 0, z: 12}
+  - {x: 0, y: 0, z: 10}
+  - {x: 0, y: 0, z: 11}
+  - {x: 0, y: 0, z: 12}
+  - {x: 26, y: 0, z: -5}
+  - {x: 26, y: 0, z: -4}
+  - {x: 26, y: 0, z: -3}
+  - {x: 27, y: 0, z: -5}
+  - {x: 27, y: 0, z: -4}
+  - {x: 27, y: 0, z: -3}

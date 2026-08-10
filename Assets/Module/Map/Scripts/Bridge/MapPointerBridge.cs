@@ -136,6 +136,13 @@ namespace Core.Module.Map
                 return;
             }
 
+            if (_authoring != null && _authoring.IsDecorBlockerMode)
+            {
+                if (_isPrimaryPressed && !IsPointerBlocked() && TryRaycast(_lastScreen, out var blockerWorld))
+                    _map.SetDecorBlocker(blockerWorld, _authoring.IsDecorBlockerPaintMode);
+                return;
+            }
+
             if (!_map.HasActivePlacement) return;
             if (!TryRaycast(_lastScreen, out var world)) return;
 
@@ -165,6 +172,14 @@ namespace Core.Module.Map
             {
                 if (TryRaycast(_lastScreen, out var eraseWorld))
                     _map.RemoveAuthoringObject(eraseWorld);
+                return;
+            }
+
+            if (_authoring != null && _authoring.IsDecorBlockerMode)
+            {
+                _isPrimaryPressed = true;
+                if (TryRaycast(_lastScreen, out var blockerWorld))
+                    _map.SetDecorBlocker(blockerWorld, _authoring.IsDecorBlockerPaintMode);
                 return;
             }
 
@@ -223,6 +238,8 @@ namespace Core.Module.Map
 
             bool wasPressed = _isPrimaryPressed;
             _isPrimaryPressed = false;
+
+            if (_authoring != null && _authoring.IsDecorBlockerMode) return;
 
             if (!wasPressed || !_map.HasActivePlacement) return;
             if (_map.CurrentPlacementInputMode != PlacementInputMode.Single) return;

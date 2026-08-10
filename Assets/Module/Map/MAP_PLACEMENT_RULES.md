@@ -209,10 +209,8 @@ Kiểm tra hai chiều giúp kết quả không phụ thuộc thứ tự đặt.
 Ví dụ:
 
 - Lake chặn `Gameplay`.
-- Rock cũng chặn `Gameplay`.
-- Khi đặt Barn lên Rock, Rock chặn layer Gameplay của Barn.
-- Khi đặt Rock lên Barn, Barn chặn layer SolidDecor của Rock.
-- Cả hai thứ tự đều bị từ chối.
+- Cây SolidDecor chặn `Gameplay`.
+- Rock dùng để ghép cụm visual là `OverlayDecor`; vùng cấm xây của cụm được author riêng bằng `DecorBlockedCells`.
 
 ### Ma trận rule đề xuất
 
@@ -436,6 +434,7 @@ Authoring vẫn kiểm tra:
 - Grid occupancy.
 - Surface rule.
 - Grid–Free layer conflict.
+- Decor blocker cells.
 - Rule khi kéo object đã chọn.
 
 Điều này bảo đảm layout lưu ra không vi phạm placement contract chính.
@@ -458,6 +457,18 @@ Ngoài rule trong tài liệu này, runtime placement còn gọi `IsTilemapPlace
 
 - Buildable tilemaps: mỗi cell phải có ít nhất một tile nền hợp lệ nếu danh sách được cấu hình.
 - Obstacle tilemaps: không cell nào được chứa obstacle tile.
+
+### Decor blocker cell mask
+
+`MapLayoutSO.DecorBlockedCells` là logical tilemap dành riêng cho decor được ghép tự do. Trong Author:
+
+- `Paint decor blocker`: kéo chuột để tô cell đỏ.
+- `Erase decor blocker`: kéo chuột để xóa cell.
+- `Hide/Show blocker overlay`: chỉ đổi hiển thị, không đổi dữ liệu.
+- `Save layout`: lưu mask cùng object layout.
+
+Gameplay object chỉ hợp lệ khi toàn bộ footprint không chạm mask. Rock visual không tự sinh collision từ
+sprite, pivot hoặc scale; author quyết định chính xác cell nào thuộc cụm decor.
 - Grid object kiểm tra toàn bộ `Size`.
 - Free object hiện chỉ kiểm tra tilemap tại cell chứa pivot bằng footprint `1x1`.
 
@@ -544,9 +555,9 @@ Hệ thống hiện chọn cách bỏ qua placement không thể restore và ghi
 
 ## 12. Cấu hình hiện tại
 
-### Decor Free
+### Decor Free có collision
 
-Banana Tree, Bonsai, Bush, Rock 1 và Rock 2:
+Banana Tree, Bonsai và Bush:
 
 ```text
 PositionMode     = Free
@@ -564,6 +575,21 @@ Kết quả:
 - Chặn công trình/ruộng mới đặt lên footprint của nó.
 - Có thể chồng lên decor Free khác.
 
+### Rock ghép cụm visual
+
+Rock 1 và Rock 2:
+
+```text
+PositionMode     = Free
+PlacementLayer   = OverlayDecor
+BlockedLayers    = None
+ProvidedSurface  = None
+AllowedSurfaces  = Any
+Size             = 1x1
+```
+
+Rock không tự chặn cell. Sau khi ghép cụm, dùng `Paint decor blocker` để đánh dấu đúng vùng cấm xây.
+
 ### Soil, Barn, Main House, Storage
 
 ```text
@@ -579,7 +605,7 @@ Kết quả:
 - Chỉ đặt trên Land.
 - Không được đặt trên Lake.
 - Không được đặt đè Grid object khác.
-- Không được đặt đè cây, bụi hoặc đá.
+- Không được đặt đè cây/bụi SolidDecor hoặc cell thuộc decor blocker mask.
 - Overlay Decor vẫn có thể phủ lên nếu được bổ sung.
 
 ### Lake
@@ -671,7 +697,7 @@ Lưu ý: do Grid–Grid đang độc quyền, đường Grid chưa thể phủ l
 9. Chọn `Single` hay `Continuous` cho input.
 10. Kiểm tra pivot prefab vì pivot quyết định cell của Free object.
 11. Test preview hợp lệ và không hợp lệ.
-12. Test placement theo cả hai thứ tự, ví dụ Rock trước Barn và Barn trước Rock.
+12. Với decor ghép cụm, paint blocker và kiểm tra toàn bộ rìa visual.
 13. Test authoring move, scale, save và reload.
 14. Test base layout cùng player save cũ.
 
@@ -684,16 +710,17 @@ Lưu ý: do Grid–Grid đang độc quyền, đường Grid chưa thể phủ l
 | Rock Free trên Land trống | Được |
 | Rock Free trên Lake | Được với cấu hình hiện tại |
 | Barn Grid trên Lake | Không được |
-| Barn Grid trên Rock | Không được |
-| Rock Free trên Barn | Không được |
+| Barn Grid trên cell blocker dưới Rock | Không được |
+| Barn Grid cạnh Rock nhưng ngoài blocker | Được |
+| Rock Overlay trên Barn | Được về layer; Author chịu trách nhiệm bố cục |
 | Rock Free chồng Rock Free | Được trong implementation hiện tại |
 | Soil Grid chồng Soil Grid | Không được |
 | Flower Overlay trên Barn | Được nếu Flower dùng mask đề xuất |
 | Lily Pad Water trên Land | Không được |
 | Lily Pad Water trên Lake | Được |
 | Move Lake vào Grid footprint khác | Không được và Lake trở lại vị trí cũ |
-| Move Rock vào Barn | Không được và Rock giữ vị trí cũ |
-| Scale Rock | Visual đổi, footprint giữ nguyên |
+| Paint/erase blocker | Preview Grid cập nhật theo mask |
+| Scale Rock | Visual đổi, blocker giữ nguyên cho tới khi Author paint lại |
 | Load player Barn trùng base Lake | Player Barn bị bỏ qua |
 
 ---

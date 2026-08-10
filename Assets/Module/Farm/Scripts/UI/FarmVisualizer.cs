@@ -28,6 +28,8 @@ namespace Core.Module.Farm
         private readonly Dictionary<Vector3Int, FarmAnimalAnchor> _animalAnchors = new Dictionary<Vector3Int, FarmAnimalAnchor>();
         private readonly HashSet<Vector3Int> _pendingPlantCells = new HashSet<Vector3Int>();
         private readonly HashSet<Vector3Int> _pendingStageCells = new HashSet<Vector3Int>();
+        private readonly HashSet<Vector3Int> _pendingAnimalEnterCells = new HashSet<Vector3Int>();
+        private readonly HashSet<Vector3Int> _pendingAnimalReactionCells = new HashSet<Vector3Int>();
         private readonly HashSet<Vector3Int> _harvestingCells = new HashSet<Vector3Int>();
 
         #region DI - Constructor
@@ -39,6 +41,7 @@ namespace Core.Module.Farm
             IMapObjectInstanceRegistry mapObjectRegistry,
             ISubscriber<FarmSlotChangedPayload> slotChangedSub,
             ISubscriber<FarmEntityPlantedPayload> plantedSub,
+            ISubscriber<FarmEntityCaredPayload> caredSub,
             ISubscriber<FarmEntityStageChangedPayload> stageChangedSub,
             ISubscriber<FarmEntityRipePayload> ripeSub,
             ISubscriber<FarmEntityHarvestedPayload> harvestedSub)
@@ -51,6 +54,7 @@ namespace Core.Module.Farm
             var bag = DisposableBag.CreateBuilder();
             slotChangedSub.Subscribe(OnSlotChanged).AddTo(bag);
             plantedSub.Subscribe(OnPlanted).AddTo(bag);
+            caredSub.Subscribe(OnCared).AddTo(bag);
             stageChangedSub.Subscribe(OnStageChanged).AddTo(bag);
             ripeSub.Subscribe(OnRipe).AddTo(bag);
             harvestedSub.Subscribe(OnHarvested).AddTo(bag);
@@ -91,12 +95,22 @@ namespace Core.Module.Farm
         {
             if (payload.EntityType == FarmEntityType.Crop)
                 _pendingPlantCells.Add(payload.Cell);
+            else
+                _pendingAnimalEnterCells.Add(payload.Cell);
+        }
+
+        private void OnCared(FarmEntityCaredPayload payload)
+        {
+            if (payload.EntityType == FarmEntityType.Animal)
+                _pendingAnimalReactionCells.Add(payload.Cell);
         }
 
         private void OnStageChanged(FarmEntityStageChangedPayload payload)
         {
             if (payload.EntityType == FarmEntityType.Crop)
                 _pendingStageCells.Add(payload.Cell);
+            else
+                _pendingAnimalReactionCells.Add(payload.Cell);
         }
 
         private void OnRipe(FarmEntityRipePayload payload)
@@ -111,7 +125,7 @@ namespace Core.Module.Farm
                 return;
 
             _harvestingCells.Add(payload.Cell);
-            view.PlayHarvest(() =>
+            Action completeHarvest = () =>
             {
                 _harvestingCells.Remove(payload.Cell);
                 FarmSlotSaveData currentSlot = _farmService.GetSlotAt(payload.Cell);
@@ -124,7 +138,12 @@ namespace Core.Module.Farm
                     if (staleView != null) Destroy(staleView.gameObject);
                     _spawnedViews.Remove(payload.Cell);
                 }
-            });
+            };
+
+            if (payload.EntityType == FarmEntityType.Animal)
+                view.PlayAnimalCollect(completeHarvest);
+            else
+                view.PlayHarvest(completeHarvest);
         }
 
         private void UpdateVisualSlot(FarmSlotSaveData slot)
@@ -162,6 +181,10 @@ namespace Core.Module.Farm
                 spawnedView.PlayPlant();
             else if (_pendingStageCells.Remove(cell))
                 spawnedView.PlayStageChange();
+            else if (_pendingAnimalEnterCells.Remove(cell))
+                spawnedView.PlayAnimalEnter();
+            else if (_pendingAnimalReactionCells.Remove(cell))
+                spawnedView.PlayAnimalReaction();
 
             // Saved slots have no gameplay event to consume. UpdateView starts
             // their idle loop directly, so they intentionally skip the plant pop.
