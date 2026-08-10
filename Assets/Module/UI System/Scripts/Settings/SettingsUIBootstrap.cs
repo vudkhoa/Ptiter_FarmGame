@@ -24,14 +24,6 @@ namespace Core.Module.Settings.UI
             _instance = null;
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void CreateBootstrap()
-        {
-            if (_instance != null) return;
-            var bootstrap = new GameObject("[Settings UI Bootstrap]");
-            bootstrap.AddComponent<SettingsUIBootstrap>();
-        }
-
         private void Awake()
         {
             if (_instance != null && _instance != this)
