@@ -14,7 +14,7 @@ namespace MyOwn.ServiceHarness
     public class PlayerData
     {
         public string PlayerId;
-        public int SaveVersion = 4;
+        public int SaveVersion = 5;
         public long LastSaveUtcTicks;
 
         public int Coins = 1000;

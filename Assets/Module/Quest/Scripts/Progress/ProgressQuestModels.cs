@@ -16,6 +16,7 @@ namespace Core.Module.Quest
         public int accumulatedCoins;
         public int stars;
         public List<string> claimedMilestoneIds = new List<string>();
+        public List<string> unlockedRecipeIds = new List<string>();
     }
 
     public sealed class ProgressMilestoneViewData
