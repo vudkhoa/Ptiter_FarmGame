@@ -1,23 +1,28 @@
 using System;
+using Core.Module.Audio;
+
 namespace Core.Module.Settings
 {
     /// <summary>
-    /// Owns the mock settings state for the current app session. It deliberately
-    /// does not persist values or touch audio/haptic services yet.
+    /// Exposes player-facing settings. Audio state is owned and persisted by the
+    /// audio module; vibration remains runtime-only until a haptics service exists.
     /// </summary>
     public sealed class SettingsService : ISettingsService
     {
-        public const bool DefaultMusicEnabled = true;
-        public const bool DefaultSoundEnabled = true;
         public const bool DefaultVibrationEnabled = true;
 
-        private bool _musicEnabled = DefaultMusicEnabled;
-        private bool _soundEnabled = DefaultSoundEnabled;
+        private readonly IAudioSettingsProvider _audioSettings;
         private bool _vibrationEnabled = DefaultVibrationEnabled;
 
+        public SettingsService(IAudioSettingsProvider audioSettings)
+        {
+            _audioSettings = audioSettings ??
+                throw new ArgumentNullException(nameof(audioSettings));
+        }
+
         public SettingsSnapshot Current => new SettingsSnapshot(
-            _musicEnabled,
-            _soundEnabled,
+            !_audioSettings.IsMuted(AudioBus.Music),
+            !_audioSettings.IsMuted(AudioBus.Sfx),
             _vibrationEnabled);
 
         public SettingsSnapshot SetEnabled(SettingsOption option, bool enabled)
@@ -25,10 +30,10 @@ namespace Core.Module.Settings
             switch (option)
             {
                 case SettingsOption.Music:
-                    _musicEnabled = enabled;
+                    _audioSettings.SetMuted(AudioBus.Music, !enabled);
                     break;
                 case SettingsOption.Sound:
-                    _soundEnabled = enabled;
+                    _audioSettings.SetMuted(AudioBus.Sfx, !enabled);
                     break;
                 case SettingsOption.Vibration:
                     _vibrationEnabled = enabled;

@@ -12,8 +12,11 @@ The module is intentionally small and fully 2D:
 1. Create **Farm Game > Audio > Settings** and **Farm Game > Audio > Catalog**.
 2. Assign both assets to `RootLifetimeScope`.
 3. Fill the catalog's Music, UI, Farm, Map, and Quest clip fields.
-4. Add `AudioSettingsReference` to the Music and Sound settings rows.
-   Toggle ON means enabled; Toggle OFF means muted.
+4. Register the Settings module after Audio. Its Music and Sound toggles map to
+   the Music and SFX buses automatically; toggle ON means enabled.
+
+`AudioSettingsReference` remains available for screens that expose per-bus
+volume sliders or additional mute toggles.
 
 ## Usage
 

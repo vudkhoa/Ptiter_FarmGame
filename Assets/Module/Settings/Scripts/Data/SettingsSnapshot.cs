@@ -1,8 +1,8 @@
 namespace Core.Module.Settings
 {
     /// <summary>
-    /// Runtime-only toggle state. Applying audio and vibration to platform
-    /// services is intentionally outside the current UI mock scope.
+    /// Current player-facing toggle state. Music and sound are backed by the
+    /// audio module; vibration is runtime-only until haptics are implemented.
     /// </summary>
     public readonly struct SettingsSnapshot
     {
