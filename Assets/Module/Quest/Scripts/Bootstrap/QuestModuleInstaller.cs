@@ -1,4 +1,5 @@
 using MessagePipe;
+using Core.Module.Quest.Utils;
 using VContainer;
 using VContainer.Unity;
 
@@ -23,6 +24,9 @@ namespace Core.Module.Quest
             builder.RegisterMessageBroker<ProgressCoinsEarnedPayload>(options);
             builder.RegisterMessageBroker<ProgressQuestStateChangedPayload>(options);
             builder.RegisterMessageBroker<ProgressRewardClaimedPayload>(options);
+            builder.RegisterMessageBroker<FoodRecipeStateChangedPayload>(options);
+            builder.RegisterMessageBroker<FoodRecipeUnlockedPayload>(options);
+            builder.RegisterMessageBroker<QuestToastRequestedPayload>(options);
             return builder;
         }
 
@@ -71,8 +75,12 @@ namespace Core.Module.Quest
             builder.Register<ProgressQuestService>(Lifetime.Singleton)
                    .AsImplementedInterfaces()
                    .AsSelf();
+            builder.Register<FoodRecipeService>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()
+                   .AsSelf();
             builder.RegisterEntryPoint<DailyQuestBootstrapper>();
             builder.RegisterEntryPoint<ProgressQuestBootstrapper>();
+            builder.RegisterEntryPoint<FoodRecipeBootstrapper>();
             builder.RegisterEntryPoint<FarmQuestEventBridge>();
 
             return builder;

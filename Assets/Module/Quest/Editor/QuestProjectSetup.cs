@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using BrunoMikoski.UIManager;
 using Core.Module.Quest;
+using Core.Module.Quest.View;
 using MyOwn.ServiceHarness;
 using TMPro;
 using UnityEditor;
@@ -27,6 +28,7 @@ namespace Core.Module.Quest.Editor
             EnsureFolders();
             ImportQuestTexturesAsSprites();
             BuildDailyContent();
+            FoodRecipeProjectSetup.Ensure();
             BuildQuestWindowPrefab(true);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -53,6 +55,7 @@ namespace Core.Module.Quest.Editor
             EnsureFolders();
             ImportQuestTexturesAsSprites();
             BuildDailyContent();
+            FoodRecipeProjectSetup.Ensure();
             if (AssetDatabase.LoadAssetAtPath<GameObject>(QuestWindowPrefabPath) == null)
                 BuildQuestWindowPrefab(false);
             AssetDatabase.SaveAssets();
@@ -286,16 +289,27 @@ namespace Core.Module.Quest.Editor
             rootRect.offsetMax = Vector2.zero;
             root.GetComponent<Canvas>().overrideSorting = true;
 
+            GameObject designRoot = new GameObject(
+                "Design Fit Root",
+                typeof(RectTransform),
+                typeof(QuestResponsivePanelFitter));
+            RectTransform designRect = designRoot.GetComponent<RectTransform>();
+            designRect.SetParent(root.transform, false);
+            designRect.anchorMin = designRect.anchorMax =
+                Vector2.one * 0.5f;
+            designRect.anchoredPosition = Vector2.zero;
+            designRect.sizeDelta = new Vector2(1800f, 1200f);
+
             GameObject daily = ImageObject(
-                "Daily Panel", root.transform,
+                "Daily Panel", designRoot.transform,
                 Sprite("quest hàng ngày_nền 2.png"),
                 Vector2.zero, new Vector2(1800, 1200));
             GameObject progress = ImageObject(
-                "Progress Placeholder", root.transform,
+                "Progress Placeholder", designRoot.transform,
                 Sprite("quest tiến độ 3.png"),
                 Vector2.zero, new Vector2(1800, 1200));
             GameObject food = ImageObject(
-                "Food Placeholder", root.transform,
+                "Food Placeholder", designRoot.transform,
                 Sprite("quest thực đơn 3.png"),
                 Vector2.zero, new Vector2(1800, 1200));
             progress.SetActive(false);
@@ -324,16 +338,16 @@ namespace Core.Module.Quest.Editor
 
             // Input sits on top of the artwork, without drawing replacement boxes.
             Button dailyTab = TransparentButton(
-                "Daily Tab", root.transform,
+                "Daily Tab", designRoot.transform,
                 new Vector2(-480, 255), new Vector2(430, 110));
             Button progressTab = TransparentButton(
-                "Progress Tab", root.transform,
+                "Progress Tab", designRoot.transform,
                 new Vector2(0, 255), new Vector2(430, 110));
             Button foodTab = TransparentButton(
-                "Food Tab", root.transform,
+                "Food Tab", designRoot.transform,
                 new Vector2(480, 255), new Vector2(430, 110));
             Button close = Button(
-                "Temporary Close", root.transform, string.Empty,
+                "Temporary Close", designRoot.transform, string.Empty,
                 new Vector2(790, 485), new Vector2(92, 92), font);
             Image closeImage = close.GetComponent<Image>();
             closeImage.sprite = Sprite("exit.png");
@@ -367,7 +381,7 @@ namespace Core.Module.Quest.Editor
             };
 
             GameObject toast = ImageObject(
-                "Reward Toast", root.transform, null,
+                "Reward Toast", designRoot.transform, null,
                 new Vector2(0, 0), new Vector2(300, 130));
             toast.GetComponent<Image>().color = new Color(0.1f, 0.45f, 0.15f, 0.95f);
             TextMeshProUGUI toastText = Text(
