@@ -102,6 +102,7 @@ namespace Core.Module.Map
             }
 
             _grid = new GridData();
+            _database.ResetPlacedCounts();
             ReloadDecorBlockersFromAuthoring();
             _placementValidator = new MapPlacementValidator(
                 _database, _grid, _freePlacements, WorldToCell, _decorBlockedCells.Contains);
@@ -138,6 +139,7 @@ namespace Core.Module.Map
         {
             return _grid.TryGetPlacementAt(gridPosition, out data);
         }
+
         #endregion
 
         #region IMapService - State Machine
@@ -347,6 +349,7 @@ namespace Core.Module.Map
                 if (!CanRemovePlayerPlacement(context)) return false;
 
                 _freePlacements.Remove(freeInstanceId);
+                _database.AddPlacedCount(free.ObjectId, -1);
                 _instanceRegistry.RemoveAndDestroy(freeInstanceId);
                 CompletePlayerRemoval(saveIndex, context);
                 SetPlayerRemovalMode(false);
@@ -370,6 +373,8 @@ namespace Core.Module.Map
                 CellToWorld(originCell));
             if (!CanRemovePlayerPlacement(gridContext) ||
                 !_grid.RemoveObjectAt(cell, out _)) return false;
+
+            _database.AddPlacedCount(placement.ID, -1);
 
             _instanceRegistry.RemoveAndDestroy(originCell);
             CompletePlayerRemoval(persistedIndex, gridContext);
@@ -421,7 +426,9 @@ namespace Core.Module.Map
 
             if (TryFindFreePlacement(worldHit, out string freeInstanceId))
             {
+                FreePlacementRecord freeRemoved = _freePlacements[freeInstanceId];
                 _freePlacements.Remove(freeInstanceId);
+                _database.AddPlacedCount(freeRemoved.ObjectId, -1);
                 _instanceRegistry.RemoveAndDestroy(freeInstanceId);
                 _authoring.RecordRemoval(freeInstanceId);
                 _changeCount++;
@@ -430,6 +437,7 @@ namespace Core.Module.Map
 
             Vector3Int cell = WorldToCell(worldHit);
             if (!_grid.RemoveObjectAt(cell, out PlacementData removed)) return false;
+            _database.AddPlacedCount(removed.ID, -1);
             Vector3Int originCell = removed.OcupiedPositions[0];
             _instanceRegistry.RemoveAndDestroy(originCell);
             _authoring.RecordRemoval(removed.InstanceId);
@@ -557,6 +565,7 @@ namespace Core.Module.Map
             StopPlacement();
             _grid.Clear();
             _freePlacements.Clear();
+            _database.ResetPlacedCounts();
             ClearSelection();
             _instanceRegistry.ClearAndDestroy();
             _changeCount = 0;
@@ -655,8 +664,8 @@ namespace Core.Module.Map
         {
             if (!_placementValidator.CanPlaceGrid(data, cell)) return false;
 
-            _grid.AddObjectAt(cell, data.Size, data.ID, data.Kind, _changeCount, instanceId, uniformScale);
             _grid.AddObjectAt(cell, data.Size, data.ID, data.FarmRole, _changeCount, instanceId, uniformScale);
+            _database.AddPlacedCount(data.ID, 1);
             _changeCount++;
             _pubAdded.Publish(new MapFurnitureAddedPayload(
                 data.ID,
@@ -685,6 +694,7 @@ namespace Core.Module.Map
                 !_placementValidator.CanPlaceFree(data, worldPosition)) return false;
 
             _freePlacements.Add(instanceId, new FreePlacementRecord(data.ID, worldPosition, uniformScale));
+            _database.AddPlacedCount(data.ID, 1);
             _changeCount++;
             _pubAdded.Publish(new MapFurnitureAddedPayload(
                 data.ID,
