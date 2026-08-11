@@ -4,6 +4,7 @@ using System.Globalization;
 using BrunoMikoski.UIManager;
 using Core.Module.Input;
 using Core.Module.Quest;
+using Core.Module.Quest.Cooking;
 using Core.Module.Quest.Utils;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -72,6 +73,7 @@ namespace MyOwn.ServiceHarness
         private IDailyQuestService _dailyQuestService;
         private IProgressQuestService _progressQuestService;
         private IFoodRecipeService _foodRecipeService;
+        private IFoodCookingPanelFactory _foodCookingPanelFactory;
         private IPublisher<QuestToastRequestedPayload> _toastPublisher;
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
         private readonly List<QuestTaskItemView> _taskViews =
@@ -94,6 +96,7 @@ namespace MyOwn.ServiceHarness
             IDailyQuestService dailyQuestService,
             IProgressQuestService progressQuestService,
             IFoodRecipeService foodRecipeService,
+            IFoodCookingPanelFactory foodCookingPanelFactory,
             IPublisher<QuestToastRequestedPayload> toastPublisher,
             ISubscriber<DailyQuestStateChangedPayload> stateSubscriber,
             ISubscriber<QuestRewardGrantedPayload> rewardSubscriber,
@@ -107,6 +110,7 @@ namespace MyOwn.ServiceHarness
             _dailyQuestService = dailyQuestService;
             _progressQuestService = progressQuestService;
             _foodRecipeService = foodRecipeService;
+            _foodCookingPanelFactory = foodCookingPanelFactory;
             _toastPublisher = toastPublisher;
             _subscriptions.Add(stateSubscriber.Subscribe(_ => Render()));
             _subscriptions.Add(rewardSubscriber.Subscribe(OnRewardGranted));
@@ -142,6 +146,7 @@ namespace MyOwn.ServiceHarness
 
         public void OnWindowClosed()
         {
+            CloseCookingPanel();
             GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
             KillMotion();
@@ -693,9 +698,22 @@ namespace MyOwn.ServiceHarness
             }
         }
 
-        private void RequestCookRecipe(string _)
+        private void RequestCookRecipe(string recipeId)
         {
-            RequestToast("Tính năng nấu ăn đang được phát triển");
+            if (string.IsNullOrWhiteSpace(recipeId)) return;
+
+            RectTransform overlayParent = transform as RectTransform;
+            GameObject panel =
+                _foodCookingPanelFactory?.Open(overlayParent, recipeId);
+            if (panel == null)
+            {
+                RequestToast("Không thể mở giao diện nấu ăn");
+            }
+        }
+
+        private void CloseCookingPanel()
+        {
+            _foodCookingPanelFactory?.Close();
         }
 
         private void RequestToast(
@@ -857,6 +875,7 @@ namespace MyOwn.ServiceHarness
 
         protected override void OnDestroy()
         {
+            CloseCookingPanel();
             GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
             KillMotion();

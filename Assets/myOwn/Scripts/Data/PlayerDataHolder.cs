@@ -6,6 +6,7 @@ using Core.Module.Map;
 using Core.Module.Time;
 using Core.Module.Storage;
 using Core.Module.Quest;
+using Core.Module.Quest.Cooking;
 using Core.Module.Currency;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
@@ -27,6 +28,7 @@ namespace MyOwn.ServiceHarness
         IMapSaveSource,
         IDailyQuestRepository,
         IProgressQuestRepository,
+        ICookingJobRepository,
         ICurrencyRepository,
         IDisposable
     {
@@ -167,6 +169,104 @@ namespace MyOwn.ServiceHarness
         {
             return Clone(_data?.QuestProgress);
         }
+
+        #region ICookingJobRepository
+        public CookingJobSaveData LoadActiveCookingJob()
+        {
+            return Clone(_data?.ActiveCookingJob);
+        }
+
+        public bool SaveActiveCookingJob(CookingJobSaveData job)
+        {
+            if (_data == null) return false;
+
+            CookingJobSaveData previous = Clone(_data.ActiveCookingJob);
+            _data.ActiveCookingJob = Clone(job);
+            if (SaveImmediate()) return true;
+
+            _data.ActiveCookingJob = previous;
+            return false;
+        }
+
+        public bool TryCommitCookingCompletion(
+            CookingCompletedPayload payload)
+        {
+            if (_data == null ||
+                string.IsNullOrWhiteSpace(payload.TransactionId) ||
+                string.IsNullOrWhiteSpace(payload.OutputItemId) ||
+                payload.Amount <= 0)
+                return false;
+
+            _data.GrantedCookingCompletionTransactions ??=
+                new List<string>();
+            bool alreadyCommitted =
+                _data.GrantedCookingCompletionTransactions.Contains(
+                    payload.TransactionId);
+            CookingJobSaveData previousJob =
+                Clone(_data.ActiveCookingJob);
+
+            if (alreadyCommitted)
+            {
+                if (previousJob != null && string.Equals(
+                        previousJob.transactionId,
+                        payload.TransactionId,
+                        StringComparison.Ordinal))
+                {
+                    _data.ActiveCookingJob = null;
+                    if (!SaveImmediate())
+                    {
+                        _data.ActiveCookingJob = previousJob;
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            if (previousJob == null || !string.Equals(
+                    previousJob.transactionId,
+                    payload.TransactionId,
+                    StringComparison.Ordinal))
+                return false;
+
+            if (!string.Equals(
+                    previousJob.recipeId,
+                    payload.RecipeId,
+                    StringComparison.Ordinal) ||
+                !string.Equals(
+                    previousJob.outputItemId,
+                    payload.OutputItemId,
+                    StringComparison.Ordinal) ||
+                previousJob.outputAmount != payload.Amount ||
+                previousJob.quantity != payload.Quantity)
+                return false;
+
+            _data.AddItem(previousJob.outputItemId, previousJob.outputAmount);
+            _data.GrantedCookingCompletionTransactions.Add(
+                payload.TransactionId);
+            _data.ActiveCookingJob = null;
+
+            if (SaveImmediate())
+            {
+                int newAmount =
+                    _data.GetItemCount(previousJob.outputItemId);
+                _inventoryChangedPublisher.Publish(
+                    new InventoryChangedPayload(
+                        previousJob.outputItemId,
+                        newAmount,
+                        previousJob.outputAmount));
+                return true;
+            }
+
+            _data.RemoveItem(
+                previousJob.outputItemId,
+                previousJob.outputAmount);
+            _data.GrantedCookingCompletionTransactions.Remove(
+                payload.TransactionId);
+            _data.ActiveCookingJob = previousJob;
+            return false;
+        }
+        #endregion
 
         public UniTask<bool> SaveProgressQuestAsync(
             ProgressQuestSaveData data,
