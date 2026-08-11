@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using BrunoMikoski.UIManager;
+using Core.Module.Cutscene;
 using Core.Module.Input;
 using Core.Module.Quest;
 using Core.Module.Quest.Cooking;
@@ -74,6 +75,7 @@ namespace MyOwn.ServiceHarness
         private IProgressQuestService _progressQuestService;
         private IFoodRecipeService _foodRecipeService;
         private IFoodCookingPanelFactory _foodCookingPanelFactory;
+        private IPublisher<PlayCutsceneRequestPayload> _cutscenePublisher;
         private IPublisher<QuestToastRequestedPayload> _toastPublisher;
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
         private readonly List<QuestTaskItemView> _taskViews =
@@ -97,6 +99,7 @@ namespace MyOwn.ServiceHarness
             IProgressQuestService progressQuestService,
             IFoodRecipeService foodRecipeService,
             IFoodCookingPanelFactory foodCookingPanelFactory,
+            IPublisher<PlayCutsceneRequestPayload> cutscenePublisher,
             IPublisher<QuestToastRequestedPayload> toastPublisher,
             ISubscriber<DailyQuestStateChangedPayload> stateSubscriber,
             ISubscriber<QuestRewardGrantedPayload> rewardSubscriber,
@@ -111,6 +114,7 @@ namespace MyOwn.ServiceHarness
             _progressQuestService = progressQuestService;
             _foodRecipeService = foodRecipeService;
             _foodCookingPanelFactory = foodCookingPanelFactory;
+            _cutscenePublisher = cutscenePublisher;
             _toastPublisher = toastPublisher;
             _subscriptions.Add(stateSubscriber.Subscribe(_ => Render()));
             _subscriptions.Add(rewardSubscriber.Subscribe(OnRewardGranted));
@@ -680,8 +684,24 @@ namespace MyOwn.ServiceHarness
             switch (result.Code)
             {
                 case FoodRecipeUnlockResultCode.Success:
+                    await UniTask.Delay(
+                        450,
+                        ignoreTimeScale: true,
+                        cancellationToken:
+                            this.GetCancellationTokenOnDestroy());
+                    if (gameObject.activeInHierarchy &&
+                        !string.IsNullOrWhiteSpace(result.CutsceneId))
+                    {
+                        _cutscenePublisher?.Publish(
+                            new PlayCutsceneRequestPayload(
+                                result.CutsceneId));
+                    }
+                    break;
                 case FoodRecipeUnlockResultCode.AlreadyUnlocked:
                     RenderFood();
+                    break;
+                case FoodRecipeUnlockResultCode.InDevelopment:
+                    RequestToast("Món ăn đang phát triển");
                     break;
                 case FoodRecipeUnlockResultCode.PrerequisiteLocked:
                     RequestToast("Hãy mở món phía trên trước");
