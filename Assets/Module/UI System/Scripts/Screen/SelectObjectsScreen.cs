@@ -1,4 +1,5 @@
 using BrunoMikoski.UIManager;
+using Core.Module.Input;
 using Core.Module.Map;
 using Core.Module.Time;
 using MessagePipe;
@@ -70,8 +71,8 @@ public class SelectObjectsScreen :
     public void OnBeforeWindowOpen()
     {
         _btnClose?.onClick.AddListener(Close);
-        _bgClose?.onClick.AddListener(Close);
         _resourceTabButton?.onClick.AddListener(ShowResources);
+        GameplayInputBlockRegistry.Add(this);
 
         if (_decorationTabButton != null)
             _decorationTabButton.interactable = false;
@@ -82,12 +83,13 @@ public class SelectObjectsScreen :
     public void OnWindowClosed()
     {
         _btnClose?.onClick.RemoveListener(Close);
-        _bgClose?.onClick.RemoveListener(Close);
         _resourceTabButton?.onClick.RemoveListener(ShowResources);
+        GameplayInputBlockRegistry.Remove(this);
     }
 
     protected override void OnDestroy()
     {
+        GameplayInputBlockRegistry.Remove(this);
         _placementStoppedSubscription?.Dispose();
         base.OnDestroy();
     }
