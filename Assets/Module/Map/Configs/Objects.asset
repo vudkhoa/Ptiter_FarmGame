@@ -74,8 +74,8 @@ MonoBehaviour:
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
-    PlacementLayer: 4
-    BlockedLayers: 2
+    PlacementLayer: 8
+    BlockedLayers: 0
     ProvidedSurface: 0
     AllowedSurfaces: 3
     RotationMode: 1
@@ -92,8 +92,8 @@ MonoBehaviour:
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
-    PlacementLayer: 4
-    BlockedLayers: 2
+    PlacementLayer: 8
+    BlockedLayers: 0
     ProvidedSurface: 0
     AllowedSurfaces: 3
     RotationMode: 1

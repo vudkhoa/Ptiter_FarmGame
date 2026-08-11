@@ -2,7 +2,8 @@
     "name": "Settings",
     "rootNamespace": "Core.Module.Settings",
     "references": [
-        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc"
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
+        "GUID:a3b9c729ef064f07b8b8e5fb58636200"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

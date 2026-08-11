@@ -4,7 +4,7 @@ namespace Core.Module.Settings
 {
     public static class SettingsModuleInstaller
     {
-        /// <summary>Registers the cross-scene, runtime-only settings state.</summary>
+        /// <summary>Registers settings backed by the already-registered audio module.</summary>
         public static IContainerBuilder RegisterSettingsModule(
             this IContainerBuilder builder)
         {

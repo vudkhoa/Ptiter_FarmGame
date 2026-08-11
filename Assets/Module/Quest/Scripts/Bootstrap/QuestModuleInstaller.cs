@@ -1,4 +1,6 @@
 using MessagePipe;
+using Core.Module.Quest.Cooking;
+using Core.Module.Quest.Utils;
 using VContainer;
 using VContainer.Unity;
 
@@ -23,6 +25,13 @@ namespace Core.Module.Quest
             builder.RegisterMessageBroker<ProgressCoinsEarnedPayload>(options);
             builder.RegisterMessageBroker<ProgressQuestStateChangedPayload>(options);
             builder.RegisterMessageBroker<ProgressRewardClaimedPayload>(options);
+            builder.RegisterMessageBroker<FoodRecipeStateChangedPayload>(options);
+            builder.RegisterMessageBroker<FoodRecipeUnlockedPayload>(options);
+            builder.RegisterMessageBroker<CookingStateChangedPayload>(options);
+            builder.RegisterMessageBroker<CookingCompletedPayload>(options);
+            builder.RegisterMessageBroker<CookingCompletionCommittedPayload>(
+                options);
+            builder.RegisterMessageBroker<QuestToastRequestedPayload>(options);
             return builder;
         }
 
@@ -71,8 +80,20 @@ namespace Core.Module.Quest
             builder.Register<ProgressQuestService>(Lifetime.Singleton)
                    .AsImplementedInterfaces()
                    .AsSelf();
+            builder.Register<FoodRecipeService>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()
+                   .AsSelf();
+            builder.Register<FoodCookingPanelFactory>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()
+                   .AsSelf();
+            builder.Register<CookingService>(Lifetime.Singleton)
+                   .AsImplementedInterfaces()
+                   .AsSelf();
+            builder.RegisterEntryPoint<CookingCompletionStorageBridge>();
+            builder.RegisterEntryPoint<CookingBootstrapper>();
             builder.RegisterEntryPoint<DailyQuestBootstrapper>();
             builder.RegisterEntryPoint<ProgressQuestBootstrapper>();
+            builder.RegisterEntryPoint<FoodRecipeBootstrapper>();
             builder.RegisterEntryPoint<FarmQuestEventBridge>();
 
             return builder;

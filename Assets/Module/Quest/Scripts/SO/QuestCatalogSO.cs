@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Core.Module.Quest.Cooking;
 using UnityEngine;
 
 namespace Core.Module.Quest
@@ -9,6 +10,9 @@ namespace Core.Module.Quest
         public List<QuestDefinitionSO> quests = new List<QuestDefinitionSO>();
         public DailyQuestScheduleSO dailySchedule;
         public ProgressQuestConfigSO progressConfig;
+        public FoodRecipeConfigSO foodRecipeConfig;
+        public FoodCookingPanelRuntimeConfigSO foodCookingPanelConfig;
+        public CookingRecipeConfigSO cookingRecipeConfig;
 
         public QuestDefinitionSO GetQuestById(string questId)
         {

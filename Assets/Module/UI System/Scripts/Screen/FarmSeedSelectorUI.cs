@@ -1,7 +1,5 @@
 // TODO: Recheck UI
-using System;
 using MessagePipe;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Core.Module.Storage;
@@ -20,7 +18,7 @@ namespace MyOwn.ServiceHarness
     {
         [Header("UI Containers")]
         [SerializeField] private Transform _itemContainer;
-        [SerializeField] private GameObject _itemTemplate;
+        [SerializeField] private FarmSeedSelectorItemView _itemTemplate;
         [SerializeField] private Button _closeButton;
 
         private IFarmService _farmService;
@@ -41,7 +39,7 @@ namespace MyOwn.ServiceHarness
 
         public void OnBeforeWindowOpen()
         {
-            if (_itemTemplate != null) _itemTemplate.SetActive(false);
+            if (_itemTemplate != null) _itemTemplate.gameObject.SetActive(false);
             if (_closeButton != null)
                 _closeButton.onClick.AddListener(Close);
         }
@@ -71,7 +69,7 @@ namespace MyOwn.ServiceHarness
             // Clear old item lists
             foreach (Transform child in _itemContainer)
             {
-                if (child.gameObject != _itemTemplate)
+                if (child != _itemTemplate.transform)
                 {
                     Destroy(child.gameObject);
                 }
@@ -87,46 +85,26 @@ namespace MyOwn.ServiceHarness
                     bool matchesAnimalContext = entity.entityType == FarmEntityType.Animal;
                     if (matchesAnimalContext == _currentContext.IsAnimal)
                     {
-                        CreateItemButton(entity.EntityId, entity.entityName, entity.coinCost, _currentContext);
+                        CreateItemButton(entity, _currentContext);
                     }
                 }
             }
         }
 
-        private void CreateItemButton(string entityId, string displayName, int cost, OpenFarmSelectorUIPayload payload)
+        private void CreateItemButton(FarmEntityData entity, OpenFarmSelectorUIPayload payload)
         {
-            GameObject buttonObj = Instantiate(_itemTemplate, _itemContainer);
-            buttonObj.SetActive(true);
-
-            TMP_Text[] texts = buttonObj.GetComponentsInChildren<TMP_Text>();
-            foreach (var t in texts)
+            FarmSeedSelectorItemView itemView = Instantiate(_itemTemplate, _itemContainer);
+            itemView.gameObject.SetActive(true);
+            itemView.Bind(
+                entity,
+                _storageService.Coins >= entity.coinCost,
+                selectedEntity =>
             {
-                if (t.name.Contains("Name")) t.text = displayName;
-                else if (t.name.Contains("Cost")) t.text = $"{cost} Xu";
-            }
-
-            Button btn = buttonObj.GetComponent<Button>();
-            if (btn == null) btn = buttonObj.GetComponentInChildren<Button>();
-
-            if (btn != null)
-            {
-                bool canAfford = _storageService.Coins >= cost;
-                btn.interactable = canAfford;
-
-                var btnImage = btn.GetComponent<Image>();
-                if (btnImage != null && !canAfford)
+                if (_farmService.TryPlant(payload.Cell, selectedEntity.EntityId))
                 {
-                    btnImage.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+                    Close();
                 }
-
-                btn.onClick.AddListener(() =>
-                {
-                    if (_farmService.TryPlant(payload.Cell, entityId))
-                    {
-                        Close();
-                    }
-                });
-            }
+            });
         }
     }
 }

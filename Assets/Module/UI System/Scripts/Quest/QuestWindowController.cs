@@ -4,6 +4,8 @@ using System.Globalization;
 using BrunoMikoski.UIManager;
 using Core.Module.Input;
 using Core.Module.Quest;
+using Core.Module.Quest.Cooking;
+using Core.Module.Quest.Utils;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using MessagePipe;
@@ -60,6 +62,9 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private ScrollRect _progressScroll;
         [SerializeField] private RectTransform _progressContent;
         [SerializeField] private ProgressMilestoneView _progressMilestoneTemplate;
+        [SerializeField] private RectTransform _progressLockOverlay;
+        [SerializeField] private Vector3 _progressBoardCycleOffsets =
+            new Vector3(0f, 24f, 45f);
 
         [Header("Reward feedback")]
         [SerializeField] private GameObject _rewardToast;
@@ -67,11 +72,17 @@ namespace MyOwn.ServiceHarness
 
         private IDailyQuestService _dailyQuestService;
         private IProgressQuestService _progressQuestService;
+        private IFoodRecipeService _foodRecipeService;
+        private IFoodCookingPanelFactory _foodCookingPanelFactory;
+        private IPublisher<QuestToastRequestedPayload> _toastPublisher;
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
         private readonly List<QuestTaskItemView> _taskViews =
             new List<QuestTaskItemView>();
         private readonly List<ProgressMilestoneView> _progressMilestoneViews =
             new List<ProgressMilestoneView>();
+        private readonly List<FoodRecipeItemView> _foodRecipeViews =
+            new List<FoodRecipeItemView>();
+        private QuestToastView _toastView;
         private Sequence _tabTransition;
         private Sequence _rewardTransition;
         private Tween _dailyFillTween;
@@ -84,23 +95,34 @@ namespace MyOwn.ServiceHarness
         public void Construct(
             IDailyQuestService dailyQuestService,
             IProgressQuestService progressQuestService,
+            IFoodRecipeService foodRecipeService,
+            IFoodCookingPanelFactory foodCookingPanelFactory,
+            IPublisher<QuestToastRequestedPayload> toastPublisher,
             ISubscriber<DailyQuestStateChangedPayload> stateSubscriber,
             ISubscriber<QuestRewardGrantedPayload> rewardSubscriber,
             ISubscriber<ProgressQuestStateChangedPayload> progressStateSubscriber,
-            ISubscriber<ProgressRewardClaimedPayload> progressRewardSubscriber)
+            ISubscriber<ProgressRewardClaimedPayload> progressRewardSubscriber,
+            ISubscriber<FoodRecipeStateChangedPayload> foodStateSubscriber,
+            ISubscriber<QuestToastRequestedPayload> toastSubscriber)
         {
             if (_isConstructed) return;
             _isConstructed = true;
             _dailyQuestService = dailyQuestService;
             _progressQuestService = progressQuestService;
+            _foodRecipeService = foodRecipeService;
+            _foodCookingPanelFactory = foodCookingPanelFactory;
+            _toastPublisher = toastPublisher;
             _subscriptions.Add(stateSubscriber.Subscribe(_ => Render()));
             _subscriptions.Add(rewardSubscriber.Subscribe(OnRewardGranted));
             _subscriptions.Add(progressStateSubscriber.Subscribe(_ => RenderProgress()));
             _subscriptions.Add(progressRewardSubscriber.Subscribe(OnProgressRewardClaimed));
+            _subscriptions.Add(foodStateSubscriber.Subscribe(_ => RenderFood()));
+            _subscriptions.Add(toastSubscriber.Subscribe(ShowToast));
             _dailyQuestService.EnsureInitializedAsync(
                 this.GetCancellationTokenOnDestroy()).Forget();
             _progressQuestService.EnsureInitializedAsync(
                 this.GetCancellationTokenOnDestroy()).Forget();
+            InitializeFoodAsync().Forget();
             Render();
             RenderProgress();
         }
@@ -117,16 +139,18 @@ namespace MyOwn.ServiceHarness
                 this.GetCancellationTokenOnDestroy()).Forget();
             _progressQuestService?.EnsureInitializedAsync(
                 this.GetCancellationTokenOnDestroy()).Forget();
+            InitializeFoodAsync().Forget();
             Render();
             RenderProgress();
         }
 
         public void OnWindowClosed()
         {
+            CloseCookingPanel();
             GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
             KillMotion();
-            if (_rewardToast != null) _rewardToast.SetActive(false);
+            _toastView?.HideImmediate();
         }
 
         private void RegisterButtons()
@@ -159,6 +183,7 @@ namespace MyOwn.ServiceHarness
             UpdateTabVisuals(index);
             if (index == 0) Render();
             if (index == 1) RenderProgress();
+            if (index == 2) RenderFood();
 
             if (previousIndex < 0 || previousPanel == null || nextPanel == null)
             {
@@ -184,6 +209,14 @@ namespace MyOwn.ServiceHarness
             ResetProgressScroll();
         }
         private void ShowFood() => ShowTab(2);
+
+        private async UniTaskVoid InitializeFoodAsync()
+        {
+            if (_foodRecipeService == null) return;
+            await _foodRecipeService.EnsureInitializedAsync(
+                this.GetCancellationTokenOnDestroy());
+            RenderFood();
+        }
 
         private GameObject GetTabPanel(int index)
         {
@@ -445,7 +478,12 @@ namespace MyOwn.ServiceHarness
             }
 
             if (_progressContent != null)
+            {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(_progressContent);
+                if (_progressPlaceholder == null ||
+                    _progressPlaceholder.activeInHierarchy)
+                    ConfigureProgressOverlays(milestoneCount);
+            }
         }
 
         private void EnsureProgressMilestoneViews(int count)
@@ -466,6 +504,63 @@ namespace MyOwn.ServiceHarness
 
             for (int i = 0; i < _progressMilestoneViews.Count; i++)
                 _progressMilestoneViews[i].gameObject.SetActive(i < count);
+
+            ConfigureProgressBambooTrack(count);
+        }
+
+        private void ConfigureProgressBambooTrack(int count)
+        {
+            RectTransform templateRect =
+                _progressMilestoneTemplate.transform as RectTransform;
+            HorizontalLayoutGroup layout =
+                _progressContent.GetComponent<HorizontalLayoutGroup>();
+            if (templateRect == null || layout == null) return;
+
+            float itemPitch = templateRect.rect.width + layout.spacing;
+            for (int i = 0; i < _progressMilestoneViews.Count; i++)
+            {
+                _progressMilestoneViews[i]?.ConfigureBambooTrack(
+                    i == 0,
+                    count,
+                    itemPitch);
+                _progressMilestoneViews[i]?.ConfigureBoardPosition(
+                    GetProgressBoardOffset(i));
+            }
+        }
+
+        private float GetProgressBoardOffset(int index)
+        {
+            return Mathf.Abs(index % 3) switch
+            {
+                1 => _progressBoardCycleOffsets.y,
+                2 => _progressBoardCycleOffsets.z,
+                _ => _progressBoardCycleOffsets.x
+            };
+        }
+
+        private void ConfigureProgressOverlays(int count)
+        {
+            if (_progressContent == null || _progressLockOverlay == null)
+                return;
+
+            if (count > 0 && _progressMilestoneViews.Count > 0)
+            {
+                _progressMilestoneViews[0]?.AttachBambooOverlay(
+                    _progressContent);
+            }
+
+            _progressLockOverlay.SetAsLastSibling();
+
+            for (int i = 0; i < _progressMilestoneViews.Count; i++)
+            {
+                ProgressMilestoneView view = _progressMilestoneViews[i];
+                if (view == null) continue;
+
+                if (i < count)
+                    view.AttachLockOverlay(_progressLockOverlay);
+                else
+                    view.HideDetachedLock();
+            }
         }
 
         private void ResetProgressScroll()
@@ -473,9 +568,26 @@ namespace MyOwn.ServiceHarness
             if (_progressScroll == null) return;
             Canvas.ForceUpdateCanvases();
             if (_progressContent != null)
+            {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(_progressContent);
+                ConfigureProgressOverlays(
+                    CountActiveProgressMilestones());
+            }
             _progressScroll.StopMovement();
             _progressScroll.horizontalNormalizedPosition = 0f;
+        }
+
+        private int CountActiveProgressMilestones()
+        {
+            int count = 0;
+            for (int i = 0; i < _progressMilestoneViews.Count; i++)
+            {
+                ProgressMilestoneView view = _progressMilestoneViews[i];
+                if (view != null && view.gameObject.activeSelf)
+                    count++;
+            }
+
+            return count;
         }
 
         private void ClaimProgressMilestone(string milestoneId)
@@ -496,55 +608,148 @@ namespace MyOwn.ServiceHarness
                 this.GetCancellationTokenOnDestroy()).Forget();
         }
 
+        private void RenderFood()
+        {
+            if (_foodRecipeService == null || _foodPlaceholder == null) return;
+            FoodRecipeViewState state = _foodRecipeService.GetViewState();
+            int recipeCount = state.Recipes?.Count ?? 0;
+            EnsureFoodRecipeViews(recipeCount);
+
+            for (int i = 0; i < _foodRecipeViews.Count; i++)
+            {
+                FoodRecipeViewData recipe =
+                    state.Recipes != null && i < state.Recipes.Count
+                        ? state.Recipes[i]
+                        : null;
+                _foodRecipeViews[i]?.Bind(
+                    recipe,
+                    state.LockIcon,
+                    _progressStarIcon != null
+                        ? _progressStarIcon.sprite
+                        : null,
+                    RequestUnlockRecipe,
+                    RequestCookRecipe);
+            }
+        }
+
+        private void EnsureFoodRecipeViews(int count)
+        {
+            RectTransform parent = _foodPlaceholder.transform as RectTransform;
+            if (parent == null) return;
+
+            Graphic legacyFullMock = _foodPlaceholder.GetComponent<Graphic>();
+            if (legacyFullMock != null) legacyFullMock.enabled = false;
+
+            DisableLegacyFoodMock("Top Recipe");
+            DisableLegacyFoodMock("Top Explore");
+            DisableLegacyFoodMock("Bottom Recipe");
+            DisableLegacyFoodMock("Bottom Explore");
+
+            while (_foodRecipeViews.Count < count)
+            {
+                FoodRecipeItemView view = FoodRecipeItemView.Create(
+                    parent,
+                    _foodTabLabel != null ? _foodTabLabel.font : null,
+                    _foodRecipeViews.Count);
+                _foodRecipeViews.Add(view);
+            }
+
+            for (int i = 0; i < _foodRecipeViews.Count; i++)
+                _foodRecipeViews[i].gameObject.SetActive(i < count);
+        }
+
+        private void DisableLegacyFoodMock(string childName)
+        {
+            Transform child = _foodPlaceholder.transform.Find(childName);
+            if (child != null) child.gameObject.SetActive(false);
+        }
+
+        private void RequestUnlockRecipe(string recipeId)
+        {
+            UnlockRecipeAsync(recipeId).Forget();
+        }
+
+        private async UniTaskVoid UnlockRecipeAsync(string recipeId)
+        {
+            if (_foodRecipeService == null) return;
+            FoodRecipeUnlockResult result =
+                await _foodRecipeService.TryUnlockAsync(
+                    recipeId,
+                    this.GetCancellationTokenOnDestroy());
+
+            switch (result.Code)
+            {
+                case FoodRecipeUnlockResultCode.Success:
+                case FoodRecipeUnlockResultCode.AlreadyUnlocked:
+                    RenderFood();
+                    break;
+                case FoodRecipeUnlockResultCode.PrerequisiteLocked:
+                    RequestToast("Hãy mở món phía trên trước");
+                    break;
+                case FoodRecipeUnlockResultCode.InsufficientStars:
+                    RequestToast(
+                        $"Cần {result.RequiredStars} sao để mở khóa");
+                    break;
+                case FoodRecipeUnlockResultCode.Busy:
+                    break;
+                default:
+                    RequestToast("Không thể mở khóa lúc này");
+                    break;
+            }
+        }
+
+        private void RequestCookRecipe(string recipeId)
+        {
+            if (string.IsNullOrWhiteSpace(recipeId)) return;
+
+            RectTransform overlayParent = transform as RectTransform;
+            GameObject panel =
+                _foodCookingPanelFactory?.Open(overlayParent, recipeId);
+            if (panel == null)
+            {
+                RequestToast("Không thể mở giao diện nấu ăn");
+            }
+        }
+
+        private void CloseCookingPanel()
+        {
+            _foodCookingPanelFactory?.Close();
+        }
+
+        private void RequestToast(
+            string message,
+            QuestToastStyle style = QuestToastStyle.Info)
+        {
+            _toastPublisher?.Publish(
+                new QuestToastRequestedPayload(message, style));
+        }
+
+        private void ShowToast(QuestToastRequestedPayload payload)
+        {
+            EnsureToastView()?.Show(payload);
+        }
+
+        private QuestToastView EnsureToastView()
+        {
+            if (_toastView != null) return _toastView;
+            if (_rewardToast == null) return null;
+
+            _toastView = _rewardToast.GetComponent<QuestToastView>();
+            if (_toastView == null)
+                _toastView = _rewardToast.AddComponent<QuestToastView>();
+            _toastView.Configure(_rewardToastText);
+            return _toastView;
+        }
+
         private void OnRewardGranted(QuestRewardGrantedPayload payload)
         {
             if (payload.ReconciledAtStartup || _rewardToast == null) return;
-            ShowRewardToast($"+{payload.Coins}");
+            RequestToast($"+{payload.Coins}", QuestToastStyle.Success);
         }
 
         private void OnProgressRewardClaimed(ProgressRewardClaimedPayload payload)
         {
             PlayProgressStarReward();
-        }
-
-        private void ShowRewardToast(string text)
-        {
-            if (_rewardToast == null) return;
-            if (_rewardToastText != null) _rewardToastText.text = text;
-
-            _rewardTransition?.Kill(false);
-            _rewardToast.SetActive(true);
-            RectTransform toastRect =
-                _rewardToast.transform as RectTransform;
-            CanvasGroup toastGroup = GetOrAddCanvasGroup(_rewardToast);
-            if (toastRect == null) return;
-
-            toastRect.localScale = Vector3.one * 0.92f;
-            toastGroup.alpha = 0f;
-            _rewardTransition = DOTween.Sequence()
-                .SetUpdate(true)
-                .SetTarget(this)
-                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
-            _rewardTransition.Join(
-                toastRect
-                    .DOScale(1f, 0.14f)
-                    .SetEase(Ease.OutCubic));
-            _rewardTransition.Join(
-                toastGroup
-                    .DOFade(1f, 0.10f)
-                    .SetEase(Ease.OutQuad));
-            _rewardTransition.AppendInterval(0.75f);
-            _rewardTransition.Append(
-                toastGroup
-                    .DOFade(0f, 0.15f)
-                    .SetEase(Ease.InQuad));
-            _rewardTransition.OnComplete(() =>
-            {
-                _rewardToast.SetActive(false);
-                toastRect.localScale = Vector3.one;
-                toastGroup.alpha = 1f;
-                _rewardTransition = null;
-            });
         }
 
         private void PlayProgressStarReward()
@@ -670,6 +875,7 @@ namespace MyOwn.ServiceHarness
 
         protected override void OnDestroy()
         {
+            CloseCookingPanel();
             GameplayInputBlockRegistry.Remove(this);
             UnregisterButtons();
             KillMotion();

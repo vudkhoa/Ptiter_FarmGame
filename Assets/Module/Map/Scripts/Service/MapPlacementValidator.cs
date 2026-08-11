@@ -14,22 +14,27 @@ namespace Core.Module.Map
         private readonly GridData _grid;
         private readonly IReadOnlyDictionary<string, FreePlacementRecord> _freePlacements;
         private readonly Func<Vector3, Vector3Int> _worldToCell;
+        private readonly Func<Vector3Int, bool> _isDecorBlocked;
 
         public MapPlacementValidator(
             ObjectDatabaseSO database,
             GridData grid,
             IReadOnlyDictionary<string, FreePlacementRecord> freePlacements,
-            Func<Vector3, Vector3Int> worldToCell)
+            Func<Vector3, Vector3Int> worldToCell,
+            Func<Vector3Int, bool> isDecorBlocked)
         {
             _database = database ?? throw new ArgumentNullException(nameof(database));
             _grid = grid ?? throw new ArgumentNullException(nameof(grid));
             _freePlacements = freePlacements ?? throw new ArgumentNullException(nameof(freePlacements));
             _worldToCell = worldToCell ?? throw new ArgumentNullException(nameof(worldToCell));
+            _isDecorBlocked = isDecorBlocked ?? throw new ArgumentNullException(nameof(isDecorBlocked));
         }
 
         public bool CanPlaceGrid(ObjectData data, Vector3Int originCell)
         {
             Vector2Int size = NormalizeSize(data.Size);
+
+            if (IsGameplayBlockedByDecor(data, originCell, size)) return false;
 
             // GridData currently supports one Grid placement per cell. Grid-vs-Grid therefore
             // remains exclusive even when the layer masks would otherwise allow an overlap.
@@ -88,6 +93,21 @@ namespace Core.Module.Map
             }
 
             return true;
+        }
+
+        private bool IsGameplayBlockedByDecor(ObjectData data, Vector3Int originCell, Vector2Int size)
+        {
+            if ((data.PlacementLayer & MapPlacementLayer.Gameplay) == 0) return false;
+
+            for (int x = 0; x < size.x; x++)
+            {
+                for (int z = 0; z < size.y; z++)
+                {
+                    if (_isDecorBlocked(originCell + new Vector3Int(x, 0, z))) return true;
+                }
+            }
+
+            return false;
         }
 
         private MapSurfaceType GetSurfaceAt(Vector3Int cell)

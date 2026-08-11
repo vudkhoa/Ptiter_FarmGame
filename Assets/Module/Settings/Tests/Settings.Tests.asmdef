@@ -2,7 +2,8 @@
     "name": "Settings.Tests",
     "rootNamespace": "Core.Module.Settings.Tests",
     "references": [
-        "GUID:4ab48617c7bde734187fcbaa6ff3077e"
+        "GUID:4ab48617c7bde734187fcbaa6ff3077e",
+        "GUID:a3b9c729ef064f07b8b8e5fb58636200"
     ],
     "includePlatforms": [
         "Editor"

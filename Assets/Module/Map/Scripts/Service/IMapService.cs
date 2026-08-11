@@ -25,6 +25,8 @@ namespace Core.Module.Map
         bool SelectAuthoringObject(Vector3 worldHit);
         bool MoveSelectedAuthoringObject(Vector3 worldHit);
         void SetSelectedAuthoringScale(float uniformScale);
+        bool SetDecorBlocker(Vector3 worldHit, bool blocked);
+        void ClearAllDecorBlockers();
 
         // Legacy-save compatibility: rebuild a missing Soil/Barn underneath a persisted farm slot.
         bool EnsureFarmPlacement(Vector3Int originCell, MapObjectKind kind);

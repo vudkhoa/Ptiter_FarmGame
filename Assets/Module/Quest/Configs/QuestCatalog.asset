@@ -30,3 +30,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c826941f07a05604980c73111d43a04d, type: 2}
   dailySchedule: {fileID: 11400000, guid: e7a75a011d5ec224cb25986823c61b6e, type: 2}
   progressConfig: {fileID: 11400000, guid: 494dd89fd0aadb4488ebcf96bfc3a476, type: 2}
+  foodRecipeConfig: {fileID: 11400000, guid: 7cce84267f9b6d44aa27eaeceaf66645, type: 2}
+  foodCookingPanelConfig: {fileID: 11400000, guid: ed84c05b3444b1549be04107c4e17613, type: 2}
+  cookingRecipeConfig: {fileID: 11400000, guid: ef6f8fb97394a6640bf3955e0533ec0e, type: 2}

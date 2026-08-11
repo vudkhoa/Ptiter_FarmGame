@@ -13,7 +13,7 @@ namespace Core.Module.Map
         private IMapService _map;
 
         #region Bind - Manual Injection
-        public void Bind(MapService map)
+        public void Bind(IMapService map)
         {
             _map = map;
         }

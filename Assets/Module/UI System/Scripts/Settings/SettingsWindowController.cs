@@ -1,4 +1,5 @@
 using BrunoMikoski.UIManager;
+using Core.Module.Input;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
@@ -43,6 +44,7 @@ namespace Core.Module.Settings.UI
 
         public void OnBeforeWindowOpen()
         {
+            GameplayInputBlockRegistry.Add(this);
             RegisterListeners();
             if (_settingsService != null)
                 BindSnapshot(_settingsService.Current);
@@ -50,6 +52,7 @@ namespace Core.Module.Settings.UI
 
         public void OnWindowClosed()
         {
+            GameplayInputBlockRegistry.Remove(this);
             UnregisterListeners();
         }
 
@@ -142,6 +145,7 @@ namespace Core.Module.Settings.UI
 
         protected override void OnDestroy()
         {
+            GameplayInputBlockRegistry.Remove(this);
             UnregisterListeners();
             base.OnDestroy();
         }

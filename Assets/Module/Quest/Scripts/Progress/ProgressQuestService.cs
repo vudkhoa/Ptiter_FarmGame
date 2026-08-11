@@ -7,7 +7,10 @@ using UnityEngine;
 
 namespace Core.Module.Quest
 {
-    public sealed class ProgressQuestService : IProgressQuestService, IDisposable
+    public sealed class ProgressQuestService :
+        IProgressQuestService,
+        IStarWalletService,
+        IDisposable
     {
         private readonly QuestCatalogSO _catalog;
         private readonly IProgressQuestRepository _repository;
@@ -18,6 +21,8 @@ namespace Core.Module.Quest
             new Queue<ProgressCoinsEarnedPayload>();
         private readonly HashSet<string> _claimingMilestones =
             new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<string> _purchasingUnlocks =
+            new HashSet<string>(StringComparer.Ordinal);
         private readonly CancellationTokenSource _lifetimeCts =
             new CancellationTokenSource();
 
@@ -26,6 +31,7 @@ namespace Core.Module.Quest
         private bool _processingCredits;
 
         public bool IsReady { get; private set; }
+        public int Stars => _state?.stars ?? 0;
 
         public ProgressQuestService(
             QuestCatalogSO catalog,
@@ -45,7 +51,14 @@ namespace Core.Module.Quest
         public async UniTask EnsureInitializedAsync(
             CancellationToken cancellationToken = default)
         {
-            if (IsReady || _initializing) return;
+            if (IsReady) return;
+            if (_initializing)
+            {
+                await UniTask.WaitUntil(
+                    () => !_initializing || IsReady,
+                    cancellationToken: cancellationToken);
+                return;
+            }
             _initializing = true;
             try
             {
@@ -183,6 +196,66 @@ namespace Core.Module.Quest
             }
         }
 
+        public bool IsStarUnlockPurchased(string unlockId)
+        {
+            return IsReady &&
+                   !string.IsNullOrWhiteSpace(unlockId) &&
+                   _state?.unlockedRecipeIds != null &&
+                   _state.unlockedRecipeIds.Contains(unlockId);
+        }
+
+        public async UniTask<StarUnlockPurchaseResult>
+            TryPurchaseStarUnlockAsync(
+                string unlockId,
+                int cost,
+                CancellationToken cancellationToken = default)
+        {
+            await EnsureInitializedAsync(cancellationToken);
+            if (!IsReady || string.IsNullOrWhiteSpace(unlockId) || cost <= 0)
+                return new StarUnlockPurchaseResult(
+                    StarUnlockPurchaseState.InvalidRequest,
+                    Stars);
+            if (IsStarUnlockPurchased(unlockId))
+                return new StarUnlockPurchaseResult(
+                    StarUnlockPurchaseState.AlreadyUnlocked,
+                    Stars);
+            if (!_purchasingUnlocks.Add(unlockId))
+                return new StarUnlockPurchaseResult(
+                    StarUnlockPurchaseState.Busy,
+                    Stars);
+
+            try
+            {
+                if (_state.stars < cost)
+                    return new StarUnlockPurchaseResult(
+                        StarUnlockPurchaseState.InsufficientStars,
+                        _state.stars);
+
+                int previousStars = _state.stars;
+                _state.stars -= cost;
+                _state.unlockedRecipeIds.Add(unlockId);
+                if (!await _repository.SaveProgressQuestAsync(
+                        _state,
+                        cancellationToken))
+                {
+                    _state.unlockedRecipeIds.Remove(unlockId);
+                    _state.stars = previousStars;
+                    return new StarUnlockPurchaseResult(
+                        StarUnlockPurchaseState.SaveFailed,
+                        _state.stars);
+                }
+
+                PublishStateChanged();
+                return new StarUnlockPurchaseResult(
+                    StarUnlockPurchaseState.Success,
+                    _state.stars);
+            }
+            finally
+            {
+                _purchasingUnlocks.Remove(unlockId);
+            }
+        }
+
         private void OnCoinsEarned(ProgressCoinsEarnedPayload payload)
         {
             if (payload.Amount <= 0) return;
@@ -250,6 +323,15 @@ namespace Core.Module.Quest
             state.accumulatedCoins = Math.Max(0, state.accumulatedCoins);
             state.stars = Math.Max(0, state.stars);
             state.claimedMilestoneIds ??= new List<string>();
+            state.unlockedRecipeIds ??= new List<string>();
+            var usedUnlockIds = new HashSet<string>(StringComparer.Ordinal);
+            for (int i = state.unlockedRecipeIds.Count - 1; i >= 0; i--)
+            {
+                string unlockId = state.unlockedRecipeIds[i];
+                if (string.IsNullOrWhiteSpace(unlockId) ||
+                    !usedUnlockIds.Add(unlockId))
+                    state.unlockedRecipeIds.RemoveAt(i);
+            }
         }
 
         private static int AddClamped(int current, int amount)
@@ -265,6 +347,7 @@ namespace Core.Module.Quest
             _lifetimeCts.Dispose();
             _pendingCredits.Clear();
             _claimingMilestones.Clear();
+            _purchasingUnlocks.Clear();
         }
     }
 }
