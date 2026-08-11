@@ -11,7 +11,7 @@ namespace MyOwn.ServiceHarness
     /// </summary>
     public static class PlayerDataSaveLoad
     {
-        private const int CURRENT_SAVE_VERSION = 5;
+        private const int CURRENT_SAVE_VERSION = 6;
         private const string FILE_NAME = "playerdata.json";
         private const string TEMP_SUFFIX = ".tmp";
 
@@ -80,6 +80,8 @@ namespace MyOwn.ServiceHarness
                 new System.Collections.Generic.List<
                     Core.Module.Quest.PendingQuestRewardSaveData>();
             data.GrantedQuestRewardTransactions ??=
+                new System.Collections.Generic.List<string>();
+            data.GrantedCookingCompletionTransactions ??=
                 new System.Collections.Generic.List<string>();
             data.QuestProgress ??= new Core.Module.Quest.ProgressQuestSaveData();
             data.QuestProgress.claimedMilestoneIds ??=
