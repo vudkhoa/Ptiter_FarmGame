@@ -29,6 +29,10 @@ namespace Core.Module.Farm
         public string entityName;
         public FarmEntityType entityType;
 
+        [Header("UI Config")]
+        [Tooltip("Icon displayed for this entity in the farm seed selector.")]
+        public Sprite selectorIcon;
+
         [Header("Purchase Config")]
         public int coinCost;
 

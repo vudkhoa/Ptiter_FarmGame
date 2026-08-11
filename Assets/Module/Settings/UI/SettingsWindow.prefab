@@ -853,6 +853,8 @@ GameObject:
   - component: {fileID: 445853948642547859}
   - component: {fileID: 4408938282534035773}
   - component: {fileID: 6825118944327906561}
+  - component: {fileID: 8900000000000000011}
+  - component: {fileID: 8900000000000000012}
   m_Layer: 0
   m_Name: SettingsWindow
   m_TagString: Untagged
@@ -966,8 +968,8 @@ MonoBehaviour:
     collectionGUIDValueB: 3807423450203082926
     itemLastKnownName: SettingsWindow
     collectionLastKnownName: UIWindowCollection
-  transitionIn: {fileID: 0}
-  transitionOut: {fileID: 0}
+  transitionIn: {fileID: 8900000000000000011}
+  transitionOut: {fileID: 8900000000000000012}
   _closeButton: {fileID: 8216788179644262675}
   _musicToggle: {fileID: 2474847267337147481}
   _soundToggle: {fileID: 6779032602622613221}
@@ -980,6 +982,34 @@ MonoBehaviour:
   _vibrationToggleImage: {fileID: 0}
   _enabledColor: {r: 1, g: 1, b: 1, a: 1}
   _disabledColor: {r: 0.55, g: 0.48, b: 0.43, a: 1}
+--- !u!114 &8900000000000000011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2486491318374958324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b724ca05598d43f59f05ac0dcad4bff6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Core.Module.UI.Animation.PopupWindowOpenTransition
+  _motionRoot: {fileID: 134342877961499098}
+  _dimmer: {fileID: 3968129583349000790}
+--- !u!114 &8900000000000000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2486491318374958324}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02a90fb3ad81424f97fdc1b65cf91a4b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Core.Module.UI.Animation.PopupWindowCloseTransition
+  _motionRoot: {fileID: 134342877961499098}
+  _dimmer: {fileID: 3968129583349000790}
 --- !u!1 &2990604605026441929
 GameObject:
   m_ObjectHideFlags: 0

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmEntityData
   entityName: Heo
   entityType: 1
+  selectorIcon: {fileID: 21300000, guid: fd3669fdd90b7614bb34221d19c042ee, type: 3}
   coinCost: 50
   inputs:
   - item: {fileID: 11400000, guid: 22200000000000000000000000000001, type: 2}
