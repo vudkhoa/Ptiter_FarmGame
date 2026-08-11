@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc5eee8794a1fad4a94e061eacfefb2f, type: 3}
+  m_Name: CookingRecipeConfig
+  m_EditorClassIdentifier: Quest::Core.Module.Quest.Cooking.CookingRecipeConfigSO
+  maxQuantity: 99
+  recipes:
+  - recipeId: banh_mi_heo_quay
+    displayName: "B\xC1NH M\xCC HEO QUAY"
+    description: "B\xE1nh m\xEC n\xF3ng gi\xF2n v\u1EDBi th\u1ECBt heo quay \u0111\u1EADm
+      v\u1ECB."
+    dishSprite: {fileID: 21300000, guid: b0bf04e6b94a4454aa7c8b539690e7bb, type: 3}
+    secondsPerItem: 20
+    outputItemId: banh_mi_heo_quay
+    outputAmountPerItem: 1
+    ingredients:
+    - itemId: pork_belly
+      displayName: "BA CH\u1EC8 HEO"
+      amountPerItem: 2
+      icon: {fileID: 21300000, guid: bdec628daae12794090c488b23c84347, type: 3}
+    - itemId: wheat_grain
+      displayName: "L\xDAA M\xCC"
+      amountPerItem: 1
+      icon: {fileID: 21300000, guid: f1d7549bc8ebb25408d5b69c5fac8b07, type: 3}

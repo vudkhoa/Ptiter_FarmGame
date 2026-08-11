@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Core.Module.Farm;
 using Core.Module.Map;
 using Core.Module.Quest;
+using Core.Module.Quest.Cooking;
 
 namespace MyOwn.ServiceHarness
 {
@@ -14,7 +15,7 @@ namespace MyOwn.ServiceHarness
     public class PlayerData
     {
         public string PlayerId;
-        public int SaveVersion = 5;
+        public int SaveVersion = 6;
         public long LastSaveUtcTicks;
 
         public int Coins = 1000;
@@ -30,6 +31,9 @@ namespace MyOwn.ServiceHarness
         public List<PendingQuestRewardSaveData> PendingQuestRewards =
             new List<PendingQuestRewardSaveData>();
         public List<string> GrantedQuestRewardTransactions = new List<string>();
+        public CookingJobSaveData ActiveCookingJob;
+        public List<string> GrantedCookingCompletionTransactions =
+            new List<string>();
 
         // Flag raised if clock manipulation is detected to freeze production
         public bool IsCheatDetected = false;

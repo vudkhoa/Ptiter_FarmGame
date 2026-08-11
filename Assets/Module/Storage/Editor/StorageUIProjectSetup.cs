@@ -165,31 +165,72 @@ namespace Core.Module.Storage.Editor
 
             SerializedObject serialized = new SerializedObject(catalog);
             SerializedProperty items = serialized.FindProperty("_items");
-            items.arraySize = 4;
             ConfigureCatalogItem(
-                items.GetArrayElementAtIndex(0),
+                FindOrAppendCatalogItem(items, "bonsai"),
                 "bonsai", "CÂY BONSAI", "Mua ở tiệm cây cảnh",
                 InventoryCategory.Decoration,
                 Sprite("UI/inventory_item_bonsai_icon.png"),
                 Sprite("UI/inventory_item_bonsai_preview.png"));
             ConfigureCatalogItem(
-                items.GetArrayElementAtIndex(1),
+                FindOrAppendCatalogItem(items, "wheat_grain"),
                 "wheat_grain", "Hạt Lúa", "Nông sản thu hoạch từ ruộng lúa.",
                 InventoryCategory.FarmProduce,
-                null, null);
+                QuestSprite("ingredient_wheat_icon.png"), null);
             ConfigureCatalogItem(
-                items.GetArrayElementAtIndex(2),
+                FindOrAppendCatalogItem(items, "sugarcane_raw"),
                 "sugarcane_raw", "Mía Thô", "Nông sản thu hoạch từ ruộng mía.",
                 InventoryCategory.FarmProduce,
                 null, null);
             ConfigureCatalogItem(
-                items.GetArrayElementAtIndex(3),
+                FindOrAppendCatalogItem(items, "egg"),
                 "egg", "Trứng Gà", "Nông sản thu hoạch từ vật nuôi.",
                 InventoryCategory.FarmProduce,
                 null, null);
+            ConfigureCatalogItem(
+                FindOrAppendCatalogItem(items, "pork_belly"),
+                "pork_belly", "Ba Chỉ Heo",
+                "Nguyên liệu dùng để chế biến món ăn.",
+                InventoryCategory.FarmProduce,
+                QuestSprite("ingredient_pork_belly_icon.png"), null);
+            ConfigureCatalogItem(
+                FindOrAppendCatalogItem(items, "banh_mi_heo_quay"),
+                "banh_mi_heo_quay", "Bánh Mì Heo Quay",
+                "Món ăn nóng giòn làm từ thịt heo và lúa mì.",
+                InventoryCategory.Food,
+                QuestSprite("food_banh_mi_icon.png"),
+                QuestSprite("food_banh_mi_icon.png"));
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(catalog);
             return catalog;
+        }
+
+        private static SerializedProperty FindOrAppendCatalogItem(
+            SerializedProperty items,
+            string itemId)
+        {
+            for (int i = 0; i < items.arraySize; i++)
+            {
+                SerializedProperty candidate =
+                    items.GetArrayElementAtIndex(i);
+                SerializedProperty id =
+                    candidate.FindPropertyRelative("itemId");
+                if (string.Equals(
+                        id.stringValue,
+                        itemId,
+                        StringComparison.Ordinal))
+                    return candidate;
+            }
+
+            int newIndex = items.arraySize;
+            items.InsertArrayElementAtIndex(newIndex);
+            SerializedProperty appended = items.GetArrayElementAtIndex(newIndex);
+            appended.FindPropertyRelative("itemId").stringValue = string.Empty;
+            appended.FindPropertyRelative("displayName").stringValue = string.Empty;
+            appended.FindPropertyRelative("description").stringValue = string.Empty;
+            appended.FindPropertyRelative("category").enumValueIndex = 0;
+            appended.FindPropertyRelative("icon").objectReferenceValue = null;
+            appended.FindPropertyRelative("preview").objectReferenceValue = null;
+            return appended;
         }
 
         private static void ConfigureCatalogItem(
@@ -207,6 +248,12 @@ namespace Core.Module.Storage.Editor
             item.FindPropertyRelative("category").enumValueIndex = (int)category;
             item.FindPropertyRelative("icon").objectReferenceValue = icon;
             item.FindPropertyRelative("preview").objectReferenceValue = preview;
+        }
+
+        private static Sprite QuestSprite(string fileName)
+        {
+            return AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/Module/Quest/Texture/" + fileName);
         }
 
         private static PrefabUIWindow BuildInventoryWindow(
