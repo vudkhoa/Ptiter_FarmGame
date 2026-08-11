@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using BrunoMikoski.UIManager;
 using Core.Module.Input;
+using Shared.Utils.HUD;
 using UnityEngine;
 using UnityEngine.UI;
 using VContainer;
@@ -13,7 +14,7 @@ namespace Shared.Utils
     /// serialized in the prefab; the scene-owned WindowsManager is injected.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class WindowOpenTrigger : MonoBehaviour
+    public sealed class WindowOpenTrigger : MonoBehaviour, IHudButtonAction
     {
         [SerializeField] private Button _button;
         [SerializeField] private WindowsManager _windowsManager;
@@ -22,6 +23,9 @@ namespace Shared.Utils
 
         private static readonly HashSet<WindowOpenTrigger> OpenTriggers =
             new HashSet<WindowOpenTrigger>();
+
+        public static bool IsAnyWindowOpen => OpenTriggers.Count > 0;
+
         private IObjectResolver _resolver;
         private IInputService _inputService;
         private bool _windowEventsSubscribed;
@@ -69,6 +73,8 @@ namespace Shared.Utils
 
         private void RegisterButton()
         {
+            if (GetComponent<HudActionButton>() != null) return;
+
             _button?.onClick.RemoveListener(Open);
             _button?.onClick.AddListener(Open);
         }
@@ -92,14 +98,21 @@ namespace Shared.Utils
             Open();
         }
 
-        public void Open()
+        public bool CanExecute()
+        {
+            return _window != null &&
+                   _windowsManager != null &&
+                   !IsAnotherWindowOpen();
+        }
+
+        public bool TryExecute()
         {
             if (_window == null)
             {
                 Debug.LogError(
                     $"[WindowOpenTrigger] '{name}' has no UIWindow assigned.",
                     this);
-                return;
+                return false;
             }
 
             if (_windowsManager == null)
@@ -108,25 +121,28 @@ namespace Shared.Utils
                     $"[WindowOpenTrigger] '{name}' was not injected with a WindowsManager. " +
                     "Instantiate this prefab through VContainer.",
                     this);
-                return;
+                return false;
             }
 
-            if (IsAnotherWindowOpen()) return;
+            if (IsAnotherWindowOpen()) return false;
 
             SubscribeWindowEvents();
-            if (!_windowsManager.Open(_window)) return;
+            if (!_windowsManager.Open(_window)) return false;
 
             SetOpenState(true);
             if (!_windowsManager.TryGetWindowInstance(
                     _window, out WindowController controller))
-                return;
+                return true;
 
             _resolver?.Inject(controller);
+            return true;
         }
+
+        public void Open() => TryExecute();
 
         private static bool HasOpenTrigger()
         {
-            return OpenTriggers.Count > 0;
+            return IsAnyWindowOpen;
         }
 
         private bool IsPointerOverUI()
