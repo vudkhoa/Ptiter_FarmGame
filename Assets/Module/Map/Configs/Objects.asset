@@ -15,8 +15,10 @@ MonoBehaviour:
   Objects:
   - name: Banana Tree
     ID: 1
+    MenuCategory: 2
+    SelectionIcon: {fileID: 0}
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
@@ -33,8 +35,10 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Bonsai
     ID: 2
+    MenuCategory: 2
+    SelectionIcon: {fileID: 21300000, guid: e22f586c46ba5c3438bdd9097379772c, type: 3}
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0.1
@@ -51,8 +55,10 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Bush
     ID: 3
+    MenuCategory: 2
+    SelectionIcon: {fileID: 0}
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
@@ -69,8 +75,10 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Rock_1
     ID: 4
+    MenuCategory: 2
+    SelectionIcon: {fileID: 0}
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
@@ -87,8 +95,10 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Rock_2
     ID: 5
+    MenuCategory: 2
+    SelectionIcon: {fileID: 0}
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
@@ -105,8 +115,10 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Soil
     ID: 101
+    MenuCategory: 1
+    SelectionIcon: {fileID: 21300000, guid: 5ae3a24aa7c5e344fa3afcf4e19ee3e4, type: 3}
     Size: {x: 1, y: 1}
-    Kind: 1
+    FarmRole: 1
     PlacementInputMode: 1
     PositionMode: 0
     FreeSnapStep: 0
@@ -123,8 +135,10 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Pig Barn
     ID: 102
+    MenuCategory: 1
+    SelectionIcon: {fileID: 21300000, guid: ad14948cc0ce0204aa5a490a784e2fe3, type: 3}
     Size: {x: 3, y: 3}
-    Kind: 2
+    FarmRole: 2
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0
@@ -141,8 +155,10 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Main House
     ID: 103
+    MenuCategory: 0
+    SelectionIcon: {fileID: 0}
     Size: {x: 5, y: 5}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0
@@ -159,8 +175,10 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Storage
     ID: 104
+    MenuCategory: 0
+    SelectionIcon: {fileID: 0}
     Size: {x: 3, y: 3}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0
@@ -177,8 +195,10 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Lake
     ID: 6
+    MenuCategory: 0
+    SelectionIcon: {fileID: 0}
     Size: {x: 9, y: 7}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0

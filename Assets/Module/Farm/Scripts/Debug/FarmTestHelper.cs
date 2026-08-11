@@ -33,8 +33,8 @@ namespace Core.Module.Farm
                 var grid = gridField?.GetValue(concreteMapService) as GridData;
                 if (grid == null) return;
 
-                AddTestPlacement(grid, MapObjectKind.Soil, new Vector3Int(0, 0, 0), 999);
-                AddTestPlacement(grid, MapObjectKind.Barn, new Vector3Int(3, 0, 3), 998);
+                AddTestPlacement(grid, FarmObjectRole.Soil, new Vector3Int(0, 0, 0), 999);
+                AddTestPlacement(grid, FarmObjectRole.Barn, new Vector3Int(3, 0, 3), 998);
             }
             catch (Exception exception)
             {
@@ -44,22 +44,22 @@ namespace Core.Module.Farm
 
         private void AddTestPlacement(
             GridData grid,
-            MapObjectKind kind,
+            FarmObjectRole role,
             Vector3Int origin,
             int placedObjectIndex)
         {
-            if (!TryGetObject(kind, out ObjectData data))
+            if (!TryGetObject(role, out ObjectData data))
             {
-                Debug.LogWarning($"[FarmTestHelper] No {kind} entry exists in ObjectDatabaseSO; test placement skipped.");
+                Debug.LogWarning($"[FarmTestHelper] No {role} entry exists in ObjectDatabaseSO; test placement skipped.");
                 return;
             }
 
-            grid.AddObjectAt(origin, data.Size, data.ID, data.Kind, placedObjectIndex);
+            grid.AddObjectAt(origin, data.Size, data.ID, data.FarmRole, placedObjectIndex);
         }
 
-        private bool TryGetObject(MapObjectKind kind, out ObjectData result)
+        private bool TryGetObject(FarmObjectRole role, out ObjectData result)
         {
-            return _objectDatabase.TryGetFirstByKind(kind, out result);
+            return _objectDatabase.TryGetFirstByFarmRole(role, out result);
         }
     }
 }

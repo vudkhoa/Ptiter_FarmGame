@@ -43,14 +43,14 @@ namespace Core.Module.Map
             Vector3Int gridPosition,
             Vector2Int objectSize,
             int id,
-            MapObjectKind kind,
+            FarmObjectRole farmRole,
             int placedObjectIndex,
             string instanceId = null,
             float uniformScale = 1f)
         {
             List<Vector3Int> positionToOccupy = CalculatePositions(gridPosition, objectSize);
             PlacementData data = new PlacementData(
-                positionToOccupy, id, kind, placedObjectIndex, instanceId, uniformScale);
+                positionToOccupy, id, farmRole, placedObjectIndex, instanceId, uniformScale);
 
             foreach (var pos in positionToOccupy)
             {
@@ -108,7 +108,7 @@ namespace Core.Module.Map
     {
         public List<Vector3Int> OcupiedPositions;
         public int ID;
-        public MapObjectKind Kind;
+        public FarmObjectRole FarmRole;
         public int PlacedObjectIndex;
         public string InstanceId;
         public float UniformScale;
@@ -116,14 +116,14 @@ namespace Core.Module.Map
         public PlacementData(
             List<Vector3Int> ocupiedPositions,
             int id,
-            MapObjectKind kind,
+            FarmObjectRole farmRole,
             int placedObjectIndex,
             string instanceId,
             float uniformScale)
         {
             this.OcupiedPositions = ocupiedPositions;
             this.ID = id;
-            this.Kind = kind;
+            this.FarmRole = farmRole;
             this.PlacedObjectIndex = placedObjectIndex;
             this.InstanceId = instanceId;
             this.UniformScale = uniformScale;

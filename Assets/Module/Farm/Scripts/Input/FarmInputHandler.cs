@@ -160,10 +160,10 @@ namespace Core.Module.Farm
 
                 if (_mapService.TryGetPlacementAt(clickedCell, out var placement))
                 {
-                    bool? isAnimal = placement.Kind switch
+                    bool? isAnimal = placement.FarmRole switch
                     {
-                        MapObjectKind.Soil => false,
-                        MapObjectKind.Barn => true,
+                        FarmObjectRole.Soil => false,
+                        FarmObjectRole.Barn => true,
                         _ => null
                     };
 

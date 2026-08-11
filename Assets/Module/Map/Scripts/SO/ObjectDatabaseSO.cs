@@ -5,11 +5,18 @@ using UnityEngine.AddressableAssets;
 
 namespace Core.Module.Map
 {
-    public enum MapObjectKind
+    public enum FarmObjectRole
     {
-        Decoration = 0,
+        None = 0,
         Soil = 1,
         Barn = 2
+    }
+
+    public enum BuildMenuCategory
+    {
+        Hidden = 0,
+        Resource = 1,
+        Decoration = 2
     }
 
     public enum MapObjectRotationMode
@@ -73,13 +80,13 @@ namespace Core.Module.Map
             return false;
         }
 
-        public bool TryGetFirstByKind(MapObjectKind kind, out ObjectData result)
+        public bool TryGetFirstByFarmRole(FarmObjectRole role, out ObjectData result)
         {
             if (Objects != null)
             {
                 foreach (ObjectData data in Objects)
                 {
-                    if (data.Kind != kind) continue;
+                    if (data.FarmRole != role) continue;
 
                     result = data;
                     return true;
@@ -96,8 +103,13 @@ namespace Core.Module.Map
     {
         public string name;
         public int ID;
+        [Header("Selection UI")]
+        [FormerlySerializedAs("SelectionCategory")]
+        public BuildMenuCategory MenuCategory;
+        public Sprite SelectionIcon;
         public Vector2Int Size;
-        public MapObjectKind Kind;
+        [FormerlySerializedAs("Kind")]
+        public FarmObjectRole FarmRole;
         public PlacementInputMode PlacementInputMode;
         public PlacementPositionMode PositionMode;
         [Min(0f)] public float FreeSnapStep;
