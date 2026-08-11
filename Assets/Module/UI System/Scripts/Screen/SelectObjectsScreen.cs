@@ -2,6 +2,7 @@ using BrunoMikoski.UIManager;
 using Core.Module.Map;
 using Core.Module.Time;
 using MessagePipe;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,38 +13,160 @@ public class SelectObjectsScreen :
     IOnBeforeWindowOpen,
     IOnWindowClosed
 {
+    [Header("Window")]
     [SerializeField] private Button _btnClose;
     [SerializeField] private Button _bgClose;
-
-    [SerializeField] private List<MapPlacer> _buttons;
     [SerializeField] private ClockDisplay _display;
+
+    [Header("Tabs")]
+    [SerializeField] private Button _resourceTabButton;
+    [SerializeField] private Image _resourceTabImage;
+    [SerializeField] private Button _decorationTabButton;
+    [SerializeField] private Image _decorationTabImage;
+    [SerializeField] private Sprite _tabActiveSprite;
+    [SerializeField] private Sprite _tabInactiveSprite;
+
+    [Header("Resource horizontal recycler")]
+    [SerializeField] private ScrollRect _resourceRecycler;
+    [SerializeField] private RectTransform _resourceContent;
+    [SerializeField] private ObjectSelectSlotView _slotPrefab;
+
+    private readonly List<ObjectData> _resourceObjects = new();
+    private readonly List<ObjectSelectSlotView> _slotPool = new();
+    private IMapService _map;
+    private ObjectDatabaseSO _database;
+    private IDisposable _placementStoppedSubscription;
+    private int _displayedCountRevision = -1;
+    private bool _reopenAfterPlacement;
 
     [Inject]
     public void Construct(
         IMapService map,
-        ISubscriber<ClockTickPayload> tickSub)
+        ObjectDatabaseSO database,
+        ISubscriber<ClockTickPayload> tickSub,
+        ISubscriber<MapPlacementStoppedPayload> placementStoppedSub)
     {
-        Bind(map, tickSub);
+        Bind(map, database, tickSub, placementStoppedSub);
     }
 
-    public void Bind(IMapService map, ISubscriber<ClockTickPayload> tickSub)
+    public void Bind(
+        IMapService map,
+        ObjectDatabaseSO database,
+        ISubscriber<ClockTickPayload> tickSub,
+        ISubscriber<MapPlacementStoppedPayload> placementStoppedSub)
     {
-        if (_buttons == null) return;
-        foreach (MapPlacer p in _buttons)
-            if (p != null) p.Bind(map);
-
+        _map = map;
+        _database = database;
         if (_display != null) _display.Subscriber(tickSub);
+
+        _placementStoppedSubscription?.Dispose();
+        _placementStoppedSubscription = placementStoppedSub?.Subscribe(OnPlacementStopped);
+
+        // UIManager creates/opens the window before WindowOpenTrigger injects it.
+        // Rebind the prefab-backed slots here so MapPlacer never keeps a null map.
+        ReloadResourceItems();
     }
 
     public void OnBeforeWindowOpen()
     {
         _btnClose?.onClick.AddListener(Close);
         _bgClose?.onClick.AddListener(Close);
+        _resourceTabButton?.onClick.AddListener(ShowResources);
+
+        if (_decorationTabButton != null)
+            _decorationTabButton.interactable = false;
+
+        ShowResources();
     }
 
     public void OnWindowClosed()
     {
         _btnClose?.onClick.RemoveListener(Close);
         _bgClose?.onClick.RemoveListener(Close);
+        _resourceTabButton?.onClick.RemoveListener(ShowResources);
+    }
+
+    protected override void OnDestroy()
+    {
+        _placementStoppedSubscription?.Dispose();
+        base.OnDestroy();
+    }
+
+    private void Update()
+    {
+        RefreshPlacedCounts(force: false);
+    }
+
+    private void ShowResources()
+    {
+        ApplyTabVisual(_resourceTabImage, active: true);
+        ApplyTabVisual(_decorationTabImage, active: false);
+        if (_resourceRecycler != null) _resourceRecycler.gameObject.SetActive(true);
+
+        ReloadResourceItems();
+    }
+
+    private void ReloadResourceItems()
+    {
+        if (_database == null || _resourceContent == null || _slotPrefab == null) return;
+
+        _database.GetObjectsByMenuCategory(BuildMenuCategory.Resource, _resourceObjects);
+        EnsurePoolSize(_resourceObjects.Count);
+
+        for (int i = 0; i < _slotPool.Count; i++)
+        {
+            if (i < _resourceObjects.Count)
+                _slotPool[i].Bind(_resourceObjects[i], _map, OnPlacementStarted);
+            else
+                _slotPool[i].Clear();
+        }
+
+        RefreshPlacedCounts(force: true);
+    }
+
+    private void EnsurePoolSize(int requiredCount)
+    {
+        while (_slotPool.Count < requiredCount)
+        {
+            ObjectSelectSlotView slot = Instantiate(_slotPrefab, _resourceContent);
+            slot.name = $"Object Slot {_slotPool.Count}";
+            _slotPool.Add(slot);
+        }
+    }
+
+    private void ApplyTabVisual(Image image, bool active)
+    {
+        if (image == null) return;
+        Sprite sprite = active ? _tabActiveSprite : _tabInactiveSprite;
+        if (sprite != null) image.sprite = sprite;
+    }
+
+    private void OnPlacementStarted()
+    {
+        if (!IsOpen) return;
+
+        _reopenAfterPlacement = true;
+        Close();
+    }
+
+    private void OnPlacementStopped(MapPlacementStoppedPayload _)
+    {
+        if (!_reopenAfterPlacement) return;
+
+        _reopenAfterPlacement = false;
+        Open();
+    }
+
+    private void RefreshPlacedCounts(bool force)
+    {
+        if (_database == null) return;
+        if (!force && _displayedCountRevision == _database.PlacedCountRevision) return;
+
+        _displayedCountRevision = _database.PlacedCountRevision;
+        foreach (ObjectSelectSlotView slot in _slotPool)
+        {
+            if (slot == null || slot.ObjectId < 0) continue;
+            slot.SetPlacedCount(_database.GetPlacedCount(slot.ObjectId));
+        }
     }
 }

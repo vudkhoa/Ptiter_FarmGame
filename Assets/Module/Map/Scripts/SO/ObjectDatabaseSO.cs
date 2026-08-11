@@ -153,6 +153,7 @@ namespace Core.Module.Map
         [FormerlySerializedAs("SelectionCategory")]
         public BuildMenuCategory MenuCategory;
         public Sprite SelectionIcon;
+        [Min(0)] public int CoinPrice;
         public Vector2Int Size;
         [FormerlySerializedAs("Kind")]
         public FarmObjectRole FarmRole;
