@@ -18,7 +18,7 @@ MonoBehaviour:
   collectionGUID:
     value1: 5548129636122632612
     value2: 3807423450203082926
-  layer: {fileID: 11400000, guid: 58cc646b2440c9540be494b551f0a3d5, type: 2}
+  layer: {fileID: 11400000, guid: 7feff1acbb8eb8042886f9bfea3874a0, type: 2}
   group:
     indirectReferences:
     - collectionItemGUIDValueA: 5648016018135734384

@@ -11,6 +11,10 @@ namespace Core.Module.Map
     public sealed class MapPlayerRemoveButton : MonoBehaviour
     {
         [SerializeField] private Button _button;
+        [SerializeField] private Camera _worldCamera;
+
+        [Header("Position")]
+        [SerializeField] private Vector2 _screenOffset = new Vector2(0f, 24f);
 
         [Header("Show Animation")]
         [SerializeField, Min(0.01f)] private float _showDuration = 0.18f;
@@ -22,6 +26,7 @@ namespace Core.Module.Map
         private CanvasGroup _canvasGroup;
         private Vector3 _restingScale;
         private Vector3 _selectedWorldPosition;
+        private Vector3 _selectedAnchorWorldPosition;
         private bool _hasSelection;
         private IDisposable _subscriptions;
 
@@ -51,10 +56,23 @@ namespace Core.Module.Map
         private void Awake()
         {
             if (_button == null) _button = GetComponent<Button>();
+            if (_worldCamera == null) _worldCamera = Camera.main;
             _rectTransform = transform as RectTransform;
             _canvasGroup = GetComponent<CanvasGroup>();
             if (_canvasGroup == null) _canvasGroup = gameObject.AddComponent<CanvasGroup>();
             _restingScale = _rectTransform != null ? _rectTransform.localScale : Vector3.one;
+        }
+
+        private void OnEnable()
+        {
+            // Update after camera LateUpdate so smooth zoom does not leave the
+            // contextual button at the previous frame's screen position.
+            Canvas.willRenderCanvases += RefreshPosition;
+        }
+
+        private void OnDisable()
+        {
+            Canvas.willRenderCanvases -= RefreshPosition;
         }
 
         private void OnDestroy()
@@ -86,22 +104,47 @@ namespace Core.Module.Map
             }
 
             _selectedWorldPosition = payload.WorldPosition;
+            _selectedAnchorWorldPosition = GetCellCenter(payload.WorldPosition);
             _hasSelection = true;
             gameObject.SetActive(true);
             PositionNear(payload.ScreenPosition);
             PlayShowAnimation();
         }
 
+        private Vector3 GetCellCenter(Vector3 worldPosition)
+        {
+            Vector3Int cell = _map.WorldToCell(worldPosition);
+            Vector3 cornerA = _map.CellToWorld(cell);
+            Vector3 cornerB = _map.CellToWorld(cell + new Vector3Int(1, 0, 1));
+            return (cornerA + cornerB) * 0.5f;
+        }
+
+        private void RefreshPosition()
+        {
+            if (!_hasSelection || _rectTransform == null) return;
+            if (_worldCamera == null) _worldCamera = Camera.main;
+            if (_worldCamera == null) return;
+
+            Vector3 screenPosition = _worldCamera.WorldToScreenPoint(_selectedAnchorWorldPosition);
+            if (screenPosition.z > 0f)
+                PositionNear(screenPosition);
+        }
+
         private void PositionNear(Vector2 screenPosition)
         {
             if (_rectTransform == null) return;
 
-            Vector2 scale = _rectTransform.lossyScale;
+            Vector3 parentScale = _rectTransform.parent != null
+                ? _rectTransform.parent.lossyScale
+                : Vector3.one;
+            var scale = new Vector2(
+                Mathf.Abs(parentScale.x * _restingScale.x),
+                Mathf.Abs(parentScale.y * _restingScale.y));
             Vector2 halfSize = Vector2.Scale(_rectTransform.rect.size, scale) * 0.5f;
-            float verticalOffset = 24f * Mathf.Max(0.01f, scale.y);
+            Vector2 scaledOffset = Vector2.Scale(_screenOffset, scale);
             var position = new Vector2(
-                Mathf.Clamp(screenPosition.x, halfSize.x, Screen.width - halfSize.x),
-                Mathf.Clamp(screenPosition.y + halfSize.y + verticalOffset, halfSize.y, Screen.height - halfSize.y));
+                Mathf.Clamp(screenPosition.x + scaledOffset.x, halfSize.x, Screen.width - halfSize.x),
+                Mathf.Clamp(screenPosition.y + halfSize.y + scaledOffset.y, halfSize.y, Screen.height - halfSize.y));
             _rectTransform.position = position;
         }
 
