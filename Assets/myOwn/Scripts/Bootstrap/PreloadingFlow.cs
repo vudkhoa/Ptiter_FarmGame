@@ -17,9 +17,14 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private string _gameSceneName = "MapScene";
 
         private ILoadingService _loading;
+        private LoadingScreenView _screen;
 
         [Inject]
-        public void Construct(ILoadingService loading) => _loading = loading;
+        public void Construct(ILoadingService loading, LoadingScreenView screen)
+        {
+            _loading = loading;
+            _screen = screen;
+        }
 
         private void Start() => RunAsync(this.GetCancellationTokenOnDestroy()).Forget();
 
@@ -28,6 +33,11 @@ namespace MyOwn.ServiceHarness
             try
             {
                 await _loading.RunBootSequenceAsync(ct);
+
+                // A fast boot reports 100 within a couple of frames; without this the scene swaps
+                // before the bar has travelled anywhere and the fill looks frozen at 0.
+                if (_screen != null) await _screen.WaitUntilCaughtUpAsync(ct);
+
                 await SceneManager.LoadSceneAsync(_gameSceneName, LoadSceneMode.Single)
                                   .ToUniTask(cancellationToken: ct);
             }
