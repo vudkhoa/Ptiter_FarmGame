@@ -4,6 +4,7 @@ using Core.Module.Farm;
 using Core.Module.Map;
 using Core.Module.Quest;
 using Core.Module.Quest.Cooking;
+using Core.Module.Tutorial;
 
 namespace MyOwn.ServiceHarness
 {
@@ -34,6 +35,7 @@ namespace MyOwn.ServiceHarness
         public CookingJobSaveData ActiveCookingJob;
         public List<string> GrantedCookingCompletionTransactions =
             new List<string>();
+        public TutorialSaveData Tutorial = new TutorialSaveData();
 
         // Flag raised if clock manipulation is detected to freeze production
         public bool IsCheatDetected = false;

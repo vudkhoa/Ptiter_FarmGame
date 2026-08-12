@@ -1047,6 +1047,7 @@ GameObject:
   - component: {fileID: 2229477868615619320}
   - component: {fileID: 2869195763231086602}
   - component: {fileID: 5262591134176484106}
+  - component: {fileID: 3656494604394746010}
   m_Layer: 5
   m_Name: Item 1 (1)
   m_TagString: Untagged
@@ -1183,6 +1184,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Map::Core.Module.Map.MapPlacer
   _objectId: 101
   _btn: {fileID: 2869195763231086602}
+--- !u!114 &3656494604394746010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3142171164868344856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b11b7c285bf1e734e9f4b3ad33f4c5f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Tutorial::Core.Module.Tutorial.TutorialAnchor
+  _anchorId: tutorial.soil_button
+  _target: {fileID: 0}
 --- !u!1 &3182030255015368778
 GameObject:
   m_ObjectHideFlags: 0
@@ -1699,6 +1714,7 @@ GameObject:
   - component: {fileID: 3026768407476453346}
   - component: {fileID: 8900000000000000001}
   - component: {fileID: 8900000000000000002}
+  - component: {fileID: 2422818300317418483}
   m_Layer: 5
   m_Name: ObjectSelectScreen
   m_TagString: Untagged
@@ -1849,6 +1865,20 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &2422818300317418483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6408830156994073677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b11b7c285bf1e734e9f4b3ad33f4c5f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Tutorial::Core.Module.Tutorial.TutorialAnchor
+  _anchorId: tutorial.objects_panel
+  _target: {fileID: 0}
 --- !u!1 &7172401035255667210
 GameObject:
   m_ObjectHideFlags: 0

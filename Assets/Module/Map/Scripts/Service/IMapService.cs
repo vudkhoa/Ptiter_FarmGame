@@ -33,6 +33,13 @@ namespace Core.Module.Map
 
         // Grid queries & coordinate conversion
         bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data);
+
+        /// <summary>
+        /// Would placing <paramref name="objectId"/> at this cell succeed right now? Same checks
+        /// AddFurniture runs, without committing anything. Lets callers such as the tutorial find
+        /// a buildable cell instead of duplicating the validation rules.
+        /// </summary>
+        bool CanPlaceObjectAt(int objectId, Vector3Int gridPosition);
         bool CanRemovePlayerObject(Vector3 worldHit);
         Vector3Int WorldToCell(Vector3 worldPosition);
         Vector3 CellToWorld(Vector3Int cellPosition);

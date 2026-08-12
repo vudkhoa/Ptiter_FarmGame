@@ -3,6 +3,7 @@ using Core.Module.Cutscene;
 using Core.Module.Map;
 using Core.Module.Farm;
 using Core.Module.Quest;
+using Core.Module.Tutorial.Integration.Farm;
 using Core.Common;
 using UnityEngine;
 using VContainer;
@@ -39,7 +40,8 @@ namespace MyOwn.ServiceHarness
             builder.RegisterMapSceneComponents()
                    .RegisterFarmGameplay()
                    .RegisterQuestGameplay()
-                   .RegisterCutsceneGameplay();
+                   .RegisterCutsceneGameplay()
+                   .RegisterTutorialFarmIntegration();
         }
     }
 }

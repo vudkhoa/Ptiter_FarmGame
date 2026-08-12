@@ -88,6 +88,9 @@ namespace MyOwn.ServiceHarness
                 new System.Collections.Generic.List<string>();
             data.QuestProgress.unlockedRecipeIds ??=
                 new System.Collections.Generic.List<string>();
+            data.Tutorial ??= new Core.Module.Tutorial.TutorialSaveData();
+            data.Tutorial.completedStepIds ??= new System.Collections.Generic.List<string>();
+            data.Tutorial.completedFlowIds ??= new System.Collections.Generic.List<string>();
 
             if (data.SaveVersion < 3)
             {

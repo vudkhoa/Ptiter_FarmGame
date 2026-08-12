@@ -23,7 +23,9 @@
         "GUID:435719c11c6f941d98c6110929b03789",
         "GUID:cef502fc18ff75641bbf905a2a64f920",
         "GUID:4ab48617c7bde734187fcbaa6ff3077e",
-        "GUID:a3b9c729ef064f07b8b8e5fb58636200"
+        "GUID:a3b9c729ef064f07b8b8e5fb58636200",
+        "Tutorial",
+        "Tutorial.FarmIntegration"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

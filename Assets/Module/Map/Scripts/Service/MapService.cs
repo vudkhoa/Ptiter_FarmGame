@@ -849,6 +849,25 @@ namespace Core.Module.Map
         {
             return _authoring.IsAuthoringMode || IsTilemapPlacementValid(cell, size);
         }
+
+        /// <summary>
+        /// Dry run of the checks AddFurniture performs, committing nothing. Mirrors UpdatePreview's
+        /// two validators so a caller can never disagree with what placement would actually allow.
+        /// </summary>
+        public bool CanPlaceObjectAt(int objectId, Vector3Int gridPosition)
+        {
+            if (_database?.Objects == null) return false;
+            if (!_database.TryGetById(objectId, out ObjectData data, out _)) return false;
+
+            if (data.PositionMode == PlacementPositionMode.Free)
+            {
+                return _placementValidator.CanPlaceFree(data, CellToWorld(gridPosition))
+                    && IsPlacementSurfaceValid(gridPosition, Vector2Int.one);
+            }
+
+            return _placementValidator.CanPlaceGrid(data, gridPosition)
+                && IsPlacementSurfaceValid(gridPosition, data.Size);
+        }
         #endregion
 
         #region Cell math
