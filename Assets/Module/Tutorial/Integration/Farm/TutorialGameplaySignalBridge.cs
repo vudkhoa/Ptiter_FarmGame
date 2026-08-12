@@ -291,7 +291,7 @@ namespace Core.Module.Tutorial.Integration.Farm
         {
             if (_objectDatabase == null) return false;
             if (!_objectDatabase.TryGetById(objectId, out ObjectData data, out _)) return false;
-            return data.Kind == MapObjectKind.Soil;
+            return data.FarmRole == FarmObjectRole.Soil;
         }
         #endregion
 
