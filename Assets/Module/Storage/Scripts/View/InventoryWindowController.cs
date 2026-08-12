@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BrunoMikoski.UIManager;
+using Core.Module.Currency;
 using Core.Module.Input;
 using DG.Tweening;
 using MessagePipe;
@@ -45,12 +46,25 @@ namespace Core.Module.Storage.View
         [SerializeField] private TMP_Text _itemName;
         [SerializeField] private TMP_Text _description;
         [SerializeField] private GameObject _actionButtonVisual;
+        [SerializeField] private GameObject _quantityControls;
+        [SerializeField] private Button _decreaseQuantityButton;
+        [SerializeField] private Button _increaseQuantityButton;
+        [SerializeField] private TMP_Text _quantityLabel;
+        [SerializeField] private Button _sellButton;
+        [SerializeField] private TMP_Text _sellPriceLabel;
+
+        [Header("Sale Feedback")]
+        [SerializeField] private GameObject _saleToast;
+        [SerializeField] private TMP_Text _saleToastText;
+        [SerializeField] private CanvasGroup _saleToastGroup;
 
         private readonly List<IDisposable> _subscriptions = new();
         private readonly List<InventoryItemDefinition> _visibleItems = new();
         private IStorageService _storage;
+        private ICurrencyService _currency;
         private InventoryCategory _category = InventoryCategory.All;
         private InventoryItemDefinition _selected;
+        private int _sellQuantity = 1;
         private int _pageIndex;
         private InventoryTabMotion _allTabMotion;
         private InventoryTabMotion _farmTabMotion;
@@ -58,6 +72,7 @@ namespace Core.Module.Storage.View
         private CanvasGroup _itemsCanvasGroup;
         private Sequence _itemsTransition;
         private Tween _detailsTransition;
+        private Sequence _saleToastSequence;
         private Vector2 _itemsRestingPosition;
         private bool _motionInitialized;
         private bool _tabMotionInitialized;
@@ -66,11 +81,13 @@ namespace Core.Module.Storage.View
         [Inject]
         public void Construct(
             IStorageService storage,
+            ICurrencyService currency,
             ISubscriber<InventoryChangedPayload> inventoryChanged)
         {
             if (_constructed) return;
             _constructed = true;
             _storage = storage;
+            _currency = currency;
             _subscriptions.Add(inventoryChanged.Subscribe(OnInventoryChanged));
             Render();
         }
@@ -81,6 +98,7 @@ namespace Core.Module.Storage.View
             _category = InventoryCategory.All;
             _pageIndex = 0;
             _selected = null;
+            _sellQuantity = 1;
             RegisterButtons();
             EnsureTabMotionInitialized();
             EnsureMotionInitialized();
@@ -104,6 +122,9 @@ namespace Core.Module.Storage.View
             _previousPage?.onClick.AddListener(PreviousPage);
             _nextPage?.onClick.AddListener(NextPage);
             _closeButton?.onClick.AddListener(Close);
+            _decreaseQuantityButton?.onClick.AddListener(DecreaseSellQuantity);
+            _increaseQuantityButton?.onClick.AddListener(IncreaseSellQuantity);
+            _sellButton?.onClick.AddListener(SellSelectedItem);
         }
 
         private void UnregisterButtons()
@@ -114,6 +135,9 @@ namespace Core.Module.Storage.View
             _previousPage?.onClick.RemoveListener(PreviousPage);
             _nextPage?.onClick.RemoveListener(NextPage);
             _closeButton?.onClick.RemoveListener(Close);
+            _decreaseQuantityButton?.onClick.RemoveListener(DecreaseSellQuantity);
+            _increaseQuantityButton?.onClick.RemoveListener(IncreaseSellQuantity);
+            _sellButton?.onClick.RemoveListener(SellSelectedItem);
         }
 
         private void ShowAll() => SetCategory(InventoryCategory.All);
@@ -131,6 +155,7 @@ namespace Core.Module.Storage.View
             _category = category;
             _pageIndex = 0;
             _selected = null;
+            _sellQuantity = 1;
             UpdateTabMotion(true);
             PlayItemsTransition(direction);
         }
@@ -191,6 +216,7 @@ namespace Core.Module.Storage.View
             if (targetPage == _pageIndex) return;
             _pageIndex = targetPage;
             _selected = null;
+            _sellQuantity = 1;
             PlayItemsTransition(-1);
         }
 
@@ -202,6 +228,7 @@ namespace Core.Module.Storage.View
             if (targetPage == _pageIndex) return;
             _pageIndex = targetPage;
             _selected = null;
+            _sellQuantity = 1;
             PlayItemsTransition(1);
         }
 
@@ -209,7 +236,15 @@ namespace Core.Module.Storage.View
         {
             if (_selected != null && _selected.itemId == payload.ItemId &&
                 payload.NewAmount <= 0)
+            {
                 _selected = null;
+                _sellQuantity = 1;
+            }
+            else if (_selected != null && _selected.itemId == payload.ItemId)
+            {
+                _sellQuantity = Mathf.Clamp(
+                    _sellQuantity, 1, Mathf.Max(1, payload.NewAmount));
+            }
             Render();
         }
 
@@ -217,8 +252,111 @@ namespace Core.Module.Storage.View
         {
             if (_selected == definition) return;
             _selected = definition;
+            _sellQuantity = 1;
             Render();
             PlayDetailsFeedback();
+        }
+
+        private void DecreaseSellQuantity()
+        {
+            if (_selected == null) return;
+            _sellQuantity = Mathf.Max(1, _sellQuantity - 1);
+            RenderDetails();
+        }
+
+        private void IncreaseSellQuantity()
+        {
+            if (_selected == null || _storage == null) return;
+            int available = _storage.GetItemCount(_selected.itemId);
+            _sellQuantity = Mathf.Min(available, _sellQuantity + 1);
+            RenderDetails();
+        }
+
+        private void SellSelectedItem()
+        {
+            if (_selected == null || _storage == null || _currency == null)
+                return;
+
+            InventoryItemDefinition item = _selected;
+            int available = _storage.GetItemCount(item.itemId);
+            int quantity = Mathf.Clamp(_sellQuantity, 0, available);
+            if (quantity <= 0 || item.sellPrice <= 0) return;
+
+            long totalValue = (long)item.sellPrice * quantity;
+            if (totalValue > int.MaxValue)
+            {
+                Debug.LogWarning(
+                    $"[Inventory] Cannot sell {quantity}x {item.itemId}: total value is too large.");
+                return;
+            }
+
+            if (!_storage.RemoveItem(item.itemId, quantity)) return;
+
+            if (!_currency.AddCoins(
+                    (int)totalValue,
+                    $"inventory-sell:{item.itemId}"))
+            {
+                _storage.AddItem(item.itemId, quantity);
+                _storage.Save();
+                _selected = item;
+                _sellQuantity = Mathf.Clamp(
+                    quantity, 1, _storage.GetItemCount(item.itemId));
+                Render();
+                Debug.LogWarning(
+                    $"[Inventory] Sale of {item.itemId} was rolled back because the coin credit failed.");
+                return;
+            }
+
+            _storage.Save();
+            int remaining = _storage.GetItemCount(item.itemId);
+            _selected = remaining > 0 ? item : null;
+            _sellQuantity = 1;
+            Render();
+            ShowSaleToast((int)totalValue);
+        }
+
+        private void ShowSaleToast(int amount)
+        {
+            if (_saleToast == null || _saleToastText == null || amount <= 0)
+                return;
+
+            RectTransform toastRect = _saleToast.transform as RectTransform;
+            _saleToastSequence?.Kill(false);
+            _saleToast.SetActive(true);
+            _saleToastText.text = $"+{amount}";
+            _saleToastText.color = Color.white;
+
+            if (_saleToastGroup == null)
+                _saleToastGroup = _saleToast.GetComponent<CanvasGroup>();
+            if (_saleToastGroup == null)
+            {
+                _saleToast.SetActive(false);
+                return;
+            }
+
+            _saleToastGroup.alpha = 0f;
+            if (toastRect != null)
+                toastRect.localScale = Vector3.one * 0.94f;
+
+            _saleToastSequence = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy);
+            _saleToastSequence.Append(
+                TweenCanvasGroupAlpha(_saleToastGroup, 1f, 0.14f));
+            if (toastRect != null)
+            {
+                _saleToastSequence.Join(
+                    toastRect.DOScale(1f, 0.18f).SetEase(Ease.OutBack));
+            }
+            _saleToastSequence.AppendInterval(1.8f);
+            _saleToastSequence.Append(
+                TweenCanvasGroupAlpha(_saleToastGroup, 0f, 0.18f));
+            _saleToastSequence.OnComplete(() =>
+            {
+                _saleToast.SetActive(false);
+                _saleToastSequence = null;
+            });
         }
 
         private void EnsureMotionInitialized()
@@ -364,6 +502,8 @@ namespace Core.Module.Storage.View
             _itemsTransition = null;
             _detailsTransition?.Kill(false);
             _detailsTransition = null;
+            _saleToastSequence?.Kill(false);
+            _saleToastSequence = null;
 
             if (_motionInitialized)
             {
@@ -378,6 +518,13 @@ namespace Core.Module.Storage.View
                     _selectedDetails.GetComponent<CanvasGroup>();
                 if (group != null) group.alpha = 1f;
             }
+
+            if (_saleToast != null)
+            {
+                _saleToast.SetActive(false);
+                _saleToast.transform.localScale = Vector3.one;
+            }
+            if (_saleToastGroup != null) _saleToastGroup.alpha = 1f;
         }
 
         private void Render()
@@ -422,7 +569,15 @@ namespace Core.Module.Storage.View
             bool hasSelection = _selected != null;
             _emptyDetails?.SetActive(!hasSelection);
             _selectedDetails?.SetActive(hasSelection);
-            if (!hasSelection) return;
+            if (!hasSelection)
+            {
+                if (_sellButton != null) _sellButton.interactable = false;
+                return;
+            }
+
+            int available = _storage.GetItemCount(_selected.itemId);
+            _sellQuantity = Mathf.Clamp(
+                _sellQuantity, 1, Mathf.Max(1, available));
 
             if (_preview != null)
             {
@@ -434,8 +589,24 @@ namespace Core.Module.Storage.View
             if (_itemName != null) _itemName.text = _selected.displayName;
             if (_description != null) _description.text = _selected.description;
 
-            // Reserved artwork only. Selling will be implemented in a later task.
-            _actionButtonVisual?.SetActive(true);
+            bool canSell = available > 0 && _selected.sellPrice > 0;
+            _quantityControls?.SetActive(canSell);
+            _actionButtonVisual?.SetActive(canSell);
+            if (_quantityLabel != null)
+                _quantityLabel.text = _sellQuantity.ToString();
+            if (_decreaseQuantityButton != null)
+                _decreaseQuantityButton.interactable =
+                    canSell && _sellQuantity > 1;
+            if (_increaseQuantityButton != null)
+                _increaseQuantityButton.interactable =
+                    canSell && _sellQuantity < available;
+            if (_sellButton != null)
+                _sellButton.interactable = canSell;
+            if (_sellPriceLabel != null)
+            {
+                long totalValue = (long)_selected.sellPrice * _sellQuantity;
+                _sellPriceLabel.text = totalValue.ToString();
+            }
         }
 
         protected override void OnDestroy()
