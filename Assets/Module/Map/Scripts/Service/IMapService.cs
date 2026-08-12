@@ -29,7 +29,7 @@ namespace Core.Module.Map
         void ClearAllDecorBlockers();
 
         // Legacy-save compatibility: rebuild a missing Soil/Barn underneath a persisted farm slot.
-        bool EnsureFarmPlacement(Vector3Int originCell, MapObjectKind kind);
+        bool EnsureFarmPlacement(Vector3Int originCell, FarmObjectRole role);
 
         // Grid queries & coordinate conversion
         bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data);

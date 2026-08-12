@@ -6,7 +6,7 @@ namespace Core.Module.Map
     {
         public readonly string InstanceId;
         public readonly int ObjectId;
-        public readonly MapObjectKind Kind;
+        public readonly FarmObjectRole FarmRole;
         public readonly PlacementPositionMode PositionMode;
         public readonly Vector3Int OriginCell;
         public readonly Vector3 WorldPosition;
@@ -14,14 +14,14 @@ namespace Core.Module.Map
         public MapPlacementRemovalContext(
             string instanceId,
             int objectId,
-            MapObjectKind kind,
+            FarmObjectRole farmRole,
             PlacementPositionMode positionMode,
             Vector3Int originCell,
             Vector3 worldPosition)
         {
             InstanceId = instanceId;
             ObjectId = objectId;
-            Kind = kind;
+            FarmRole = farmRole;
             PositionMode = positionMode;
             OriginCell = originCell;
             WorldPosition = worldPosition;
