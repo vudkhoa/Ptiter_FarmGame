@@ -8,10 +8,8 @@ using Core.Module.Tutorial;
 
 namespace MyOwn.ServiceHarness
 {
-    /// <summary>
-    /// POCO save model. [Serializable] để JsonUtility serialize. Sub-data nested cũng phải [Serializable].
+    /// POCO save model. [Serializable] để JsonUtility serialize, sub-data nested cũng vậy.
     /// Bump SaveVersion khi đổi schema → handle migration ở PlayerDataSaveLoad.Load().
-    /// </summary>
     [Serializable]
     public class PlayerData
     {

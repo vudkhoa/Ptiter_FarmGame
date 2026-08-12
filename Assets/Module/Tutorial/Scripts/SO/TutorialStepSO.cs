@@ -3,10 +3,8 @@ using UnityEngine;
 
 namespace Core.Module.Tutorial
 {
-    /// <summary>
     /// One instruction beat. RULE: fields are read-only at runtime - progress lives in
-    /// TutorialSaveData, never on the asset, or it would leak between play sessions in the editor.
-    /// </summary>
+    /// TutorialSaveData, never on the asset, or it would leak between editor play sessions.
     [CreateAssetMenu(
         fileName = "TutorialStep",
         menuName = "Game/Tutorial/Tutorial Step",
@@ -20,32 +18,25 @@ namespace Core.Module.Tutorial
         public TutorialHandConfig hand = new TutorialHandConfig();
 
         [Header("Hint")]
-        [Tooltip("Player-facing text. Leave empty to hide the hint bubble.")]
+        [Tooltip("Leave empty to hide the hint bubble.")]
         [TextArea(1, 3)]
         public string hintText;
 
-        [Tooltip(
-            "Canvas-space offset of the hint bubble measured from the BOTTOM OF THE HAND, so it " +
-            "stays glued no matter how the hand is scaled or offset. y = -(half the bubble " +
-            "height + the gap you want): -90 leaves roughly a 25 unit gap.")]
+        [Tooltip("Canvas-space offset measured from the BOTTOM OF THE HAND. -90 leaves a ~25 unit gap.")]
         public Vector2 hintOffset = new Vector2(0f, -90f);
 
         [Header("Focus")]
-        [Tooltip("Draw the highlight ring around the anchor.")]
         public bool showFocusRing = true;
 
-        [Tooltip("Override the ring artwork, e.g. an isometric diamond for a map cell. Empty uses the default.")]
+        [Tooltip("Override the ring artwork, e.g. an isometric diamond for a map cell.")]
         public Sprite focusSprite;
 
         [Tooltip("Breathe the highlighted widget and its ring together, in sync with the hand.")]
         public bool highlightPulse = true;
 
-        [Tooltip("Peak scale of that breath.")]
         [Min(1f)] public float highlightPulseScale = 1.07f;
 
-        [Tooltip(
-            "Nudge the ring off the anchor, in canvas units. Independent of the hand: pair it with " +
-            "the same value in hand.offset when you want the fingertip to follow the ring.")]
+        [Tooltip("Nudge the ring off the anchor, in canvas units. Independent of the hand.")]
         public Vector2 focusOffset;
 
         [Tooltip("Extra size added to the resolved anchor rect, in canvas units.")]
@@ -58,11 +49,7 @@ namespace Core.Module.Tutorial
         [Tooltip("Darken the screen behind the highlight.")]
         public bool dimBackground = true;
 
-        [Tooltip(
-            "Force the step: the dim swallows every tap except the anchor, so no other button " +
-            "and no other map cell can be pressed. Works for UI anchors (through a live copy of " +
-            "the widget) and for world anchors (the dim opens over that cell only). " +
-            "Requires dimBackground.")]
+        [Tooltip("The dim swallows every tap except the anchor. Requires dimBackground.")]
         public bool blockInputOutsideFocus = true;
 
         [Tooltip("Anchor ids to hide while this step runs, e.g. a panel that covers the target.")]
@@ -73,7 +60,7 @@ namespace Core.Module.Tutorial
         [Tooltip("Delay before the hand appears, so it does not fight a window opening animation.")]
         public float startDelay = 0.35f;
 
-        [Tooltip("Signal that marks this step done. None means the step completes as soon as it is shown.")]
+        [Tooltip("None means the step completes as soon as it is shown.")]
         public TutorialSignal completionSignal = TutorialSignal.None;
 
         public bool IsValid => !string.IsNullOrWhiteSpace(stepId);

@@ -8,22 +8,15 @@ using VContainer.Unity;
 
 namespace Core.Module.Tutorial.Integration.Farm
 {
-    /// <summary>
     /// The only place that knows both Farm/Map payloads and TutorialSignal. Also pins the world
-    /// anchors the hand points at, since a freshly placed plot has no component to hang a
-    /// TutorialAnchor on. Scene-scoped: it needs IMapService for cell to world conversion.
-    /// </summary>
+    /// anchors the hand points at. Scene-scoped: it needs IMapService for cell to world conversion.
     public sealed class TutorialGameplaySignalBridge : IStartable, IDisposable
     {
-        /// <summary>Cells searched outward from the middle of the view before giving up.</summary>
+        /// Cells searched outward from the middle of the view before giving up.
         private const int FreePlotSearchRadius = 12;
 
-        /// <summary>
-        /// Viewport band the suggested plot must land in. Keeps it clear of the object picker down
-        /// the left, the HUD along the top and the cancel button at the bottom - the plot placed
-        /// here is still pointed at on the NEXT step, by which time the picker is back on screen
-        /// and would cover a plot tucked behind it.
-        /// </summary>
+        /// Viewport band the suggested plot must land in. Keeps it clear of the object picker, the
+        /// HUD and the cancel button, all of which are back on screen for the NEXT step.
         private static readonly Rect SafePlotViewport = Rect.MinMaxRect(0.38f, 0.30f, 0.80f, 0.72f);
 
         // Matches FarmVisualizer's soil offset so the hand lands on the crop, not the ground under it.
@@ -36,13 +29,12 @@ namespace Core.Module.Tutorial.Integration.Farm
         private readonly ObjectDatabaseSO _objectDatabase;
         private readonly IDisposable _subscriptions;
 
-        /// <summary>Squared cell distance of the restored plot currently pinned; nearest one wins.</summary>
+        /// Squared cell distance of the restored plot currently pinned; nearest one wins.
         private float _restoredPlotDistance = float.MaxValue;
 
-        /// <summary>Search origin cached across the restore burst so the camera ray is cast once.</summary>
+        /// Search origin cached across the restore burst so the camera ray is cast once.
         private Vector3Int? _searchOrigin;
 
-        #region VContainer
         public TutorialGameplaySignalBridge(
             ITutorialService tutorial,
             IMapService mapService,
@@ -72,11 +64,9 @@ namespace Core.Module.Tutorial.Integration.Farm
             _subscriptions = bag.Build();
         }
 
-        /// <summary>
-        /// FarmEntityRipePayload only fires at the moment a crop finishes growing. A player who
-        /// quits before harvesting comes back to an already ripe farm and no event, so the
-        /// harvest flow would never arm. Replay the signal once for a crop that is already waiting.
-        /// </summary>
+        #region Lifecycle
+        /// FarmEntityRipePayload only fires the moment a crop finishes growing, so a player who quit
+        /// before harvesting comes back to a ripe farm and no event. Replay the signal once.
         public void Start()
         {
             if (!TryFindRipeCrop(out Vector3Int cell)) return;
@@ -88,6 +78,91 @@ namespace Core.Module.Tutorial.Integration.Farm
             _tutorial.ReportSignal(TutorialSignal.CropRipe);
         }
 
+        public void Dispose()
+        {
+            _subscriptions?.Dispose();
+
+            // The anchors point into a scene that is going away; a stale world point would
+            // park the hand over whatever happens to be at those coordinates next.
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.NewPlot);
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.RipeCrop);
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.FreePlot);
+        }
+        #endregion
+
+        #region Event Handlers
+        private void OnPlacementStarted(MapPlacementStartedPayload payload)
+        {
+            if (!IsSoil(payload.ObjectId)) return;
+
+            // Pin BEFORE reporting: this signal completes the previous step, so the next one goes
+            // on screen inside this same call and would otherwise find nothing to point at.
+            PinFreePlotAnchor(payload.ObjectId);
+            _tutorial.ReportSignal(TutorialSignal.LandPlacementStarted);
+        }
+
+        private void OnFurnitureAdded(MapFurnitureAddedPayload payload)
+        {
+            if (!IsSoil(payload.ObjectId)) return;
+
+            // The same payload replays for every saved placement at scene load. Only a placement
+            // the player just performed animates, and only that one is a tutorial beat.
+            if (!payload.AnimatePlacement)
+            {
+                ConsiderRestoredPlot(payload);
+                return;
+            }
+
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.FreePlot);
+            TutorialAnchorRegistry.SetWorldPoint(
+                TutorialAnchorIds.NewPlot,
+                payload.SnappedWorld + CropVisualOffset,
+                CellHalfExtent(payload.Cell));
+
+            // Soil paints continuously, so the next tap would drop a second plot instead of opening
+            // the seed picker. Free play keeps the brush - only a running tutorial hands it in.
+            if (_tutorial.IsRunning) _mapService.StopPlacement(false);
+
+            _tutorial.ReportSignal(TutorialSignal.LandPlaced);
+        }
+
+        private void OnSelectorOpened(OpenFarmSelectorUIPayload payload)
+        {
+            if (payload.IsAnimal) return;
+
+            _tutorial.ReportSignal(TutorialSignal.SeedSelectorOpened);
+        }
+
+        private void OnPlanted(FarmEntityPlantedPayload payload)
+        {
+            if (payload.EntityType != FarmEntityType.Crop) return;
+
+            // The plot is no longer bare, so nothing should be pointing at it as one.
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.NewPlot);
+            _tutorial.ReportSignal(TutorialSignal.SeedPlanted);
+        }
+
+        private void OnRipe(FarmEntityRipePayload payload)
+        {
+            if (payload.EntityType != FarmEntityType.Crop) return;
+
+            TutorialAnchorRegistry.SetWorldPoint(
+                TutorialAnchorIds.RipeCrop,
+                _mapService.CellToWorld(payload.Cell) + CropVisualOffset,
+                CellHalfExtent(payload.Cell));
+            _tutorial.ReportSignal(TutorialSignal.CropRipe);
+        }
+
+        private void OnHarvested(FarmEntityHarvestedPayload payload)
+        {
+            if (payload.EntityType != FarmEntityType.Crop) return;
+
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.RipeCrop);
+            _tutorial.ReportSignal(TutorialSignal.CropHarvested);
+        }
+        #endregion
+
+        #region Private Methods
         private bool TryFindRipeCrop(out Vector3Int cell)
         {
             cell = default;
@@ -110,34 +185,8 @@ namespace Core.Module.Tutorial.Integration.Farm
             return false;
         }
 
-        public void Dispose()
-        {
-            _subscriptions?.Dispose();
-
-            // The anchors point into a scene that is going away; a stale world point would
-            // park the hand over whatever happens to be at those coordinates next.
-            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.NewPlot);
-            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.RipeCrop);
-            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.FreePlot);
-        }
-        #endregion
-
-        #region Map
-        private void OnPlacementStarted(MapPlacementStartedPayload payload)
-        {
-            if (!IsSoil(payload.ObjectId)) return;
-
-            // Pin the anchor BEFORE reporting: this signal completes the previous step, so the
-            // "tap an empty patch" step goes on screen inside this same call and would otherwise
-            // find nothing to point at on its first frame.
-            PinFreePlotAnchor(payload.ObjectId);
-            _tutorial.ReportSignal(TutorialSignal.LandPlacementStarted);
-        }
-
-        /// <summary>
-        /// Points at a cell the player can genuinely build on. A fixed screen position used to
-        /// land on the shop roof, telling them to tap somewhere placement would refuse.
-        /// </summary>
+        /// Points at a cell the player can genuinely build on. A fixed screen position used to land
+        /// on the shop roof, telling them to tap somewhere placement would refuse.
         private void PinFreePlotAnchor(int objectId)
         {
             if (!TryFindPlaceableCell(objectId, out Vector3Int cell))
@@ -150,16 +199,13 @@ namespace Core.Module.Tutorial.Integration.Farm
             }
 
             // CellToWorld is exactly where MapPreviewView parks its own grid cursor and where the
-            // soil prefab lands, so the marker sits on the same spot the game considers "this cell".
+            // soil prefab lands, so the marker sits on the spot the game considers "this cell".
             TutorialAnchorRegistry.SetWorldPoint(
                 TutorialAnchorIds.FreePlot, _mapService.CellToWorld(cell), CellHalfExtent(cell));
         }
 
-        /// <summary>
         /// Half the world footprint of one grid cell. Every world anchor ships it so the view sizes
-        /// the ring - and the hole a force step opens in the dim - by projection, instead of a
-        /// guessed pixel size that stops matching the moment the camera zooms.
-        /// </summary>
+        /// the ring by projection instead of a guessed pixel size that breaks when the camera zooms.
         private Vector3 CellHalfExtent(Vector3Int cell)
         {
             Vector3 origin = _mapService.CellToWorld(cell);
@@ -167,14 +213,12 @@ namespace Core.Module.Tutorial.Integration.Farm
             return new Vector3(Mathf.Abs(diagonal.x), 0f, Mathf.Abs(diagonal.z)) * 0.5f;
         }
 
-        /// <summary>
-        /// Rings outward from whatever the camera is looking at, nearest cell wins. Runs twice:
-        /// once demanding the cell sit in the open middle of the screen, then once without that
-        /// demand, because a plot in an awkward spot still beats no guidance at all.
-        /// </summary>
+        /// Rings outward from whatever the camera is looking at, nearest cell wins. Runs twice: the
+        /// second pass drops the safe-viewport demand, since an awkward plot beats no guidance.
         private bool TryFindPlaceableCell(int objectId, out Vector3Int result)
         {
             if (TryFindPlaceableCell(objectId, true, out result)) return true;
+
             return TryFindPlaceableCell(objectId, false, out result);
         }
 
@@ -233,42 +277,8 @@ namespace Core.Module.Tutorial.Integration.Farm
                 : Vector3Int.zero;
         }
 
-        private void OnFurnitureAdded(MapFurnitureAddedPayload payload)
-        {
-            if (!IsSoil(payload.ObjectId)) return;
-
-            // The same payload replays for every saved placement at scene load. Only a placement
-            // the player just performed animates, and only that one is a tutorial beat - but a
-            // replayed one is still the only notice that a plot from an earlier session exists.
-            if (!payload.AnimatePlacement)
-            {
-                ConsiderRestoredPlot(payload);
-                return;
-            }
-
-            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.FreePlot);
-            TutorialAnchorRegistry.SetWorldPoint(
-                TutorialAnchorIds.NewPlot,
-                payload.SnappedWorld + CropVisualOffset,
-                CellHalfExtent(payload.Cell));
-
-            // Soil paints continuously, so the brush is still in the player's hand: the next tap
-            // would drop a second plot instead of opening the seed picker on the one they just
-            // made. Take it back before the plant step points at that plot. Free play keeps the
-            // brush - only a running tutorial hands it in - and the build menu stays closed so it
-            // cannot reopen over the target.
-            if (_tutorial.IsRunning) _mapService.StopPlacement(false);
-
-            _tutorial.ReportSignal(TutorialSignal.LandPlaced);
-        }
-
-        /// <summary>
         /// Re-pins the new-plot anchor onto a plot restored from the save, so the plant-seed step
-        /// still has a target for a player who placed land, quit, and came back. Anyone who still
-        /// owes that step has planted nothing, so any bare plot of theirs is a valid target; the
-        /// crop check only guards the case where farm data is already up when the map replays.
-        /// Nearest to the middle of the view wins, which keeps the hand on screen.
-        /// </summary>
+        /// still has a target. Nearest to the middle of the view wins, which keeps the hand on screen.
         private void ConsiderRestoredPlot(in MapFurnitureAddedPayload payload)
         {
             if (HasCrop(payload.Cell)) return;
@@ -290,11 +300,8 @@ namespace Core.Module.Tutorial.Integration.Farm
             return slot != null && !string.IsNullOrEmpty(slot.entityId);
         }
 
-        /// <summary>
-        /// Cached on purpose: the restore replays every saved placement back to back, and the
-        /// camera cannot move in between. PinFreePlotAnchor keeps using the live origin instead,
-        /// because by then the player has had time to pan the map.
-        /// </summary>
+        /// Cached on purpose: the restore replays every saved placement back to back and the camera
+        /// cannot move in between. PinFreePlotAnchor keeps using the live origin instead.
         private Vector3Int RestoreSearchOrigin()
         {
             _searchOrigin ??= ResolveSearchOrigin();
@@ -305,43 +312,8 @@ namespace Core.Module.Tutorial.Integration.Farm
         {
             if (_objectDatabase == null) return false;
             if (!_objectDatabase.TryGetById(objectId, out ObjectData data, out _)) return false;
+
             return data.FarmRole == FarmObjectRole.Soil;
-        }
-        #endregion
-
-        #region Farm
-        private void OnSelectorOpened(OpenFarmSelectorUIPayload payload)
-        {
-            if (payload.IsAnimal) return;
-            _tutorial.ReportSignal(TutorialSignal.SeedSelectorOpened);
-        }
-
-        private void OnPlanted(FarmEntityPlantedPayload payload)
-        {
-            if (payload.EntityType != FarmEntityType.Crop) return;
-
-            // The plot is no longer bare, so nothing should be pointing at it as one.
-            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.NewPlot);
-            _tutorial.ReportSignal(TutorialSignal.SeedPlanted);
-        }
-
-        private void OnRipe(FarmEntityRipePayload payload)
-        {
-            if (payload.EntityType != FarmEntityType.Crop) return;
-
-            TutorialAnchorRegistry.SetWorldPoint(
-                TutorialAnchorIds.RipeCrop,
-                _mapService.CellToWorld(payload.Cell) + CropVisualOffset,
-                CellHalfExtent(payload.Cell));
-            _tutorial.ReportSignal(TutorialSignal.CropRipe);
-        }
-
-        private void OnHarvested(FarmEntityHarvestedPayload payload)
-        {
-            if (payload.EntityType != FarmEntityType.Crop) return;
-
-            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.RipeCrop);
-            _tutorial.ReportSignal(TutorialSignal.CropHarvested);
         }
         #endregion
     }

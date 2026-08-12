@@ -863,10 +863,8 @@ namespace Core.Module.Map
             return _authoring.IsAuthoringMode || IsTilemapPlacementValid(cell, size);
         }
 
-        /// <summary>
         /// Dry run of the checks AddFurniture performs, committing nothing. Mirrors UpdatePreview's
-        /// two validators so a caller can never disagree with what placement would actually allow.
-        /// </summary>
+        /// two validators so a caller can never disagree with what placement would allow.
         public bool CanPlaceObjectAt(int objectId, Vector3Int gridPosition)
         {
             if (_database?.Objects == null) return false;

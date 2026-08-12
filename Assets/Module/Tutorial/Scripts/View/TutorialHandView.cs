@@ -6,14 +6,17 @@ using UnityEngine.UI;
 
 namespace Core.Module.Tutorial
 {
-    /// <summary>
-    /// Draws the pointing hand, the focus ring, the hint bubble and the input mask for one step.
-    /// Re-resolves its anchor every LateUpdate so the hand tracks a panning camera and a farm
-    /// slot that spawns a frame after the step starts.
-    /// </summary>
+    /// Draws the pointing hand, focus ring, hint bubble and input mask for one step. Re-resolves its
+    /// anchor every LateUpdate so the hand tracks a panning camera and a late-spawning farm slot.
     [DisallowMultipleComponent]
     public sealed class TutorialHandView : MonoBehaviour, ITutorialView
     {
+        /// Canvas units kept between the hint bubble and the screen edge.
+        private const float HintScreenMargin = 24f;
+
+        /// Reused by TryGetUiScreenRect, which runs every LateUpdate while a UI step is on screen.
+        private static readonly Vector3[] CornerBuffer = new Vector3[4];
+
         [Header("Canvas")]
         [SerializeField] private Canvas _canvas;
         [SerializeField] private RectTransform _canvasRect;
@@ -22,10 +25,7 @@ namespace Core.Module.Tutorial
         [Tooltip("Positioner: follows the anchor. Never animated, so tweens cannot fight tracking.")]
         [SerializeField] private RectTransform _handRoot;
 
-        [Tooltip(
-            "Animated child. Owns every tween. Its PIVOT must sit on the fingertip: that is what " +
-            "makes offset (0,0) point exactly at the anchor and keeps the fingertip planted while " +
-            "the tap scales.")]
+        [Tooltip("Animated child. Its PIVOT must sit on the fingertip.")]
         [SerializeField] private RectTransform _hand;
         [SerializeField] private CanvasGroup _handGroup;
 
@@ -37,17 +37,14 @@ namespace Core.Module.Tutorial
         [Tooltip("Full-screen black at low opacity. Swallows every tap that is not the highlight.")]
         [SerializeField] private Image _dimmer;
 
-        [Tooltip(
-            "Holder for the highlighted widget's clone. Must start INACTIVE: cloning into an " +
-            "inactive parent is what stops the copy's own scripts from ever running Awake/OnEnable.")]
+        [Tooltip("Holder for the highlighted widget's clone. Must start INACTIVE.")]
         [SerializeField] private RectTransform _highlightRoot;
 
         [Header("Hint")]
         [SerializeField] private RectTransform _hintRoot;
         [SerializeField] private TMP_Text _hintLabel;
 
-        /// <summary>Canvas units kept between the hint bubble and the screen edge.</summary>
-        private const float HintScreenMargin = 24f;
+        private readonly List<HiddenAnchor> _hiddenAnchors = new();
 
         private TutorialStepSO _step;
         private Sequence _motion;
@@ -57,7 +54,6 @@ namespace Core.Module.Tutorial
         private bool _warnedUnmaskableAnchor;
 
         private Sprite _defaultFocusSprite;
-        private readonly List<HiddenAnchor> _hiddenAnchors = new List<HiddenAnchor>();
 
         private RectTransform _highlightSource;
         private RectTransform _highlightClone;
@@ -65,9 +61,7 @@ namespace Core.Module.Tutorial
         private Vector2 _highlightSourceSize;
         private TutorialDimMask _dimMask;
 
-        public bool IsShowing => _step != null;
-
-        /// <summary>Remembers what a hidden anchor looked like so the step can put it back.</summary>
+        /// Remembers what a hidden anchor looked like so the step can put it back.
         private readonly struct HiddenAnchor
         {
             public readonly CanvasGroup Group;
@@ -84,7 +78,93 @@ namespace Core.Module.Tutorial
             }
         }
 
-        #region ITutorialView
+        #region Properties
+        public bool IsShowing => _step != null;
+
+        private float CanvasScale => _canvas != null && _canvas.scaleFactor > 0f ? _canvas.scaleFactor : 1f;
+
+        private Camera CanvasCamera =>
+            _canvas != null && _canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? _canvas.worldCamera
+                : null;
+        #endregion
+
+        #region Unity Lifecycle
+        private void Awake()
+        {
+            if (_focusImage == null && _focusRing != null)
+                _focusImage = _focusRing.GetComponent<Image>();
+            if (_focusImage != null) _defaultFocusSprite = _focusImage.sprite;
+
+            if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
+            if (_canvasRect == null && _canvas != null)
+                _canvasRect = _canvas.transform as RectTransform;
+
+            // Only the mask subclass can leave a hole for a world cell. A container authored
+            // before it existed still holds a plain Image, which ApplyMask reports on.
+            _dimMask = _dimmer as TutorialDimMask;
+
+            if (_dimmer == null || _highlightRoot == null)
+            {
+                Debug.LogWarning(
+                    "[TutorialHandView] Dimmer or Highlight Root is unwired - steps with " +
+                    "blockInputOutsideFocus will not mask. Run Tools/Tutorial/Rebuild Tutorial Content.",
+                    this);
+            }
+
+            // Without these three there is nothing to place or animate, and LateUpdate would
+            // throw once per frame for the whole step. Fail loudly once instead.
+            if (_canvasRect != null && _handRoot != null && _hand != null) return;
+
+            Debug.LogError(
+                "[TutorialHandView] Canvas rect, hand root or hand image is unwired. " +
+                "Run Tools/Tutorial/Rebuild Tutorial Content.", this);
+            enabled = false;
+        }
+
+        private void OnDisable()
+        {
+            ClearHighlight();
+            RestoreHiddenAnchors();
+            KillMotion();
+        }
+
+        private void OnDestroy() => KillMotion();
+
+        private void LateUpdate()
+        {
+            if (_step == null) return;
+
+            // Unscaled: a tutorial must still animate while a paused popup owns the time scale.
+            // Fully qualified because Core.Module.Time would otherwise shadow UnityEngine.Time.
+            _elapsed += UnityEngine.Time.unscaledDeltaTime;
+            if (_elapsed < _step.startDelay) return;
+
+            if (!TryResolveAnchor(
+                    _step.hand, out Vector2 canvasPoint, out Vector2 anchorSize, out RectTransform uiTarget))
+            {
+                // The target is not on screen yet (scene still loading, slot not spawned).
+                // Showing a hand over empty ground is worse than showing nothing.
+                if (_visualsArmed) SetVisualsVisible(false);
+                _visualsArmed = false;
+                ClearHighlight(true);
+                return;
+            }
+
+            if (!_visualsArmed)
+            {
+                _visualsArmed = true;
+                SetVisualsVisible(true);
+            }
+
+            _handRoot.anchoredPosition = canvasPoint + _step.hand.offset;
+            LayoutFocus(canvasPoint, anchorSize);
+            LayoutHint(canvasPoint);
+            ApplyMask(uiTarget, canvasPoint, anchorSize);
+        }
+        #endregion
+
+        #region Public API
         public void ShowStep(TutorialStepSO step)
         {
             if (step == null)
@@ -120,88 +200,11 @@ namespace Core.Module.Tutorial
         }
         #endregion
 
-        #region Unity LifeCycle
-        private void Awake()
-        {
-            if (_focusImage == null && _focusRing != null)
-                _focusImage = _focusRing.GetComponent<Image>();
-            if (_focusImage != null) _defaultFocusSprite = _focusImage.sprite;
-
-            if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
-            if (_canvasRect == null && _canvas != null)
-                _canvasRect = _canvas.transform as RectTransform;
-
-            // Only the mask subclass can leave a hole for a world cell. A container authored
-            // before it existed still holds a plain Image, which ApplyMask reports on.
-            _dimMask = _dimmer as TutorialDimMask;
-
-            // A container authored before the dim + clone rework still works, it just cannot mask.
-            // Say so rather than leaving someone wondering where the dim went.
-            if (_dimmer == null || _highlightRoot == null)
-            {
-                Debug.LogWarning(
-                    "[TutorialHandView] Dimmer or Highlight Root is unwired - steps with " +
-                    "blockInputOutsideFocus will not mask. Run Tools/Tutorial/Rebuild Tutorial Content.",
-                    this);
-            }
-
-            // Without these three there is nothing to place or animate, and LateUpdate would
-            // throw once per frame for the whole step. Fail loudly once instead.
-            if (_canvasRect != null && _handRoot != null && _hand != null) return;
-
-            Debug.LogError(
-                "[TutorialHandView] Canvas rect, hand root or hand image is unwired. " +
-                "Run Tools/Tutorial/Rebuild Tutorial Content.", this);
-            enabled = false;
-        }
-
-        private void OnDisable()
-        {
-            ClearHighlight();
-            RestoreHiddenAnchors();
-            KillMotion();
-        }
-
-        private void LateUpdate()
-        {
-            if (_step == null) return;
-
-            // Unscaled: a tutorial must still animate while a paused popup owns the time scale.
-            // Fully qualified because Core.Module.Time would otherwise shadow UnityEngine.Time.
-            _elapsed += UnityEngine.Time.unscaledDeltaTime;
-            if (_elapsed < _step.startDelay) return;
-
-            if (!TryResolveAnchor(
-                    _step.hand, out Vector2 canvasPoint, out Vector2 anchorSize, out RectTransform uiTarget))
-            {
-                // The target is not on screen yet (scene still loading, slot not spawned).
-                // Showing a hand over empty ground is worse than showing nothing.
-                if (_visualsArmed) SetVisualsVisible(false);
-                _visualsArmed = false;
-                ClearHighlight(true);
-                return;
-            }
-
-            if (!_visualsArmed)
-            {
-                _visualsArmed = true;
-                SetVisualsVisible(true);
-            }
-
-            _handRoot.anchoredPosition = canvasPoint + _step.hand.offset;
-            LayoutFocus(canvasPoint, anchorSize);
-            LayoutHint(canvasPoint);
-            ApplyMask(uiTarget, canvasPoint, anchorSize);
-        }
-        #endregion
+        #region Private Methods
 
         #region Layout
-        /// <summary>
-        /// Resolves the step anchor into this canvas' local space, plus the size the focus ring
-        /// should hug. <paramref name="uiTarget"/> is the resolved widget when the anchor is UI,
-        /// null otherwise - only a UI widget can be cloned onto the dim.
-        /// Returns false when nothing under the anchor id is currently on screen.
-        /// </summary>
+        /// Resolves the step anchor into canvas space plus the size the focus ring should hug.
+        /// <paramref name="uiTarget"/> is the widget when the anchor is UI - only those can be cloned.
         private bool TryResolveAnchor(
             TutorialHandConfig hand,
             out Vector2 canvasPoint,
@@ -244,9 +247,8 @@ namespace Core.Module.Tutorial
                     {
                         if (!TryProjectWorld(worldPoint, out screenPoint)) return false;
 
-                        // Size the highlight from the target's real world footprint when the
-                        // bridge pinned one. A fixed pixel size stops matching the moment the
-                        // camera zooms, which is what made the cell marker look wrong.
+                        // Size the highlight from the target's real world footprint when the bridge
+                        // pinned one: a fixed pixel size stops matching the moment the camera zooms.
                         Vector3 halfExtent = TutorialAnchorRegistry.GetWorldHalfExtent(hand.anchorId);
                         if (halfExtent != Vector3.zero &&
                             TryProjectFootprint(worldPoint, halfExtent, out Vector2 footprint))
@@ -274,11 +276,8 @@ namespace Core.Module.Tutorial
             return true;
         }
 
-        /// <summary>
-        /// Screen-space size of a world-space box, from the bounding box of its four ground
-        /// corners. Isometric cells are diamonds, so the axis-aligned bound is exactly the
-        /// rectangle the diamond sprite has to fill.
-        /// </summary>
+        /// Screen-space size of a world box, from the bounding box of its four ground corners.
+        /// Isometric cells are diamonds, so the axis-aligned bound is the rect the sprite must fill.
         private bool TryProjectFootprint(Vector3 worldCenter, Vector3 halfExtent, out Vector2 size)
         {
             size = Vector2.zero;
@@ -320,14 +319,13 @@ namespace Core.Module.Tutorial
                 ? null
                 : sourceCanvas.worldCamera;
 
-            Vector3[] corners = new Vector3[4];
-            rect.GetWorldCorners(corners);
+            rect.GetWorldCorners(CornerBuffer);
 
-            Vector2 min = RectTransformUtility.WorldToScreenPoint(sourceCamera, corners[0]);
+            Vector2 min = RectTransformUtility.WorldToScreenPoint(sourceCamera, CornerBuffer[0]);
             Vector2 max = min;
-            for (int i = 1; i < corners.Length; i++)
+            for (int i = 1; i < CornerBuffer.Length; i++)
             {
-                Vector2 point = RectTransformUtility.WorldToScreenPoint(sourceCamera, corners[i]);
+                Vector2 point = RectTransformUtility.WorldToScreenPoint(sourceCamera, CornerBuffer[i]);
                 min = Vector2.Min(min, point);
                 max = Vector2.Max(max, point);
             }
@@ -347,10 +345,11 @@ namespace Core.Module.Tutorial
             _focusRing.sizeDelta = anchorSize + _step.focusPadding;
         }
 
-        /// <summary>How far the hand artwork reaches below its fingertip pivot, in canvas units.</summary>
+        /// How far the hand artwork reaches below its fingertip pivot, in canvas units.
         private float HandDropHeight()
         {
             if (_hand == null || _handRoot == null) return 0f;
+
             return _hand.rect.height * _hand.pivot.y * Mathf.Abs(_handRoot.localScale.y);
         }
 
@@ -359,15 +358,13 @@ namespace Core.Module.Tutorial
             if (_hintRoot == null) return;
             if (!_hintRoot.gameObject.activeSelf) return;
 
-            // Measured from the BOTTOM OF THE HAND, not from the anchor: the artwork hangs about
-            // 147 units below its fingertip pivot, so an anchor-relative offset would have to
-            // bake that in by hand and drift the moment the hand is scaled or re-pivoted.
+            // Measured from the BOTTOM OF THE HAND, not from the anchor: an anchor-relative offset
+            // would have to bake the artwork's drop in and drift when the hand is rescaled.
             Vector2 target = center + _step.hand.offset
                            + new Vector2(0f, -HandDropHeight())
                            + _step.hintOffset;
 
             // A target near a screen edge would push the bubble half off-screen and cut the text.
-            // Slide it back in rather than letting the player read half a sentence.
             Vector2 canvasHalf = _canvasRect.rect.size * 0.5f;
             Vector2 hintHalf = _hintRoot.rect.size * 0.5f;
             float limitX = Mathf.Max(0f, canvasHalf.x - hintHalf.x - HintScreenMargin);
@@ -380,13 +377,8 @@ namespace Core.Module.Tutorial
         #endregion
 
         #region Mask
-        /// <summary>
-        /// Dims everything, then opens exactly one way through it. A UI widget gets a dead copy
-        /// drawn on top of the dim with an invisible catcher relaying taps back to the real one -
-        /// a copy matches the silhouette exactly, which a rectangular hole never does. A world
-        /// cell has no widget to copy, so the dim keeps swallowing every tap EXCEPT the cell's own
-        /// rect, which it reports as a miss so the map raycast underneath still sees it.
-        /// </summary>
+        /// Dims everything, then opens exactly one way through. A UI widget gets a dead copy plus an
+        /// invisible catcher; a world cell instead gets a hole punched in the dim's raycast.
         private void ApplyMask(RectTransform uiTarget, Vector2 canvasPoint, Vector2 anchorSize)
         {
             if (!_step.dimBackground)
@@ -431,10 +423,8 @@ namespace Core.Module.Tutorial
             _highlightRoot.localScale = ResolveFitScale(anchorSize);
         }
 
-        /// <summary>
-        /// The clone keeps the original's own rect size so its children stay laid out; the holder
-        /// scales that rect up or down to whatever the original currently measures on screen.
-        /// </summary>
+        /// The clone keeps the original's rect size so its children stay laid out; the holder scales
+        /// that rect to whatever the original currently measures on screen.
         private Vector3 ResolveFitScale(Vector2 anchorSize)
         {
             float x = _highlightSourceSize.x > 0.01f ? anchorSize.x / _highlightSourceSize.x : 1f;
@@ -495,10 +485,8 @@ namespace Core.Module.Tutorial
             return rect;
         }
 
-        /// <summary>
-        /// Strips everything that makes the copy behave like the original. Left alone: Graphics,
-        /// layout components and CanvasRenderer, which are all that is needed to look identical.
-        /// </summary>
+        /// Strips everything that makes the copy behave like the original. Graphics, layout
+        /// components and CanvasRenderer stay - they are all it needs to look identical.
         private static void SanitizeClone(GameObject clone)
         {
             MonoBehaviour[] behaviours = clone.GetComponentsInChildren<MonoBehaviour>(true);
@@ -521,10 +509,8 @@ namespace Core.Module.Tutorial
             for (int i = 0; i < canvases.Length; i++) canvases[i].overrideSorting = false;
         }
 
-        /// <summary>
-        /// <paramref name="resyncMotion"/> rebuilds the shared beat: the clone is one of its
-        /// targets, so losing it mid-step would leave a sequence tweening a destroyed transform.
-        /// </summary>
+        /// <paramref name="resyncMotion"/> rebuilds the shared beat: the clone is one of its targets,
+        /// so losing it mid-step would leave a sequence tweening a destroyed transform.
         private void ClearHighlight(bool resyncMotion = false)
         {
             bool hadClone = _highlightClone != null;
@@ -569,18 +555,16 @@ namespace Core.Module.Tutorial
         }
         #endregion
 
-        #region Step decoration
+        #region Step Decoration
         private void ApplyFocusSprite(TutorialStepSO step)
         {
             if (_focusImage == null) return;
+
             _focusImage.sprite = step.focusSprite != null ? step.focusSprite : _defaultFocusSprite;
         }
 
-        /// <summary>
-        /// Fades out anything the step declares as in the way, e.g. the object picker sitting on
-        /// top of the plot the player is being told to tap. Uses a CanvasGroup rather than
+        /// Fades out anything the step declares as in the way. Uses a CanvasGroup rather than
         /// SetActive so a UIManager window is never told it closed behind its own back.
-        /// </summary>
         private void ApplyHiddenAnchors(TutorialStepSO step)
         {
             if (step.hiddenAnchorIds == null) return;
@@ -616,7 +600,7 @@ namespace Core.Module.Tutorial
         }
         #endregion
 
-        #region Hand presentation
+        #region Hand Presentation
         private void ApplyStaticHandSettings(TutorialHandConfig hand)
         {
             if (_handRoot == null) return;
@@ -652,13 +636,8 @@ namespace Core.Module.Tutorial
                 _hintRoot.gameObject.SetActive(!string.IsNullOrWhiteSpace(_step.hintText));
         }
 
-        /// <summary>
-        /// One sequence drives the hand AND the highlighted widget, so they can never drift out of
-        /// phase: the widget swells over exactly the window the hand spends pressing in, and
-        /// settles over the window the hand spends lifting. Two separate loops used to slide apart
-        /// and read as the button randomly changing size.
-        /// Drives localScale only - LateUpdate rewrites sizeDelta and anchoredPosition every frame.
-        /// </summary>
+        /// One sequence drives the hand AND the highlighted widget so they can never drift out of
+        /// phase. Drives localScale only - LateUpdate rewrites sizeDelta and position every frame.
         private void BuildMotion()
         {
             KillMotion();
@@ -722,16 +701,12 @@ namespace Core.Module.Tutorial
                                              .SetEase(Ease.InOutSine));
                     if (_handGroup != null)
                         sequence.Insert(0f, _handGroup.DOFade(0f, duration).SetEase(Ease.InQuad));
-                    sequence.InsertCallback(duration, () =>
-                    {
-                        _hand.anchoredPosition = Vector2.zero;
-                        if (_handGroup != null) _handGroup.alpha = 1f;
-                    });
+                    sequence.InsertCallback(duration, ResetHandAfterSwipe);
                     break;
             }
         }
 
-        /// <summary>Swells on the press window, settles on the release window. Never the reverse.</summary>
+        /// Swells on the press window, settles on the release window. Never the reverse.
         private void InsertHighlightBeat(
             Sequence sequence, TutorialHandConfig hand, float press, float release)
         {
@@ -750,6 +725,12 @@ namespace Core.Module.Tutorial
             }
         }
 
+        private void ResetHandAfterSwipe()
+        {
+            if (_hand != null) _hand.anchoredPosition = Vector2.zero;
+            if (_handGroup != null) _handGroup.alpha = 1f;
+        }
+
         private void KillMotion()
         {
             if (_motion != null)
@@ -765,17 +746,8 @@ namespace Core.Module.Tutorial
         #endregion
 
         #region Cameras
-        private float CanvasScale => _canvas != null && _canvas.scaleFactor > 0f ? _canvas.scaleFactor : 1f;
-
-        private Camera CanvasCamera =>
-            _canvas != null && _canvas.renderMode != RenderMode.ScreenSpaceOverlay
-                ? _canvas.worldCamera
-                : null;
-
-        /// <summary>
-        /// The gameplay camera is destroyed on every scene change, so it is looked up lazily
-        /// rather than cached once at Awake.
-        /// </summary>
+        /// The gameplay camera is destroyed on every scene change, so it is looked up lazily rather
+        /// than cached once at Awake.
         private Camera ResolveWorldCamera()
         {
             if (_worldCamera != null) return _worldCamera;
@@ -786,6 +758,8 @@ namespace Core.Module.Tutorial
 
             return _worldCamera;
         }
+        #endregion
+
         #endregion
     }
 }

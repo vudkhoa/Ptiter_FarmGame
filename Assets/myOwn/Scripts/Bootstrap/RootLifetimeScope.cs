@@ -21,9 +21,7 @@ using myOwn.Firebase;
 
 namespace MyOwn.ServiceHarness
 {
-    /// <summary>
     /// Cross-scene root container (DontDestroyOnLoad). Register MessagePipe + global Singleton services.
-    /// </summary>
     public sealed class RootLifetimeScope : LifetimeScope
     {
         [Header("Boot data (cấp cho preloader chạy lúc boot)")]

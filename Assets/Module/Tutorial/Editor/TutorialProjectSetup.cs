@@ -36,10 +36,8 @@ namespace Core.Module.Tutorial.Editor
         }
     }
 
-    /// <summary>
     /// Generates the tutorial assets: sprites, step/flow/catalog, the persistent UI container in
     /// the Preloading scene, and the build-button anchor. Re-runnable; overwrites only its output.
-    /// </summary>
     public static class TutorialProjectSetup
     {
         private const string ModuleRoot = "Assets/Module/Tutorial";
@@ -62,25 +60,15 @@ namespace Core.Module.Tutorial.Editor
         private const string ContainerName = "[Tutorial UI Container]";
         private const string HandViewName = "Hand View";
 
-        /// <summary>
-        /// Hand artwork size in canvas units, matching the 400x326 source aspect so the sprite
-        /// is never stretched (the Image has no preserveAspect).
-        /// </summary>
+        /// Matches the 400x326 source aspect so the sprite is never stretched (no preserveAspect).
         private static readonly Vector2 HandSize = new Vector2(184f, 150f);
 
-        /// <summary>
-        /// Fingertip position inside the hand sprite, measured from its alpha: normalized
-        /// (0.087, 0.020) from the top-left, converted to Unity pivot space (origin bottom-left).
-        /// Putting the pivot here is what makes a step offset of (0,0) land the fingertip exactly
-        /// on the anchor, and keeps it planted while the tap animation scales.
-        /// Re-measure this if the hand art is replaced.
-        /// </summary>
+        /// Fingertip position inside the hand sprite, measured from its alpha. This pivot is what
+        /// lands a step offset of (0,0) on the anchor - re-measure it if the hand art is replaced.
         private static readonly Vector2 HandFingertipPivot = new Vector2(0.087f, 0.980f);
 
-        /// <summary>
-        /// Canvas-space lift applied to both the cell ring and the hand on the place-land step.
-        /// The grid anchor resolves slightly below the tile artwork it marks; tuned by eye.
-        /// </summary>
+        /// Canvas-space lift for the cell ring and the hand on the place-land step: the grid anchor
+        /// resolves slightly below the tile artwork it marks.
         private static readonly Vector2 CellAnchorCorrection = new Vector2(0f, 75f);
 
         // Above the UIManager canvas (0) and the Settings HUD (100). A focused modal outranks even
@@ -88,6 +76,7 @@ namespace Core.Module.Tutorial.Editor
         private const int TutorialCanvasSortingOrder = 199;
         private const int ForegroundSortingOrder = 201;
 
+        #region Public API
         [MenuItem("Tools/Tutorial/Rebuild Tutorial Content")]
         public static void Rebuild()
         {
@@ -102,10 +91,10 @@ namespace Core.Module.Tutorial.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log(
-                "[TutorialSetup] Rebuilt tutorial catalog, flows, steps and the persistent UI container. " +
-                $"Container={(container != null ? "ok" : "MISSING")}. " +
-                "If tutorial_hand.png is swapped for different art, re-measure HandFingertipPivot.");
+            if (container == null)
+            {
+                Debug.LogError("[TutorialSetup] Rebuild finished without a container - the hand cannot show.");
+            }
         }
 
         [MenuItem("Tools/Tutorial/Reset Saved Tutorial Progress")]
@@ -114,16 +103,21 @@ namespace Core.Module.Tutorial.Editor
             string path = Path.Combine(Application.persistentDataPath, "playerdata.json");
             if (!File.Exists(path))
             {
-                Debug.Log("[TutorialSetup] No save file - the tutorial already starts from scratch.");
+                EditorUtility.DisplayDialog(
+                    "Tutorial", "No save file - the tutorial already starts from scratch.", "OK");
                 return;
             }
 
-            Debug.Log(
-                "[TutorialSetup] Delete the save to replay the tutorial: " + path +
-                "\nOr call ITutorialService.ResetProgress() from play mode to keep the rest of the save.");
+            EditorUtility.DisplayDialog(
+                "Tutorial",
+                $"Delete this file to replay the tutorial:\n{path}\n\n" +
+                "Or call ITutorialService.ResetProgress() in play mode to keep the rest of the save.",
+                "Reveal");
             EditorUtility.RevealInFinder(path);
         }
+        #endregion
 
+        #region Private Methods
         [InitializeOnLoadMethod]
         private static void ScheduleEnsure() => EditorApplication.delayCall += EnsureSetup;
 
@@ -165,10 +159,7 @@ namespace Core.Module.Tutorial.Editor
         {
             return new TutorialSprites
             {
-                Hand = EnsureSprite(
-                    "tutorial_hand.png", 128,
-                    (x, y, size) => TouchIndicatorAlpha(x, y, size),
-                    0),
+                Hand = EnsureSprite("tutorial_hand.png", 128, TouchIndicatorAlpha, 0),
                 FocusRing = EnsureSprite(
                     "tutorial_focus_ring.png", 96,
                     (x, y, size) => RoundedOutlineAlpha(x, y, size, 28f, 6f),
@@ -221,7 +212,7 @@ namespace Core.Module.Tutorial.Editor
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
-        /// <summary>Filled dot with a detached outer ring - reads as "tap here" at any size.</summary>
+        /// Filled dot with a detached outer ring - reads as "tap here" at any size.
         private static float TouchIndicatorAlpha(int x, int y, int size)
         {
             float half = size * 0.5f;
@@ -234,7 +225,7 @@ namespace Core.Module.Tutorial.Editor
             return Mathf.Max(core, ring);
         }
 
-        /// <summary>Hollow diamond: |dx| + |dy| == 1 in normalised space, banded by thickness.</summary>
+        /// Hollow diamond: |dx| + |dy| == 1 in normalised space, banded by thickness.
         private static float DiamondOutlineAlpha(int x, int y, int size, float thickness)
         {
             float half = size * 0.5f;
@@ -260,7 +251,7 @@ namespace Core.Module.Tutorial.Editor
             return Mathf.Clamp01(0.5f - band);
         }
 
-        /// <summary>Signed distance to a rounded rectangle filling the texture. Negative inside.</summary>
+        /// Signed distance to a rounded rectangle filling the texture. Negative inside.
         private static float RoundedRectDistance(int x, int y, int size, float radius)
         {
             float half = size * 0.5f;
@@ -353,10 +344,8 @@ namespace Core.Module.Tutorial.Editor
                 "Chạm vào ô đất để bắt đầu trồng cây.",
                 hand =>
                 {
-                    // The plot the player just put down, not a fixed world point: a hard coded
-                    // position pointed at the map origin rather than at their land. The bridge
-                    // re-pins this anchor from the save on scene load, so quitting after placing
-                    // and coming back still has a target.
+                    // The plot the player just put down, not a fixed world point. The bridge re-pins
+                    // this anchor from the save, so quitting after placing still leaves a target.
                     hand.anchorMode = TutorialAnchorMode.Anchor;
                     hand.anchorId = TutorialAnchorIds.NewPlot;
                     hand.offset = Vector2.zero;
@@ -544,10 +533,8 @@ namespace Core.Module.Tutorial.Editor
                 HandViewName, typeof(RectTransform), typeof(TutorialHandView));
             RectTransform handViewRect = Stretch(handViewObject, containerObject.transform);
 
-            // Sibling order is the depth order: dim at the back, the cloned widget over it, the
-            // hand and ring in the foreground canvas on top of both.
-            // TutorialDimMask, not a plain Image: a step that gates a map cell needs the dim to
-            // report a miss over that one rect, which only the subclass can do.
+            // Sibling order is the depth order: dim at the back, cloned widget over it, hand and
+            // ring on top. TutorialDimMask, not a plain Image, so a gated map cell can report a miss.
             GameObject dimmerObject = new GameObject(
                 "Dimmer", typeof(RectTransform), typeof(CanvasRenderer), typeof(TutorialDimMask));
             Stretch(dimmerObject, handViewRect);
@@ -630,10 +617,8 @@ namespace Core.Module.Tutorial.Editor
         #endregion
 
         #region Build button anchor
-        /// <summary>
         /// Only the HUD button is a fixed widget. The soil row and the panel root are runtime
         /// instances, so they register from code (ObjectSelectSlotView / SelectObjectsScreen).
-        /// </summary>
         private static void AddBuildButtonAnchor()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(BuildHudButtonPrefabPath);
@@ -748,6 +733,8 @@ namespace Core.Module.Tutorial.Editor
                 throw new InvalidOperationException($"Serialized field '{name}' was not found.");
             property.objectReferenceValue = value;
         }
+        #endregion
+
         #endregion
     }
 }

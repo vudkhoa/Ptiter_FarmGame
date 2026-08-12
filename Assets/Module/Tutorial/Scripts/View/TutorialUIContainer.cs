@@ -4,17 +4,15 @@ using UnityEngine;
 
 namespace Core.Module.Tutorial
 {
-    /// <summary>
     /// The persistent home of the tutorial UI, authored into the Preloading scene so the hand
     /// outlives every map reload - the first harvest flow fires long after the first load.
-    /// </summary>
     [DisallowMultipleComponent]
     public sealed class TutorialUIContainer : MonoBehaviour, ITutorialView
     {
-        [Tooltip("Hand view living under this container. Assigned by Tools/Tutorial/Rebuild Tutorial Content.")]
+        [Tooltip("Assigned by Tools/Tutorial/Rebuild Tutorial Content.")]
         [SerializeField] private TutorialHandView _handView;
 
-        [Tooltip("Keep this object alive across scene loads. Off only when it already sits under another persistent root.")]
+        [Tooltip("Off only when it already sits under another persistent root.")]
         [SerializeField] private bool _persistAcrossScenes = true;
 
         private Canvas[] _overlayCanvases = Array.Empty<Canvas>();
@@ -23,7 +21,7 @@ namespace Core.Module.Tutorial
         public bool IsShowing => _handView != null && _handView.IsShowing;
         #endregion
 
-        #region Unity LifeCycle
+        #region Unity Lifecycle
         private void Awake()
         {
             RegisterOverlayCanvases();
@@ -57,30 +55,30 @@ namespace Core.Module.Tutorial
         }
         #endregion
 
-        #region ITutorialView
+        #region Public API
         public void ShowStep(TutorialStepSO step)
         {
             if (_handView == null) return;
+
             _handView.ShowStep(step);
         }
 
         public void Hide()
         {
             if (_handView == null) return;
+
             _handView.Hide();
         }
         #endregion
 
         #region Private Methods
-        /// <summary>
         /// Hands the container's canvases to the overlay registry so a focused modal lifts the
         /// whole thing as one, instead of leaving the hand behind the window it points into.
-        /// </summary>
         private void RegisterOverlayCanvases()
         {
             // Inactive included: the hand view spends most of its life switched off.
             Canvas[] canvases = GetComponentsInChildren<Canvas>(true);
-            List<Canvas> overlays = new List<Canvas>(canvases.Length);
+            List<Canvas> overlays = new(canvases.Length);
 
             for (int i = 0; i < canvases.Length; i++)
             {

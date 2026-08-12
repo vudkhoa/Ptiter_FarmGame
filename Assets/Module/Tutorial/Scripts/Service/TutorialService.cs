@@ -7,13 +7,12 @@ using VContainer.Unity;
 
 namespace Core.Module.Tutorial
 {
-    /// <summary>
-    /// Owns "which step is on screen". Flows run strictly in catalog order and each finished step
-    /// is written to disk immediately, so a crash mid-tutorial resumes on the next step instead
-    /// of replaying the whole thing.
-    /// </summary>
+    /// Owns "which step is on screen". Flows run strictly in catalog order and each finished step is
+    /// written to disk immediately, so a crash mid-tutorial resumes on the next step.
     public sealed class TutorialService : ITutorialService, IAsyncStartable, IDisposable
     {
+        private const int MaxAdvanceIterations = 512;
+
         private readonly TutorialCatalogSO _catalog;
         private readonly ITutorialRepository _repository;
         private readonly ITutorialView _view;
@@ -29,13 +28,8 @@ namespace Core.Module.Tutorial
         private bool _finished;
         private bool _disposed;
 
-        public bool IsRunning => _currentStep != null;
-        public string CurrentFlowId => _currentFlow != null ? _currentFlow.flowId : null;
-        public string CurrentStepId => _currentStep != null ? _currentStep.stepId : null;
-
-        #region VContainer
         // Takes ITutorialView, not a provider: the container lives in the Preloading scene and is
-        // resolved once at boot. A missing container binds NullTutorialView instead of failing the scope.
+        // resolved once at boot. A missing container binds NullTutorialView instead of failing.
         public TutorialService(
             TutorialCatalogSO catalog,
             ITutorialRepository repository,
@@ -52,10 +46,17 @@ namespace Core.Module.Tutorial
             _flowCompletedPub = flowCompletedPub;
         }
 
-        /// <summary>
-        /// The save file is read by another IAsyncStartable during the same container start, so
-        /// the tutorial waits for it rather than racing it and reading empty progress.
-        /// </summary>
+        #region Properties
+        public bool IsRunning => _currentStep != null;
+
+        public string CurrentFlowId => _currentFlow != null ? _currentFlow.flowId : null;
+
+        public string CurrentStepId => _currentStep != null ? _currentStep.stepId : null;
+        #endregion
+
+        #region Lifecycle
+        /// The save file is read by another IAsyncStartable during the same container start, so the
+        /// tutorial waits for it rather than racing it and reading empty progress.
         public async UniTask StartAsync(CancellationToken cancellation)
         {
             try
@@ -78,6 +79,45 @@ namespace Core.Module.Tutorial
             _view?.Hide();
         }
         #endregion
+
+        #region Public API
+        public void ReportSignal(TutorialSignal signal)
+        {
+            if (signal == TutorialSignal.None || _finished || !_initialized || _disposed) return;
+
+            if (_currentStep != null)
+            {
+                if (_currentStep.completionSignal != signal) return;
+
+                CompleteStep(_currentStep);
+                Advance();
+                return;
+            }
+
+            if (_currentFlow == null || _flowArmed) return;
+            if (_currentFlow.startSignal != signal) return;
+
+            _flowArmed = true;
+            Advance();
+        }
+
+        public void ResetProgress()
+        {
+            _progress = new TutorialSaveData { initialized = true };
+            Persist();
+
+            _currentFlow = null;
+            _currentStep = null;
+            _flowArmed = false;
+            _finished = false;
+            _initialized = true;
+            _view?.Hide();
+
+            if (_catalog != null && _catalog.tutorialEnabled) Advance();
+        }
+        #endregion
+
+        #region Private Methods
 
         #region Initialization
         private void Initialize()
@@ -109,10 +149,8 @@ namespace Core.Module.Tutorial
             Advance();
         }
 
-        /// <summary>
         /// First contact with a save file. A player who already has a farm must never be shown
         /// "place your first plot", so their untouched tutorial data is retired on sight.
-        /// </summary>
         private void SeedProgressForExistingSave()
         {
             if (_progress.initialized) return;
@@ -133,21 +171,17 @@ namespace Core.Module.Tutorial
         }
         #endregion
 
-        #region Flow control
-        /// <summary>
-        /// Walks forward to the first thing that needs the player: an armed step to display, a
-        /// flow waiting on its start signal, or the end of the catalog. Loops instead of recursing
-        /// because a step with no completion signal finishes the instant it is reached.
-        /// </summary>
+        #region Flow Control
+        /// Walks forward to the first thing that needs the player. Loops instead of recursing because
+        /// a step with no completion signal finishes the instant it is reached.
         private void Advance()
         {
             if (_finished || _disposed) return;
 
             // Bounded by the number of authored steps; the guard only catches a malformed catalog.
             int safety = 0;
-            const int maxIterations = 512;
 
-            while (safety++ < maxIterations)
+            while (safety++ < MaxAdvanceIterations)
             {
                 TutorialFlowSO flow = _catalog.GetFirstIncompleteFlow(_progress);
                 if (flow == null)
@@ -184,7 +218,7 @@ namespace Core.Module.Tutorial
             }
 
             Debug.LogError(
-                $"[TutorialService] Aborted after {maxIterations} iterations. " +
+                $"[TutorialService] Aborted after {MaxAdvanceIterations} iterations. " +
                 "Check the catalog for steps with duplicate ids or an empty completion signal.");
             Finish();
         }
@@ -256,43 +290,6 @@ namespace Core.Module.Tutorial
             _currentFlow = null;
             ClearCurrentStep();
         }
-        #endregion
-
-        #region Signals
-        public void ReportSignal(TutorialSignal signal)
-        {
-            if (signal == TutorialSignal.None || _finished || !_initialized || _disposed) return;
-
-            if (_currentStep != null)
-            {
-                if (_currentStep.completionSignal != signal) return;
-
-                CompleteStep(_currentStep);
-                Advance();
-                return;
-            }
-
-            if (_currentFlow == null || _flowArmed) return;
-            if (_currentFlow.startSignal != signal) return;
-
-            _flowArmed = true;
-            Advance();
-        }
-
-        public void ResetProgress()
-        {
-            _progress = new TutorialSaveData { initialized = true };
-            Persist();
-
-            _currentFlow = null;
-            _currentStep = null;
-            _flowArmed = false;
-            _finished = false;
-            _initialized = true;
-            _view?.Hide();
-
-            if (_catalog != null && _catalog.tutorialEnabled) Advance();
-        }
 
         private void Persist()
         {
@@ -301,6 +298,8 @@ namespace Core.Module.Tutorial
             // Losing the write means the step replays next launch - annoying, never fatal.
             Debug.LogError("[TutorialService] Failed to persist tutorial progress.");
         }
+        #endregion
+
         #endregion
     }
 }

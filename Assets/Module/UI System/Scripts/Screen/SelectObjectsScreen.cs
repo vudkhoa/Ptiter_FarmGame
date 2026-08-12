@@ -39,12 +39,29 @@ public class SelectObjectsScreen :
 
     private readonly List<ObjectData> _resourceObjects = new();
     private readonly List<ObjectSelectSlotView> _slotPool = new();
+
     private IMapService _map;
     private ObjectDatabaseSO _database;
     private IDisposable _placementStoppedSubscription;
     private int _displayedCountRevision = -1;
     private bool _reopenAfterPlacement;
 
+    #region Unity Lifecycle
+    private void Update()
+    {
+        RefreshPlacedCounts(force: false);
+    }
+
+    protected override void OnDestroy()
+    {
+        GameplayInputBlockRegistry.Remove(this);
+        TutorialAnchorRegistry.Unregister(TutorialAnchorIds.ObjectsPanel, transform);
+        _placementStoppedSubscription?.Dispose();
+        base.OnDestroy();
+    }
+    #endregion
+
+    #region Public API
     [Inject]
     public void Construct(
         IMapService map,
@@ -101,20 +118,9 @@ public class SelectObjectsScreen :
         GameplayInputBlockRegistry.Remove(this);
         TutorialAnchorRegistry.Unregister(TutorialAnchorIds.ObjectsPanel, transform);
     }
+    #endregion
 
-    protected override void OnDestroy()
-    {
-        GameplayInputBlockRegistry.Remove(this);
-        TutorialAnchorRegistry.Unregister(TutorialAnchorIds.ObjectsPanel, transform);
-        _placementStoppedSubscription?.Dispose();
-        base.OnDestroy();
-    }
-
-    private void Update()
-    {
-        RefreshPlacedCounts(force: false);
-    }
-
+    #region Event Handlers
     private void ShowResources()
     {
         ApplyTabVisual(_resourceTabImage, active: true);
@@ -124,16 +130,35 @@ public class SelectObjectsScreen :
         ReloadResourceItems();
     }
 
-    /// <summary>
     /// Raised through the hub rather than an injected service: UIManager opens this window before
     /// VContainer injects it, so a service field cannot be relied on from a click handler.
-    /// The resource tab stays selected - a locked tab must not swap the panel out.
-    /// </summary>
     private void ShowLockedTabToast()
     {
         ToastHub.Show(_lockedTabMessage, ToastStyle.Warning);
     }
 
+    private void OnPlacementStarted()
+    {
+        if (!IsOpen) return;
+
+        _reopenAfterPlacement = true;
+        Close();
+    }
+
+    private void OnPlacementStopped(MapPlacementStoppedPayload payload)
+    {
+        if (!_reopenAfterPlacement) return;
+
+        // Cleared either way: the trip back to the map is over, so a later stop must not drag
+        // this window up again out of nowhere.
+        _reopenAfterPlacement = false;
+        if (!payload.ReopenPicker) return;
+
+        Open();
+    }
+    #endregion
+
+    #region Private Methods
     private void ReloadResourceItems()
     {
         if (_database == null || _resourceContent == null || _slotPrefab == null) return;
@@ -156,49 +181,32 @@ public class SelectObjectsScreen :
     {
         while (_slotPool.Count < requiredCount)
         {
-            ObjectSelectSlotView slot = Instantiate(_slotPrefab, _resourceContent);
-            slot.name = $"Object Slot {_slotPool.Count}";
-            _slotPool.Add(slot);
+            _slotPool.Add(Instantiate(_slotPrefab, _resourceContent));
         }
     }
 
     private void ApplyTabVisual(Image image, bool active)
     {
         if (image == null) return;
+
         Sprite sprite = active ? _tabActiveSprite : _tabInactiveSprite;
         if (sprite != null) image.sprite = sprite;
     }
 
-    private void OnPlacementStarted()
-    {
-        if (!IsOpen) return;
-
-        _reopenAfterPlacement = true;
-        Close();
-    }
-
-    private void OnPlacementStopped(MapPlacementStoppedPayload payload)
-    {
-        if (!_reopenAfterPlacement) return;
-
-        // Cleared either way: the trip back to the map is over, so a later stop must not drag
-        // this window up again out of nowhere.
-        _reopenAfterPlacement = false;
-        if (!payload.ReopenPicker) return;
-
-        Open();
-    }
-
+    // Polled from Update: the revision guard is what keeps it from touching every slot each frame.
     private void RefreshPlacedCounts(bool force)
     {
         if (_database == null) return;
         if (!force && _displayedCountRevision == _database.PlacedCountRevision) return;
 
         _displayedCountRevision = _database.PlacedCountRevision;
-        foreach (ObjectSelectSlotView slot in _slotPool)
+        for (int i = 0; i < _slotPool.Count; i++)
         {
+            ObjectSelectSlotView slot = _slotPool[i];
             if (slot == null || slot.ObjectId < 0) continue;
+
             slot.SetPlacedCount(_database.GetPlacedCount(slot.ObjectId));
         }
     }
+    #endregion
 }

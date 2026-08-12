@@ -1,6 +1,6 @@
 namespace Core.Module.Toast
 {
-    /// <summary>Picks the background colour only. Layout and timing are identical for every style.</summary>
+    /// Picks the background colour only. Layout and timing are identical for every style.
     public enum ToastStyle
     {
         Info = 0,
