@@ -26,6 +26,7 @@ namespace Core.Module.Quest
         private readonly CancellationTokenSource _lifetimeCts = new CancellationTokenSource();
         private readonly HashSet<string> _pendingTransactions = new HashSet<string>();
         private readonly HashSet<string> _retryingTransactions = new HashSet<string>();
+        private readonly HashSet<string> _claimingTasks = new HashSet<string>();
 
         private DailyQuestSaveData _state;
         private bool _initializing;
@@ -87,7 +88,6 @@ namespace Core.Module.Quest
                 ActivateSavedTasks();
                 IsReady = true;
                 PublishStateChanged();
-                ReconcileCompletedTasks();
                 ReconcilePendingRewardsAsync().Forget();
             }
             catch (OperationCanceledException)
@@ -123,6 +123,7 @@ namespace Core.Module.Quest
             for (int i = 0; i < _state.tasks.Count; i++)
             {
                 DailyQuestTaskSaveData task = _state.tasks[i];
+                if (task == null || task.rewardQueued) continue;
                 QuestDefinitionSO definition = _catalog.GetQuestById(task.questDefinitionId);
                 QuestRuntimeState runtime = _questService.GetQuestState(task.runtimeId);
                 int current = 0;
@@ -195,6 +196,95 @@ namespace Core.Module.Quest
             };
         }
 
+        public async UniTask<bool> ClaimTaskAsync(
+            string runtimeId,
+            CancellationToken cancellationToken = default)
+        {
+            if (!IsReady || string.IsNullOrWhiteSpace(runtimeId) ||
+                !_claimingTasks.Add(runtimeId))
+                return false;
+
+            DailyQuestTaskSaveData task = null;
+            bool staged = false;
+            try
+            {
+                task = _state?.tasks?.Find(
+                    item => item != null && item.runtimeId == runtimeId);
+                QuestRuntimeState runtime =
+                    _questService.GetQuestState(runtimeId);
+                if (task == null || task.rewardQueued ||
+                    runtime?.Status != QuestStatus.Completed)
+                    return false;
+
+                task.quest = runtime.CreateSnapshot();
+                task.rewardQueued = true;
+                string transactionId = CreateTaskTransactionId(
+                    _state.dayKey, task.runtimeId);
+                var pending = new PendingQuestRewardSaveData
+                {
+                    transactionId = transactionId,
+                    dayKey = _state.dayKey,
+                    sourceId = task.runtimeId,
+                    kind = DailyRewardKind.Task,
+                    coins = task.coinReward
+                };
+
+                staged = await _repository.StageQuestRewardAsync(
+                    _state, pending, cancellationToken);
+                if (!staged)
+                {
+                    task.rewardQueued = false;
+                    PublishStateChanged();
+                    return false;
+                }
+
+                _pendingTransactions.Add(transactionId);
+                PublishStateChanged();
+
+                try
+                {
+                    bool granted = await TryGrantRewardAsync(
+                        pending, false, _lifetimeCts.Token);
+                    if (!granted)
+                        StartRewardRetry(pending, false);
+                }
+                catch (OperationCanceledException)
+                {
+                    // The staged transaction remains persisted for next startup.
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogException(exception);
+                    StartRewardRetry(pending, false);
+                }
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                if (!staged && task != null)
+                {
+                    task.rewardQueued = false;
+                    PublishStateChanged();
+                }
+                return false;
+            }
+            catch (Exception exception)
+            {
+                if (!staged && task != null)
+                {
+                    task.rewardQueued = false;
+                    PublishStateChanged();
+                }
+                Debug.LogException(exception);
+                return false;
+            }
+            finally
+            {
+                _claimingTasks.Remove(runtimeId);
+            }
+        }
+
         public async UniTask<bool> ClaimMilestoneAsync(
             string milestoneId,
             CancellationToken cancellationToken = default)
@@ -241,8 +331,9 @@ namespace Core.Module.Quest
             if (task == null || task.rewardQueued) return;
 
             task.quest = _questService.CreateSnapshot(task.runtimeId);
-            task.rewardQueued = true;
-            QueueTaskRewardAsync(task, false).Forget();
+            _repository.SaveDailyQuestAsync(
+                _state, true, _lifetimeCts.Token).Forget();
+            PublishStateChanged();
         }
 
         private void OnQuestProgressChanged(QuestProgressChangedPayload payload)
@@ -255,64 +346,6 @@ namespace Core.Module.Quest
             _repository.SaveDailyQuestAsync(
                 _state, false, _lifetimeCts.Token).Forget();
             PublishStateChanged();
-        }
-
-        private async UniTaskVoid QueueTaskRewardAsync(
-            DailyQuestTaskSaveData task,
-            bool reconciledAtStartup)
-        {
-            string transactionId = CreateTaskTransactionId(_state.dayKey, task.runtimeId);
-            var pending = new PendingQuestRewardSaveData
-            {
-                transactionId = transactionId,
-                dayKey = _state.dayKey,
-                sourceId = task.runtimeId,
-                kind = DailyRewardKind.Task,
-                coins = task.coinReward
-            };
-
-            bool staged = await _repository.StageQuestRewardAsync(
-                _state, pending, _lifetimeCts.Token);
-            if (!staged)
-            {
-                task.rewardQueued = false;
-                await RetryStageAndGrantAsync(task, pending, reconciledAtStartup);
-                return;
-            }
-
-            _pendingTransactions.Add(transactionId);
-            PublishStateChanged();
-            bool granted = await TryGrantRewardAsync(
-                pending, reconciledAtStartup, _lifetimeCts.Token);
-            if (!granted)
-                StartRewardRetry(pending, reconciledAtStartup);
-        }
-
-        private async UniTask RetryStageAndGrantAsync(
-            DailyQuestTaskSaveData task,
-            PendingQuestRewardSaveData pending,
-            bool reconciledAtStartup)
-        {
-            int retryIndex = 0;
-            while (!_lifetimeCts.IsCancellationRequested)
-            {
-                await UniTask.Delay(
-                    RetryDelays[Math.Min(retryIndex, RetryDelays.Length - 1)],
-                    cancellationToken: _lifetimeCts.Token);
-                task.rewardQueued = true;
-                if (await _repository.StageQuestRewardAsync(
-                        _state, pending, _lifetimeCts.Token))
-                {
-                    _pendingTransactions.Add(pending.transactionId);
-                    PublishStateChanged();
-                    if (!await TryGrantRewardAsync(
-                            pending, reconciledAtStartup, _lifetimeCts.Token))
-                        StartRewardRetry(pending, reconciledAtStartup);
-                    return;
-                }
-                task.rewardQueued = false;
-                retryIndex++;
-            }
         }
 
         private void OnClockTick(ClockTickPayload payload)
@@ -340,6 +373,7 @@ namespace Core.Module.Quest
                 if (next == null) return;
                 _state = next;
                 _pendingTransactions.Clear();
+                _claimingTasks.Clear();
                 LoadPendingTransactions();
                 await _repository.SaveDailyQuestAsync(
                     _state, true, _lifetimeCts.Token);
@@ -425,21 +459,6 @@ namespace Core.Module.Quest
             {
                 if (pending[i] != null)
                     _pendingTransactions.Add(pending[i].transactionId);
-            }
-        }
-
-        private void ReconcileCompletedTasks()
-        {
-            if (_state?.tasks == null) return;
-            for (int i = 0; i < _state.tasks.Count; i++)
-            {
-                DailyQuestTaskSaveData task = _state.tasks[i];
-                if (task == null || task.rewardQueued) continue;
-                QuestRuntimeState runtime = _questService.GetQuestState(task.runtimeId);
-                if (runtime?.Status != QuestStatus.Completed) continue;
-                task.quest = runtime.CreateSnapshot();
-                task.rewardQueued = true;
-                QueueTaskRewardAsync(task, true).Forget();
             }
         }
 
@@ -558,6 +577,7 @@ namespace Core.Module.Quest
             for (int i = 0; i < _subscriptions.Count; i++)
                 _subscriptions[i]?.Dispose();
             _subscriptions.Clear();
+            _claimingTasks.Clear();
             _lifetimeCts.Cancel();
             _lifetimeCts.Dispose();
         }
