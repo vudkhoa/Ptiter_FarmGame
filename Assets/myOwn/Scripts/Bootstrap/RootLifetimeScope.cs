@@ -12,6 +12,7 @@ using Core.Module.Time;
 using Core.Module.Quest;
 using Core.Module.Loading;
 using Core.Module.Currency;
+using Core.Module.Currency.Integration.Map;
 using Core.Module.Currency.Integration.Quest;
 using Core.Module.Settings;
 using Core.Module.Audio;
@@ -68,6 +69,7 @@ namespace MyOwn.ServiceHarness
                    .RegisterCurrencyQuestIntegration()
                    .RegisterTutorialModule(options, _tutorialCatalog, _tutorialUIContainer)
                    .RegisterToastModule(_toastUIContainer)
+                   .RegisterCurrencyMapIntegration()
                    .RegisterLoadingModule(options);
 
             // Boot data + Addressable refs cấp cho preloader (nạp trong RunBootSequenceAsync).
