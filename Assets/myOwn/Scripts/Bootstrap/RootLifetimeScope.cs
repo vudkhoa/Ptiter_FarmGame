@@ -16,13 +16,13 @@ using Core.Module.Currency.Integration.Map;
 using Core.Module.Currency.Integration.Quest;
 using Core.Module.Settings;
 using Core.Module.Audio;
+using Core.Module.Toast;
+using Core.Module.Tutorial;
 using myOwn.Firebase;
 
 namespace MyOwn.ServiceHarness
 {
-    /// <summary>
     /// Cross-scene root container (DontDestroyOnLoad). Register MessagePipe + global Singleton services.
-    /// </summary>
     public sealed class RootLifetimeScope : LifetimeScope
     {
         [Header("Boot data (cấp cho preloader chạy lúc boot)")]
@@ -32,6 +32,13 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private CutsceneCatalogReference _cutsceneCatalogRef;
         [SerializeField] private AudioSettingsSO _audioSettings;
         [SerializeField] private AudioCatalogSO _audioCatalog;
+
+        [Header("Tutorial (UI sống sẵn trong scene Preloading, theo root qua DontDestroyOnLoad)")]
+        [SerializeField] private TutorialCatalogSO _tutorialCatalog;
+        [SerializeField] private TutorialUIContainer _tutorialUIContainer;
+
+        [Header("Toast (UI sống sẵn trong scene Preloading, theo root qua DontDestroyOnLoad)")]
+        [SerializeField] private ToastUIContainer _toastUIContainer;
 
         protected override void Awake()
         {
@@ -60,6 +67,8 @@ namespace MyOwn.ServiceHarness
                    .RegisterQuestModule(options)
                    .RegisterCutsceneModule(options)
                    .RegisterCurrencyQuestIntegration()
+                   .RegisterTutorialModule(options, _tutorialCatalog, _tutorialUIContainer)
+                   .RegisterToastModule(_toastUIContainer)
                    .RegisterCurrencyMapIntegration()
                    .RegisterLoadingModule(options);
 

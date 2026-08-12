@@ -1,13 +1,13 @@
 using Core.Module.Input;
+using Core.Module.Toast;
+using Core.Module.Tutorial;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Shared.Utils
 {
-    /// <summary>
-    /// Promotes the Canvas that owns the active modal above every other Canvas
-    /// and enables one shared raycast shield below the modal window content.
-    /// </summary>
+    /// Promotes the Canvas that owns the active modal above every other Canvas except the tutorial
+    /// and toast overlays, and enables one shared raycast shield below the modal window content.
     [DefaultExecutionOrder(-1000)]
     [DisallowMultipleComponent]
     public sealed class GlobalModalInputBlocker : MonoBehaviour
@@ -27,21 +27,7 @@ namespace Shared.Utils
         private bool _originalOverrideSorting;
         private int _originalSortingOrder;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStatics()
-        {
-            _instance = null;
-        }
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void CreateBootstrap()
-        {
-            if (_instance != null) return;
-
-            GameObject bootstrap = new GameObject(BootstrapName);
-            bootstrap.AddComponent<GlobalModalInputBlocker>();
-        }
-
+        #region Unity Lifecycle
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -78,6 +64,14 @@ namespace Shared.Utils
                 Refresh(true);
         }
 
+        private void OnDestroy()
+        {
+            ReleaseModalLayer();
+            if (_instance == this) _instance = null;
+        }
+        #endregion
+
+        #region Event Handlers
         private void Refresh(bool blocked)
         {
             if (!blocked)
@@ -95,15 +89,30 @@ namespace Shared.Utils
             Canvas ownerCanvas = owner.GetComponentInParent<Canvas>();
             RaiseCanvas(ownerCanvas != null ? ownerCanvas.rootCanvas : null);
 
-            // UIManager sorts its known layers first during Awake. HUD buttons
-            // that are direct children of the manager can therefore end up
-            // after Popup and receive raycasts above it. The modal layer must
-            // be the final root child while it owns input.
+            // UIManager sorts its known layers first during Awake, so a HUD button parented
+            // directly to the manager can land after Popup and steal raycasts above it.
             popupLayer.SetAsLastSibling();
             _raycastTarget.SetActive(true);
             _raycastRect.SetAsFirstSibling();
             _raycastImage.enabled = true;
             _raycastImage.raycastTarget = true;
+        }
+        #endregion
+
+        #region Private Methods
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            _instance = null;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void CreateBootstrap()
+        {
+            if (_instance != null) return;
+
+            GameObject bootstrap = new GameObject(BootstrapName);
+            bootstrap.AddComponent<GlobalModalInputBlocker>();
         }
 
         private void EnsureRaycastTarget(Transform popupLayer)
@@ -137,9 +146,8 @@ namespace Shared.Utils
                 _raycastImage.canvasRenderer.cullTransparentMesh = false;
 
                 Debug.LogWarning(
-                    $"[GlobalModalInputBlocker] '{RaycastTargetName}' was " +
-                    $"missing under '{popupLayer.name}'. A runtime fallback " +
-                    "was created.", popupLayer);
+                    $"[GlobalModalInputBlocker] '{RaycastTargetName}' was missing under " +
+                    $"'{popupLayer.name}'. A runtime fallback was created.", popupLayer);
             }
 
             if (_raycastRect.parent != popupLayer)
@@ -190,35 +198,43 @@ namespace Shared.Utils
             {
                 Canvas canvas = canvases[i];
                 if (canvas == null || !canvas.isRootCanvas) continue;
+                // Tutorial overlays are lifted ABOVE this modal a few lines down; counting them
+                // here would make each side chase the other upwards forever.
+                if (TutorialOverlayCanvasRegistry.IsOverlay(canvas)) continue;
+                // The toast layer parks at a fixed order far above everything and never moves.
+                // Counting it would push each modal past it and hide the message it just raised.
+                if (ToastCanvasRegistry.IsOverlay(canvas)) continue;
+
                 highestOrder = Mathf.Max(highestOrder, canvas.sortingOrder);
             }
 
             targetCanvas.overrideSorting = true;
             targetCanvas.sortingOrder = highestOrder + SortingOrderPadding;
+
+            // A tutorial step can point at a widget inside this very window, so its dim, its
+            // clone of the widget and its hand all have to clear the window they explain.
+            TutorialOverlayCanvasRegistry.RaiseAbove(targetCanvas.sortingOrder);
         }
 
         private void ReleaseModalLayer()
         {
-            if (_raycastImage != null)
-                _raycastImage.raycastTarget = false;
+            if (_raycastImage != null) _raycastImage.raycastTarget = false;
 
             RestoreCanvasSorting();
         }
 
         private void RestoreCanvasSorting()
         {
+            // Unconditional: the overlays must come back down even if the modal canvas went away
+            // with its scene, otherwise the tutorial keeps a raise nothing is holding up any more.
+            TutorialOverlayCanvasRegistry.ResetToBase();
+
             if (_raisedCanvas == null) return;
 
             _raisedCanvas.overrideSorting = _originalOverrideSorting;
             _raisedCanvas.sortingOrder = _originalSortingOrder;
             _raisedCanvas = null;
         }
-
-        private void OnDestroy()
-        {
-            ReleaseModalLayer();
-            if (_instance == this)
-                _instance = null;
-        }
+        #endregion
     }
 }

@@ -23,6 +23,10 @@ namespace Core.Module.Map
         // State machine
         void StartPlacement(int objectId);
         void StopPlacement();
+
+        /// <paramref name="reopenPicker"/> false ends the placement without inviting the build
+        /// menu back, for a stop the game performed rather than the player.
+        void StopPlacement(bool reopenPicker);
         void SetPlayerRemovalMode(bool active);
 
         // World-only API
@@ -41,6 +45,10 @@ namespace Core.Module.Map
 
         // Grid queries & coordinate conversion
         bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data);
+
+        /// Would placing <paramref name="objectId"/> at this cell succeed right now? Same checks
+        /// AddFurniture runs, without committing anything.
+        bool CanPlaceObjectAt(int objectId, Vector3Int gridPosition);
         bool CanRemovePlayerObject(Vector3 worldHit);
         Vector3Int WorldToCell(Vector3 worldPosition);
         Vector3 CellToWorld(Vector3Int cellPosition);

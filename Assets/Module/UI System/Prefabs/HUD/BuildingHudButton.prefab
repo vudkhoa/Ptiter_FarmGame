@@ -211,6 +211,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5856680736632208003, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2263616742245666707}
+    - targetCorrespondingSourceObject: {fileID: 5856680736632208003, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2263616742245666708}
   m_SourcePrefab: {fileID: 100100000, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
 --- !u!1 &8725626004855640600 stripped
 GameObject:
@@ -233,3 +236,17 @@ MonoBehaviour:
   _windowsManager: {fileID: 0}
   _window: {fileID: 11400000, guid: 8facc328dbe240947acff453f2a10f38, type: 2}
   _isOpen: 0
+--- !u!114 &2263616742245666708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8725626004855640600}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b11b7c285bf1e734e9f4b3ad33f4c5f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Tutorial::Core.Module.Tutorial.TutorialAnchor
+  _anchorId: tutorial.build_button
+  _target: {fileID: 0}

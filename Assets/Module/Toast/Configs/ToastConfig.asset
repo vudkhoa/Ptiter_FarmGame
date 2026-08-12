@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce822f5523558444385dcd650bf1be63, type: 3}
+  m_Name: ToastConfig
+  m_EditorClassIdentifier: Toast::Core.Module.Toast.ToastConfigSO
+  setupVersion: 2
+  defaultDuration: 1.6
+  fadeInDuration: 0.16
+  fadeOutDuration: 0.22
+  riseDistance: 40
+  popScale: 0.92
+  maxVisible: 3
+  maxQueued: 8
+  mergeDuplicates: 1
+  overrideBackgroundColor: 1
+  backgroundOpacity: 0.78
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  infoColor: {r: 0.11, g: 0.09, b: 0.07, a: 0.94}
+  successColor: {r: 0.1, g: 0.42, b: 0.16, a: 0.95}
+  warningColor: {r: 0.6, g: 0.36, b: 0.05, a: 0.95}
+  errorColor: {r: 0.52, g: 0.13, b: 0.12, a: 0.95}

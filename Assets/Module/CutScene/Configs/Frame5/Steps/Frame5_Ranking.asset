@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Frame5_Ranking
   m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.CutsceneStepSO
   stepId: frame5_ranking
-  runMode: 1
+  runMode: 0
   tasks:
+  - {fileID: 11400000, guid: 3b7d1e94c5a04f28ab6d0e17c9f43004, type: 2}
   - {fileID: 11400000, guid: eb2550f969af46af9dd60e8bb0d39929, type: 2}
+  - {fileID: 11400000, guid: 3b7d1e94c5a04f28ab6d0e17c9f43005, type: 2}

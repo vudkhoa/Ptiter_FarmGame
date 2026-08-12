@@ -2,6 +2,8 @@ using BrunoMikoski.UIManager;
 using Core.Module.Input;
 using Core.Module.Map;
 using Core.Module.Time;
+using Core.Module.Toast;
+using Core.Module.Tutorial;
 using MessagePipe;
 using System;
 using System.Collections.Generic;
@@ -27,6 +29,9 @@ public class SelectObjectsScreen :
     [SerializeField] private Sprite _tabActiveSprite;
     [SerializeField] private Sprite _tabInactiveSprite;
 
+    [Tooltip("Shown as a toast when a tab that is not implemented yet is tapped.")]
+    [SerializeField] private string _lockedTabMessage = "Tính năng chưa mở!";
+
     [Header("Resource horizontal recycler")]
     [SerializeField] private ScrollRect _resourceRecycler;
     [SerializeField] private RectTransform _resourceContent;
@@ -34,12 +39,29 @@ public class SelectObjectsScreen :
 
     private readonly List<ObjectData> _resourceObjects = new();
     private readonly List<ObjectSelectSlotView> _slotPool = new();
+
     private IMapService _map;
     private ObjectDatabaseSO _database;
     private IDisposable _placementStoppedSubscription;
     private int _displayedCountRevision = -1;
     private bool _reopenAfterPlacement;
 
+    #region Unity Lifecycle
+    private void Update()
+    {
+        RefreshPlacedCounts(force: false);
+    }
+
+    protected override void OnDestroy()
+    {
+        GameplayInputBlockRegistry.Remove(this);
+        TutorialAnchorRegistry.Unregister(TutorialAnchorIds.ObjectsPanel, transform);
+        _placementStoppedSubscription?.Dispose();
+        base.OnDestroy();
+    }
+    #endregion
+
+    #region Public API
     [Inject]
     public void Construct(
         IMapService map,
@@ -72,10 +94,18 @@ public class SelectObjectsScreen :
     {
         _btnClose?.onClick.AddListener(Close);
         _resourceTabButton?.onClick.AddListener(ShowResources);
+        _decorationTabButton?.onClick.AddListener(ShowLockedTabToast);
         GameplayInputBlockRegistry.Add(this);
 
+        // Reported here rather than through an injected service: UIManager opens the window
+        // before VContainer injects it, so the field would still be null.
+        TutorialAnchorRegistry.Register(TutorialAnchorIds.ObjectsPanel, transform);
+        TutorialSignalHub.Report(TutorialSignal.BuildMenuOpened);
+
+        // Left interactable on purpose: the tab is locked, but the tap has to reach us so the
+        // player is told why instead of pressing a dead button.
         if (_decorationTabButton != null)
-            _decorationTabButton.interactable = false;
+            _decorationTabButton.interactable = true;
 
         ShowResources();
     }
@@ -84,21 +114,13 @@ public class SelectObjectsScreen :
     {
         _btnClose?.onClick.RemoveListener(Close);
         _resourceTabButton?.onClick.RemoveListener(ShowResources);
+        _decorationTabButton?.onClick.RemoveListener(ShowLockedTabToast);
         GameplayInputBlockRegistry.Remove(this);
+        TutorialAnchorRegistry.Unregister(TutorialAnchorIds.ObjectsPanel, transform);
     }
+    #endregion
 
-    protected override void OnDestroy()
-    {
-        GameplayInputBlockRegistry.Remove(this);
-        _placementStoppedSubscription?.Dispose();
-        base.OnDestroy();
-    }
-
-    private void Update()
-    {
-        RefreshPlacedCounts(force: false);
-    }
-
+    #region Event Handlers
     private void ShowResources()
     {
         ApplyTabVisual(_resourceTabImage, active: true);
@@ -108,6 +130,35 @@ public class SelectObjectsScreen :
         ReloadResourceItems();
     }
 
+    /// Raised through the hub rather than an injected service: UIManager opens this window before
+    /// VContainer injects it, so a service field cannot be relied on from a click handler.
+    private void ShowLockedTabToast()
+    {
+        ToastHub.Show(_lockedTabMessage, ToastStyle.Warning);
+    }
+
+    private void OnPlacementStarted()
+    {
+        if (!IsOpen) return;
+
+        _reopenAfterPlacement = true;
+        Close();
+    }
+
+    private void OnPlacementStopped(MapPlacementStoppedPayload payload)
+    {
+        if (!_reopenAfterPlacement) return;
+
+        // Cleared either way: the trip back to the map is over, so a later stop must not drag
+        // this window up again out of nowhere.
+        _reopenAfterPlacement = false;
+        if (!payload.ReopenPicker) return;
+
+        Open();
+    }
+    #endregion
+
+    #region Private Methods
     private void ReloadResourceItems()
     {
         if (_database == null || _resourceContent == null || _slotPrefab == null) return;
@@ -130,45 +181,32 @@ public class SelectObjectsScreen :
     {
         while (_slotPool.Count < requiredCount)
         {
-            ObjectSelectSlotView slot = Instantiate(_slotPrefab, _resourceContent);
-            slot.name = $"Object Slot {_slotPool.Count}";
-            _slotPool.Add(slot);
+            _slotPool.Add(Instantiate(_slotPrefab, _resourceContent));
         }
     }
 
     private void ApplyTabVisual(Image image, bool active)
     {
         if (image == null) return;
+
         Sprite sprite = active ? _tabActiveSprite : _tabInactiveSprite;
         if (sprite != null) image.sprite = sprite;
     }
 
-    private void OnPlacementStarted()
-    {
-        if (!IsOpen) return;
-
-        _reopenAfterPlacement = true;
-        Close();
-    }
-
-    private void OnPlacementStopped(MapPlacementStoppedPayload _)
-    {
-        if (!_reopenAfterPlacement) return;
-
-        _reopenAfterPlacement = false;
-        Open();
-    }
-
+    // Polled from Update: the revision guard is what keeps it from touching every slot each frame.
     private void RefreshPlacedCounts(bool force)
     {
         if (_database == null) return;
         if (!force && _displayedCountRevision == _database.PlacedCountRevision) return;
 
         _displayedCountRevision = _database.PlacedCountRevision;
-        foreach (ObjectSelectSlotView slot in _slotPool)
+        for (int i = 0; i < _slotPool.Count; i++)
         {
+            ObjectSelectSlotView slot = _slotPool[i];
             if (slot == null || slot.ObjectId < 0) continue;
+
             slot.SetPlacedCount(_database.GetPlacedCount(slot.ObjectId));
         }
     }
+    #endregion
 }

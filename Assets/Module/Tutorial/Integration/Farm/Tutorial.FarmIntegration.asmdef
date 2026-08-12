@@ -1,0 +1,21 @@
+{
+    "name": "Tutorial.FarmIntegration",
+    "rootNamespace": "Core.Module.Tutorial.Integration.Farm",
+    "references": [
+        "Tutorial",
+        "Farm",
+        "Map",
+        "MessagePipe",
+        "VContainer",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

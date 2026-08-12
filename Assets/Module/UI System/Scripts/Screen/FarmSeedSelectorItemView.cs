@@ -15,6 +15,8 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _costText;
 
+        private static readonly Color UnaffordableTint = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+
         private FarmEntityData _entity;
         private Action<FarmEntityData> _onSelected;
 
@@ -31,10 +33,10 @@ namespace MyOwn.ServiceHarness
             _icon.preserveAspect = true;
             _icon.enabled = entity.selectorIcon != null;
 
-            _button.interactable = canAfford;
-            _background.color = canAfford
-                ? Color.white
-                : new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            // Stays clickable even when it cannot be bought: a dead button never tells the player
+            // why. The row only dims, and the selector answers the tap with a toast.
+            _button.interactable = true;
+            _background.color = canAfford ? Color.white : UnaffordableTint;
 
             _button.onClick.AddListener(Select);
         }

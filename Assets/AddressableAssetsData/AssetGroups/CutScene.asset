@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: CutScene
   m_GUID: e132add79c9be4343834c59a5f6e4cc7
   m_SerializeEntries:
+  - m_GUID: 4d746bbf0359e9f48aa305b74c38cb87
+    m_Address: vfx_glowing_reward
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e3481384b61541428148baefef370e32
     m_Address: Shot1_06_Hold
     m_ReadOnly: 0
@@ -100,6 +105,31 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42002
+    m_Address: frame5_bg
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42003
+    m_Address: frame5_dim
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f43001
+    m_Address: Shot5_Photo
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f43002
+    m_Address: Shot5_Dim
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f43003
+    m_Address: Frame5_Photo
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3fc36ae70b0140bf982be6d61e1c01cf
     m_Address: BreadPigHayTask
     m_ReadOnly: 0
@@ -167,6 +197,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 76efdfbffbb14f03915e22136ff51a5b
     m_Address: shot4_banhmi
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f42004
+    m_Address: shot4_background
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b7d1e94c5a04f28ab6d0e17c9f44001
+    m_Address: Shot4_00_Background
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
