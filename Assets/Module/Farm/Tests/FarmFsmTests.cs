@@ -705,7 +705,7 @@ namespace Core.Module.Farm.Tests
             };
             var service = CreateFarmService(savedSlots);
             var context = new MapPlacementRemovalContext(
-                "soil-instance", 101, MapObjectKind.Soil,
+                "soil-instance", 101, FarmObjectRole.Soil,
                 PlacementPositionMode.Grid, cell, Vector3.zero);
 
             Assert.IsTrue(service.CanRemove(context));
@@ -724,7 +724,7 @@ namespace Core.Module.Farm.Tests
             var service = CreateFarmService();
             Assert.IsTrue(service.TryPlant(cell, "wheat"));
             var context = new MapPlacementRemovalContext(
-                "soil-instance", 101, MapObjectKind.Soil,
+                "soil-instance", 101, FarmObjectRole.Soil,
                 PlacementPositionMode.Grid, cell, Vector3.zero);
 
             Assert.IsFalse(service.CanRemove(context));
@@ -747,7 +747,7 @@ namespace Core.Module.Farm.Tests
             var savedSlots = new List<FarmSlotSaveData> { animalSlot };
             var service = CreateFarmService(savedSlots);
             var context = new MapPlacementRemovalContext(
-                "barn-instance", 202, MapObjectKind.Barn,
+                "barn-instance", 202, FarmObjectRole.Barn,
                 PlacementPositionMode.Grid, cell, Vector3.zero);
 
             Assert.IsTrue(service.CanRemove(context));
