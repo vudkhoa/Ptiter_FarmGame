@@ -268,9 +268,11 @@ namespace Core.Module.Tutorial.Editor
         {
             // The build menu starts closed, so the very first beat is the HUD button that opens it.
             // Without this the flow used to point straight at a row inside a panel nobody had opened.
+            // No hint text: the dim plus the hand on the one lit button already says "press this",
+            // and the bubble covered the button on short screens. Empty hides the bubble entirely.
             TutorialStepSO openBuildMenu = BuildStep(
                 "Step_OpenBuildMenu", "farm_open_build_menu",
-                "Chạm vào nút Xây dựng để mở danh sách ô đất.",
+                string.Empty,
                 hand =>
                 {
                     hand.anchorMode = TutorialAnchorMode.Anchor;

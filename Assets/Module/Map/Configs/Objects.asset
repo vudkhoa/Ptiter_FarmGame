@@ -122,7 +122,7 @@ MonoBehaviour:
     ID: 101
     MenuCategory: 1
     SelectionIcon: {fileID: 21300000, guid: e22f586c46ba5c3438bdd9097379772c, type: 3}
-    CoinPrice: 200
+    CoinPrice: 100
     Size: {x: 1, y: 1}
     FarmRole: 1
     PlacementInputMode: 1
@@ -143,7 +143,7 @@ MonoBehaviour:
     ID: 102
     MenuCategory: 1
     SelectionIcon: {fileID: 21300000, guid: 5ae3a24aa7c5e344fa3afcf4e19ee3e4, type: 3}
-    CoinPrice: 400
+    CoinPrice: 200
     Size: {x: 3, y: 3}
     FarmRole: 2
     PlacementInputMode: 0

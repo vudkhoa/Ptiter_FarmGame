@@ -30,7 +30,7 @@ MonoBehaviour:
     pressEase: 5
     releaseEase: 27
     swipeOffset: {x: 0, y: 180}
-  hintText: "Ch\u1EA1m v\xE0o n\xFAt X\xE2y d\u1EF1ng \u0111\u1EC3 m\u1EDF danh s\xE1ch \xF4 \u0111\u1EA5t."
+  hintText: 
   hintOffset: {x: 0, y: -90}
   showFocusRing: 0
   focusSprite: {fileID: 0}
