@@ -13,6 +13,7 @@ namespace Core.Module.Map
     {
         // Injected from root container (registered once in RootLifetimeScope).
         private ObjectDatabaseSO _database;
+        private IMapPlacementPaymentService _payment;
 
         [Header("Ref")]
         [SerializeField] private float _cellSize = 1f;
@@ -65,6 +66,7 @@ namespace Core.Module.Map
             IMapObjectInstanceRegistry instanceRegistry,
             MapAuthoringController authoring,
             ObjectDatabaseSO database,
+            IMapPlacementPaymentService payment,
             IMapSaveSource saveSource,
             IReadOnlyList<IMapPlacementRemovalPolicy> removalPolicies)
         {
@@ -77,6 +79,7 @@ namespace Core.Module.Map
             _instanceRegistry = instanceRegistry;
             _authoring = authoring;
             _database = database;
+            _payment = payment;
             _saveSource = saveSource;
             _persistedPlacements = saveSource?.MapPlacements;
             _removalPolicies = removalPolicies;
@@ -248,13 +251,42 @@ namespace Core.Module.Map
                 placedWorld = GetFreePosition(data, worldHit);
                 cell = WorldToCell(placedWorld);
                 if (!IsPlacementSurfaceValid(cell, Vector2Int.one) ||
-                    !PlaceFreeObjectAt(data, prefab, placedWorld, instanceId, 1f, true)) return false;
+                    !_placementValidator.CanPlaceFree(data, placedWorld)) return false;
             }
             else
             {
                 placedWorld = CellToWorld(cell);
                 if (!IsPlacementSurfaceValid(cell, data.Size) ||
-                    !PlaceGridObjectAt(data, prefab, cell, instanceId, 1f, true)) return false;
+                    !_placementValidator.CanPlaceGrid(data, cell)) return false;
+            }
+
+            int paidAmount = _authoring.IsAuthoringMode
+                ? 0
+                : Mathf.Max(0, data.CoinPrice);
+            if (paidAmount > 0 &&
+                (_payment == null ||
+                 !_payment.TrySpend(data.ID, paidAmount)))
+            {
+                int balance = _payment?.Balance ?? 0;
+                Debug.LogWarning(
+                    $"[MapService] Cannot place {data.name}: costs {paidAmount} " +
+                    $"coins but player has {balance}.");
+                return false;
+            }
+
+            bool placed = data.PositionMode == PlacementPositionMode.Free
+                ? PlaceFreeObjectAt(data, prefab, placedWorld, instanceId, 1f, true)
+                : PlaceGridObjectAt(data, prefab, cell, instanceId, 1f, true);
+            if (!placed)
+            {
+                if (paidAmount > 0 &&
+                    !_payment.Refund(data.ID, paidAmount))
+                {
+                    Debug.LogError(
+                        $"[MapService] Failed to refund {paidAmount} coins for " +
+                        $"object {data.ID} after placement failed.");
+                }
+                return false;
             }
 
             if (_authoring.IsAuthoringMode)

@@ -2,6 +2,14 @@ using UnityEngine;
 
 namespace Core.Module.Map
 {
+    public interface IMapPlacementPaymentService
+    {
+        int Balance { get; }
+
+        bool TrySpend(int objectId, int amount);
+        bool Refund(int objectId, int amount);
+    }
+
     public interface IMapService
     {
         // Query

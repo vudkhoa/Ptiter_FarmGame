@@ -1,0 +1,18 @@
+{
+    "name": "Currency.MapIntegration",
+    "rootNamespace": "Core.Module.Currency.Integration.Map",
+    "references": [
+        "Currency",
+        "Map",
+        "VContainer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
