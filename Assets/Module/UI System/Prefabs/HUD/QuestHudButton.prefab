@@ -141,6 +141,10 @@ PrefabInstance:
       value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3019977445769891695, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
+      propertyPath: m_fontStyle
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3019977445769891695, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_fontColor.b
       value: 0.14509805
       objectReference: {fileID: 0}
@@ -183,6 +187,10 @@ PrefabInstance:
     - target: {fileID: 8460446663039866211, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_AnchorMin.y
       value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 8460446663039866211, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 6.4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

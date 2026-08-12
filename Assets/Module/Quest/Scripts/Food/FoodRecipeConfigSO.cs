@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Core.Module.Cutscene;
 using UnityEngine;
 
 namespace Core.Module.Quest
@@ -13,6 +14,12 @@ namespace Core.Module.Quest
         [Min(1)] public int starCost = 1;
         public string prerequisiteRecipeId;
         public Sprite mockSprite;
+        [Tooltip("Cutscene played after the first unlock and from the cooking panel replay button.")]
+        public CutsceneSO cutscene;
+
+        public bool HasPlayableCutscene =>
+            cutscene != null &&
+            !string.IsNullOrWhiteSpace(cutscene.cutsceneId);
     }
 
     [CreateAssetMenu(

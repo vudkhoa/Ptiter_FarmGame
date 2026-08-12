@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Core.Module.Cutscene;
 using MessagePipe;
 
 namespace Core.Module.Quest.Cooking.UI
@@ -9,6 +10,9 @@ namespace Core.Module.Quest.Cooking.UI
         private readonly FoodCookingPanelView _view;
         private readonly ICookingService _service;
         private readonly string _recipeId;
+        private readonly string _cutsceneId;
+        private readonly IPublisher<PlayCutsceneRequestPayload>
+            _cutscenePublisher;
         private readonly Action _closeAction;
         private readonly List<IDisposable> _subscriptions =
             new List<IDisposable>();
@@ -26,24 +30,41 @@ namespace Core.Module.Quest.Cooking.UI
             ISubscriber<CookingStateChangedPayload> stateSubscriber,
             ISubscriber<CookingCompletedPayload> completedSubscriber,
             string recipeId,
+            string cutsceneId,
+            IPublisher<PlayCutsceneRequestPayload> cutscenePublisher,
             Action closeAction)
         {
             _view = view;
             _service = service;
             _recipeId = recipeId;
+            _cutsceneId = cutsceneId;
+            _cutscenePublisher = cutscenePublisher;
             _closeAction = closeAction;
 
             _view.CloseRequested += OnCloseRequested;
             _view.MinusRequested += OnMinusRequested;
             _view.PlusRequested += OnPlusRequested;
             _view.CookRequested += OnCookRequested;
+            _view.ReplayStoryRequested += OnReplayStoryRequested;
             _view.IntroCompleted += OnIntroCompleted;
             _view.CompletionFinished += OnCompletionFinished;
             _subscriptions.Add(stateSubscriber.Subscribe(OnStateChanged));
             _subscriptions.Add(completedSubscriber.Subscribe(OnCompleted));
 
+            _view.SetReplayStoryAvailable(
+                !string.IsNullOrWhiteSpace(_cutsceneId));
             _view.ShowDetailImmediate();
             RenderCurrent(forceVisualState: true);
+        }
+
+        private void OnReplayStoryRequested()
+        {
+            if (_disposed || _introPlaying || _completionPlaying ||
+                string.IsNullOrWhiteSpace(_cutsceneId))
+                return;
+
+            _cutscenePublisher?.Publish(
+                new PlayCutsceneRequestPayload(_cutsceneId));
         }
 
         private void OnCloseRequested()
@@ -191,6 +212,7 @@ namespace Core.Module.Quest.Cooking.UI
             _view.MinusRequested -= OnMinusRequested;
             _view.PlusRequested -= OnPlusRequested;
             _view.CookRequested -= OnCookRequested;
+            _view.ReplayStoryRequested -= OnReplayStoryRequested;
             _view.IntroCompleted -= OnIntroCompleted;
             _view.CompletionFinished -= OnCompletionFinished;
             for (int i = 0; i < _subscriptions.Count; i++)

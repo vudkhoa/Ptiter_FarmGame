@@ -1,4 +1,5 @@
 using System;
+using Core.Module.Cutscene;
 using Core.Module.Quest.Cooking.UI;
 using MessagePipe;
 using UnityEngine;
@@ -11,7 +12,10 @@ namespace Core.Module.Quest.Cooking
         IDisposable
     {
         private readonly FoodCookingPanelRuntimeConfigSO _config;
+        private readonly FoodRecipeConfigSO _foodRecipeConfig;
         private readonly ICookingService _cookingService;
+        private readonly IPublisher<PlayCutsceneRequestPayload>
+            _cutscenePublisher;
         private readonly ISubscriber<CookingStateChangedPayload>
             _stateSubscriber;
         private readonly ISubscriber<CookingCompletedPayload>
@@ -25,13 +29,18 @@ namespace Core.Module.Quest.Cooking
         public FoodCookingPanelFactory(
             QuestCatalogSO catalog,
             ICookingService cookingService,
+            IPublisher<PlayCutsceneRequestPayload> cutscenePublisher,
             ISubscriber<CookingStateChangedPayload> stateSubscriber,
             ISubscriber<CookingCompletedPayload> completedSubscriber)
         {
             _config = catalog != null
                 ? catalog.foodCookingPanelConfig
                 : null;
+            _foodRecipeConfig = catalog != null
+                ? catalog.foodRecipeConfig
+                : null;
             _cookingService = cookingService;
+            _cutscenePublisher = cutscenePublisher;
             _stateSubscriber = stateSubscriber;
             _completedSubscriber = completedSubscriber;
         }
@@ -42,6 +51,19 @@ namespace Core.Module.Quest.Cooking
             {
                 Debug.LogError(
                     "[Cooking UI] Cannot open without an overlay parent.");
+                return null;
+            }
+
+            FoodRecipeDefinition recipe =
+                _foodRecipeConfig?.GetRecipe(recipeId);
+            string cutsceneId = recipe != null &&
+                                recipe.HasPlayableCutscene
+                ? recipe.cutscene.cutsceneId
+                : string.Empty;
+            if (string.IsNullOrWhiteSpace(cutsceneId))
+            {
+                Debug.LogError(
+                    $"[Cooking UI] Recipe '{recipeId}' has no cutscene.");
                 return null;
             }
 
@@ -105,6 +127,8 @@ namespace Core.Module.Quest.Cooking
                 _stateSubscriber,
                 _completedSubscriber,
                 recipeId,
+                cutsceneId,
+                _cutscenePublisher,
                 Close);
             return _instance;
         }

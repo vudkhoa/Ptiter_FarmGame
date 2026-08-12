@@ -50,6 +50,7 @@ namespace Core.Module.Quest.Cooking.UI
         [SerializeField] private Button _minusButton;
         [SerializeField] private Button _plusButton;
         [SerializeField] private Button _cookButton;
+        [SerializeField] private Button _replayStoryButton;
 
         [Header("Audio")]
         [SerializeField] private AudioSource _audioSource;
@@ -112,6 +113,7 @@ namespace Core.Module.Quest.Cooking.UI
         private bool _hasCachedDetailColors;
 
         private bool _hasCachedAuthoredState;
+        private bool _replayStoryAvailable;
 
         public float IntroDuration => IntroEndTime;
         public float CompletionDuration => CompletionEndTime;
@@ -125,6 +127,7 @@ namespace Core.Module.Quest.Cooking.UI
         public event Action MinusRequested;
         public event Action PlusRequested;
         public event Action CookRequested;
+        public event Action ReplayStoryRequested;
 
         private void Awake()
         {
@@ -151,6 +154,9 @@ namespace Core.Module.Quest.Cooking.UI
             RegisterButton(_minusButton, NotifyMinusRequested);
             RegisterButton(_plusButton, NotifyPlusRequested);
             RegisterButton(_cookButton, NotifyCookRequested);
+            RegisterButton(
+                _replayStoryButton,
+                NotifyReplayStoryRequested);
         }
 
         private void UnregisterInput()
@@ -159,6 +165,9 @@ namespace Core.Module.Quest.Cooking.UI
             UnregisterButton(_minusButton, NotifyMinusRequested);
             UnregisterButton(_plusButton, NotifyPlusRequested);
             UnregisterButton(_cookButton, NotifyCookRequested);
+            UnregisterButton(
+                _replayStoryButton,
+                NotifyReplayStoryRequested);
         }
 
         private void NotifyCloseRequested()
@@ -179,6 +188,11 @@ namespace Core.Module.Quest.Cooking.UI
         private void NotifyCookRequested()
         {
             CookRequested?.Invoke();
+        }
+
+        private void NotifyReplayStoryRequested()
+        {
+            ReplayStoryRequested?.Invoke();
         }
 
         private static void RegisterButton(
@@ -316,7 +330,18 @@ namespace Core.Module.Quest.Cooking.UI
 
             RestoreAuthoredVisuals();
             SetDetailInput(true);
+            SetReplayInput(true);
             SetCloseInput(true);
+        }
+
+        public void SetReplayStoryAvailable(bool available)
+        {
+            ResolveReferences();
+            _replayStoryAvailable = available;
+            if (_replayStoryButton == null) return;
+
+            _replayStoryButton.gameObject.SetActive(available);
+            _replayStoryButton.interactable = available;
         }
 
         public void PlayIntro(int quantity, int remainingSeconds)
@@ -342,6 +367,7 @@ namespace Core.Module.Quest.Cooking.UI
                 _animationStage.gameObject.SetActive(true);
 
             SetDetailInput(false);
+            SetReplayInput(false);
             SetCloseInput(false);
             PrepareIntroVisuals();
             UpdateCountdown(quantity, remainingSeconds);
@@ -429,6 +455,7 @@ namespace Core.Module.Quest.Cooking.UI
 
             RestoreCookingVisuals();
             SetDetailInput(false);
+            SetReplayInput(true);
             SetCloseInput(true);
             UpdateCountdown(quantity, remainingSeconds);
             StartCookingLoops();
@@ -462,6 +489,7 @@ namespace Core.Module.Quest.Cooking.UI
                 _animationStage.gameObject.SetActive(true);
 
             SetDetailInput(false);
+            SetReplayInput(false);
             SetCloseInput(false);
             PrepareCompletionVisuals(quantity);
             PlaySfx(_confirmClip, _confirmVolume);
@@ -965,6 +993,7 @@ namespace Core.Module.Quest.Cooking.UI
 
             RestoreAuthoredVisuals();
             SetDetailInput(true);
+            SetReplayInput(true);
             SetCloseInput(true);
         }
 
@@ -1001,6 +1030,15 @@ namespace Core.Module.Quest.Cooking.UI
                 _plusButton.interactable = interactable;
             if (_cookButton != null)
                 _cookButton.interactable = interactable;
+        }
+
+        private void SetReplayInput(bool interactable)
+        {
+            if (_replayStoryButton != null)
+            {
+                _replayStoryButton.interactable =
+                    _replayStoryAvailable && interactable;
+            }
         }
 
         private void SetCloseInput(bool interactable)
@@ -1307,6 +1345,11 @@ namespace Core.Module.Quest.Cooking.UI
             {
                 _cookButton = FindComponent<Button>(
                     "WindowRoot/DetailStage/IngredientPanel/CookButton");
+            }
+            if (_replayStoryButton == null)
+            {
+                _replayStoryButton = FindComponent<Button>(
+                    "WindowRoot/ReplayStoryButton");
             }
             if (_audioSource == null)
             {

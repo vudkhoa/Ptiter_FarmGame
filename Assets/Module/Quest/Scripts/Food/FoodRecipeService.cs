@@ -56,15 +56,18 @@ namespace Core.Module.Quest
 
                 bool unlocked = _starWallet.IsStarUnlockPurchased(
                     definition.recipeId);
+                bool hasCutscene = definition.HasPlayableCutscene;
                 bool prerequisiteMet =
                     string.IsNullOrWhiteSpace(definition.prerequisiteRecipeId) ||
                     _starWallet.IsStarUnlockPurchased(
                         definition.prerequisiteRecipeId);
-                FoodRecipeAccessState access = unlocked
-                    ? FoodRecipeAccessState.Unlocked
-                    : prerequisiteMet
-                        ? FoodRecipeAccessState.Locked
-                        : FoodRecipeAccessState.PrerequisiteLocked;
+                FoodRecipeAccessState access = !hasCutscene
+                    ? FoodRecipeAccessState.InDevelopment
+                    : unlocked
+                        ? FoodRecipeAccessState.Unlocked
+                        : prerequisiteMet
+                            ? FoodRecipeAccessState.Locked
+                            : FoodRecipeAccessState.PrerequisiteLocked;
 
                 recipes.Add(new FoodRecipeViewData
                 {
@@ -75,6 +78,9 @@ namespace Core.Module.Quest
                         : string.Empty,
                     StarCost = Math.Max(1, definition.starCost),
                     MockSprite = definition.mockSprite,
+                    CutsceneId = hasCutscene
+                        ? definition.cutscene.cutsceneId
+                        : string.Empty,
                     AccessState = access
                 });
             }
@@ -99,11 +105,24 @@ namespace Core.Module.Quest
                     FoodRecipeUnlockResultCode.InvalidRecipe, recipeId, 0);
 
             int cost = Math.Max(1, definition.starCost);
+            string cutsceneId = definition.HasPlayableCutscene
+                ? definition.cutscene.cutsceneId
+                : string.Empty;
+            if (string.IsNullOrWhiteSpace(cutsceneId))
+            {
+                return Result(
+                    FoodRecipeUnlockResultCode.InDevelopment,
+                    recipeId,
+                    0,
+                    string.Empty);
+            }
+
             if (_starWallet.IsStarUnlockPurchased(recipeId))
                 return Result(
                     FoodRecipeUnlockResultCode.AlreadyUnlocked,
                     recipeId,
-                    cost);
+                    cost,
+                    cutsceneId);
 
             if (!string.IsNullOrWhiteSpace(definition.prerequisiteRecipeId) &&
                 !_starWallet.IsStarUnlockPurchased(
@@ -111,7 +130,8 @@ namespace Core.Module.Quest
                 return Result(
                     FoodRecipeUnlockResultCode.PrerequisiteLocked,
                     recipeId,
-                    cost);
+                    cost,
+                    cutsceneId);
 
             StarUnlockPurchaseResult purchase =
                 await _starWallet.TryPurchaseStarUnlockAsync(
@@ -138,15 +158,20 @@ namespace Core.Module.Quest
                 _unlockedPublisher.Publish(
                     new FoodRecipeUnlockedPayload(recipeId, cost));
             }
-            return Result(code, recipeId, cost);
+            return Result(code, recipeId, cost, cutsceneId);
         }
 
         private static FoodRecipeUnlockResult Result(
             FoodRecipeUnlockResultCode code,
             string recipeId,
-            int requiredStars)
+            int requiredStars,
+            string cutsceneId = "")
         {
-            return new FoodRecipeUnlockResult(code, recipeId, requiredStars);
+            return new FoodRecipeUnlockResult(
+                code,
+                recipeId,
+                requiredStars,
+                cutsceneId);
         }
     }
 }
