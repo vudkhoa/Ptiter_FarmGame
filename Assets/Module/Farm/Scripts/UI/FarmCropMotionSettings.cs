@@ -22,6 +22,12 @@ namespace Core.Module.Farm
         [SerializeField, Range(0f, 10f)] private float _idleSwayAngle = 2.5f;
         [SerializeField, Min(0f)] private float _idleStagger = 0.08f;
 
+        [Header("Ripe Bounce")]
+        [SerializeField, Min(0.5f)] private float _ripeCycleDuration = 1.8f;
+        [SerializeField, Range(0f, 15f)] private float _ripeSwayAngle = 7f;
+        [SerializeField, Min(0.05f)] private float _ripeStretchDuration = 0.25f;
+        [SerializeField, Range(0f, 0.6f)] private float _ripeStretchAmount = 0.35f;
+
         [Header("Stage Change")]
         [SerializeField, Min(0f)] private float _stageDuration = 0.24f;
         [SerializeField, Min(1f)] private float _stagePopScale = 1.2f;
@@ -44,6 +50,10 @@ namespace Core.Module.Farm
         public float IdleScale => _idleScale;
         public float IdleSwayAngle => _idleSwayAngle;
         public float IdleStagger => _idleStagger;
+        public float RipeCycleDuration => _ripeCycleDuration;
+        public float RipeSwayAngle => _ripeSwayAngle;
+        public float RipeStretchDuration => _ripeStretchDuration;
+        public float RipeStretchAmount => _ripeStretchAmount;
         public float StageDuration => _stageDuration;
         public float StagePopScale => _stagePopScale;
         public float StageStagger => _stageStagger;

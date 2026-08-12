@@ -434,6 +434,10 @@ MonoBehaviour:
     _idleScale: 1.025
     _idleSwayAngle: 2.5
     _idleStagger: 0.08
+    _ripeCycleDuration: 3.6
+    _ripeSwayAngle: 7
+    _ripeStretchDuration: 0.5
+    _ripeStretchAmount: 0.35
     _stageDuration: 0.24
     _stagePopScale: 1.2
     _stageStagger: 0.025
