@@ -1,4 +1,5 @@
 using Core.Module.Map;
+using Core.Module.Toast;
 
 namespace Core.Module.Currency.Integration.Map
 {
@@ -15,6 +16,14 @@ namespace Core.Module.Currency.Integration.Map
 
         public bool TrySpend(int objectId, int amount)
         {
+            if (_currency.Balance < amount)
+            {
+                ToastHub.Show(
+                    $"Không đủ tiền! Cần {amount} vàng",
+                    ToastStyle.Error);
+                return false;
+            }
+
             return _currency.TrySpend(amount, $"map-object:{objectId}");
         }
 

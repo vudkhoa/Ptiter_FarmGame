@@ -4,6 +4,7 @@
     "references": [
         "Currency",
         "Map",
+        "Toast",
         "VContainer"
     ],
     "includePlatforms": [],
