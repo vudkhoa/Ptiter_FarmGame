@@ -35,6 +35,7 @@ namespace Core.Module.Farm
         private Tween _motionTween;
         private Tween _idleTween;
         private bool _isCrop;
+        private bool _isRipeCrop;
 
         private void Awake()
         {
@@ -65,6 +66,7 @@ namespace Core.Module.Farm
             // 1. If slot data is null or completely empty (unplanted Soil / unoccupied Barn)
             if (slot == null || (slot.state == FarmSlotState.Empty && string.IsNullOrEmpty(slot.entityId)))
             {
+                _isRipeCrop = false;
                 StopMotion();
                 SetEntitySprite(null, false);
                 if (_progressBar != null) _progressBar.gameObject.SetActive(false);
@@ -79,6 +81,7 @@ namespace Core.Module.Farm
 
             bool isAnimal = entity.entityType == FarmEntityType.Animal;
             _isCrop = !isAnimal;
+            _isRipeCrop = _isCrop && slot.state == FarmSlotState.Ripe;
 
             // 2. Resolve Slot States
             switch (slot.state)
@@ -440,23 +443,109 @@ namespace Core.Module.Farm
             ResetRendererTransforms();
             if (!HasVisibleRenderer()) return;
 
-            float phase = 0f;
-            float cycleDuration = _motionSettings.IdleHalfCycleDuration * 4f;
-            float phasePerSecond = Mathf.PI * 2f / cycleDuration;
+            float timeline = 0f;
+            float cycleDuration = _isRipeCrop
+                ? Mathf.Max(_motionSettings.RipeCycleDuration,
+                    _motionSettings.RipeStretchDuration * 2f + 0.04f)
+                : _motionSettings.IdleHalfCycleDuration * 4f;
             _idleTween = DOTween
                 .To(
-                    () => phase,
+                    () => timeline,
                     value =>
                     {
-                        phase = value;
-                        ApplyIdlePose(value, phasePerSecond);
+                        timeline = value;
+                        if (_isRipeCrop)
+                            ApplyRipePose(value, cycleDuration);
+                        else
+                            ApplyIdlePose(value, Mathf.PI * 2f / cycleDuration);
                     },
-                    Mathf.PI * 2f,
+                    _isRipeCrop ? cycleDuration : Mathf.PI * 2f,
                     cycleDuration)
                 .SetEase(Ease.Linear)
                 .SetLoops(-1, LoopType.Restart)
                 .SetUpdate(true)
                 .SetTarget(this);
+        }
+
+        private void ApplyRipePose(float timeline, float cycleDuration)
+        {
+            float stretchDuration = _motionSettings.RipeStretchDuration;
+            float moveDuration = (cycleDuration - stretchDuration * 2f) * 0.25f;
+
+            for (int i = 0; i < _cropRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = _cropRenderers[i];
+                if (renderer == null || !renderer.gameObject.activeSelf) continue;
+
+                float time = Mathf.Repeat(timeline - i * _motionSettings.IdleStagger, cycleDuration);
+                float rotation;
+                float stretchProgress = -1f;
+
+                if (time < stretchDuration)
+                {
+                    rotation = 0f;
+                    stretchProgress = time / stretchDuration;
+                }
+                else if ((time -= stretchDuration) < moveDuration)
+                {
+                    rotation = Mathf.Lerp(0f, _motionSettings.RipeSwayAngle,
+                        Mathf.SmoothStep(0f, 1f, time / moveDuration));
+                }
+                else if ((time -= moveDuration) < moveDuration)
+                {
+                    rotation = Mathf.Lerp(_motionSettings.RipeSwayAngle, 0f,
+                        Mathf.SmoothStep(0f, 1f, time / moveDuration));
+                }
+                else if ((time -= moveDuration) < stretchDuration)
+                {
+                    rotation = 0f;
+                    stretchProgress = time / stretchDuration;
+                }
+                else if ((time -= stretchDuration) < moveDuration)
+                {
+                    rotation = Mathf.Lerp(0f, -_motionSettings.RipeSwayAngle,
+                        Mathf.SmoothStep(0f, 1f, time / moveDuration));
+                }
+                else
+                {
+                    time -= moveDuration;
+                    rotation = Mathf.Lerp(-_motionSettings.RipeSwayAngle, 0f,
+                        Mathf.SmoothStep(0f, 1f, time / moveDuration));
+                }
+
+                Transform target = renderer.transform;
+                target.localPosition = GetRestPosition(i);
+                target.localRotation = GetRestRotation(i) * Quaternion.Euler(0f, 0f, rotation);
+                target.localScale = stretchProgress >= 0f
+                    ? GetRipeStretchScale(stretchProgress)
+                    : _spriteBaseLocalScale;
+            }
+        }
+
+        private Vector3 GetRipeStretchScale(float progress)
+        {
+            float amount = _motionSettings.RipeStretchAmount;
+            Vector3 squash = new Vector3(1f + amount * 0.6f, 1f - amount * 0.35f, 1f);
+            Vector3 stretch = new Vector3(1f - amount * 0.35f, 1f + amount, 1f);
+            Vector3 multiplier;
+
+            if (progress < 0.3f)
+            {
+                multiplier = Vector3.Lerp(Vector3.one, squash,
+                    Mathf.SmoothStep(0f, 1f, progress / 0.3f));
+            }
+            else if (progress < 0.65f)
+            {
+                multiplier = Vector3.Lerp(squash, stretch,
+                    Mathf.SmoothStep(0f, 1f, (progress - 0.3f) / 0.35f));
+            }
+            else
+            {
+                multiplier = Vector3.Lerp(stretch, Vector3.one,
+                    Mathf.SmoothStep(0f, 1f, (progress - 0.65f) / 0.35f));
+            }
+
+            return Vector3.Scale(_spriteBaseLocalScale, multiplier);
         }
 
         private void ApplyIdlePose(float phase, float phasePerSecond)
@@ -473,6 +562,7 @@ namespace Core.Module.Farm
 
                 Transform target = renderer.transform;
                 target.localScale = _spriteBaseLocalScale * scale;
+                target.localPosition = GetRestPosition(i);
                 target.localRotation = GetRestRotation(i) * Quaternion.Euler(0f, 0f, sway);
             }
         }

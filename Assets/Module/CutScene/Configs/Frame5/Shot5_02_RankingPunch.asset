@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6b3ff9151dab27449bd5d0a22265c28, type: 3}
+  m_Name: Shot5_02_RankingPunch
+  m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.TweenTransformTaskSO
+  taskName: Shot5_02_RankingPunch
+  startDelay: 0
+  targetImageId: shot5_ranking
+  tweenPosition: 0
+  fromPosition: {x: 0, y: 0}
+  toPosition: {x: 0, y: 0}
+  tweenScale: 1
+  fromScale: {x: 0.6, y: 0.6, z: 1}
+  toScale: {x: 1, y: 1, z: 1}
+  tweenRotation: 0
+  fromRotationZ: 0
+  toRotationZ: 0
+  duration: 0.32
+  ease: 27

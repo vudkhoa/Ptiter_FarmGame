@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cff22b6c444ea504d9adfa10ed20120c, type: 3}
+  m_Name: Flow_FirstHarvest
+  m_EditorClassIdentifier: Tutorial::Core.Module.Tutorial.TutorialFlowSO
+  flowId: first_harvest
+  startSignal: 30
+  steps:
+  - {fileID: 11400000, guid: 26ab25ffe7010e147829b4b8e1b6bfe2, type: 2}

@@ -15,16 +15,18 @@ MonoBehaviour:
   entityName: Heo
   entityType: 1
   selectorIcon: {fileID: 21300000, guid: fd3669fdd90b7614bb34221d19c042ee, type: 3}
-  coinCost: 50
+  coinCost: 100
   inputs:
   - item: {fileID: 11400000, guid: 22200000000000000000000000000001, type: 2}
     amount: 1
   outputs:
-  - item: {fileID: 11400000, guid: 22200000000000000000000000000003, type: 2}
+  - item: {fileID: 11400000, guid: 22200000000000000000000000000004, type: 2}
     amount: 1
-  processTime: 45
+  processTime: 450
   stage2Threshold: 0.3
   growthSprites:
+  - {fileID: 21300000, guid: fd3669fdd90b7614bb34221d19c042ee, type: 3}
+  - {fileID: 21300000, guid: fd3669fdd90b7614bb34221d19c042ee, type: 3}
   - {fileID: 21300000, guid: fd3669fdd90b7614bb34221d19c042ee, type: 3}
   autoRestart: 0
   maxCycles: -1

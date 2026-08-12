@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: BreadFrame2Task
   m_EditorClassIdentifier: CutScene::Core.Module.Cutscene.ShowImageTaskSO
   taskName: Frame 2
-  startDelay: 0.1
+  startDelay: 0
   sprite:
     m_AssetGUID: 3b7d1e94c5a04f28ab6d0e17c9f42001
     m_SubObjectName: frame_bg

@@ -15,4 +15,5 @@ MonoBehaviour:
   stepId: frame4_banhmi
   runMode: 1
   tasks:
+  - {fileID: 11400000, guid: 3b7d1e94c5a04f28ab6d0e17c9f44001, type: 2}
   - {fileID: 11400000, guid: 5b4ac594b77e46cd926bb11df96206b4, type: 2}

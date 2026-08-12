@@ -23,7 +23,7 @@ MonoBehaviour:
     m_EditorAssetChanged: 0
   slot: 1
   imageId: shot5_ranking
-  fadeDuration: 1
+  fadeDuration: 0.18
   ease: 6
   overrideLayout: 1
   anchoredPosition: {x: 468, y: 260.2}

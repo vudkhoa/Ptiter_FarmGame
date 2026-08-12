@@ -1,5 +1,7 @@
 using System;
+using System.Threading;
 using Core.Module.Loading;
+using Cysharp.Threading.Tasks;
 using MessagePipe;
 using TMPro;
 using UnityEngine;
@@ -18,21 +20,35 @@ namespace MyOwn.ServiceHarness
         private IDisposable _sub;
         private float _target;
 
+        // The bar has visually reached the last reported progress.
+        public bool IsCaughtUp => _slider == null || _slider.value >= _target - 0.001f;
+
         [Inject]
         public void Construct(ISubscriber<LoadingProgressPayload> sub)
             => _sub = sub.Subscribe(OnProgress);
 
+        private void Awake()
+        {
+            // Start empty regardless of the value the scene was saved with.
+            if (_slider != null) _slider.value = 0f;
+        }
+
         private void OnProgress(LoadingProgressPayload p)
         {
-            _target = p.Progress / 100f;   // Progress is 0..100
+            _target = Mathf.Clamp01(p.Progress / 100f);   // Progress is 0..100
             if (_label != null) _label.text = p.Message;
         }
 
         private void Update()
         {
             if (_slider == null || _slider.value >= _target) return;
-            _slider.value = Mathf.MoveTowards(_slider.value, _target, _fillSpeed * Time.deltaTime);
+            // Unscaled: boot must keep animating even if something parks Time.timeScale at 0.
+            _slider.value = Mathf.MoveTowards(_slider.value, _target, _fillSpeed * Time.unscaledDeltaTime);
         }
+
+        // Lets the boot flow hold the scene swap until the bar actually finished travelling.
+        public UniTask WaitUntilCaughtUpAsync(CancellationToken ct)
+            => UniTask.WaitUntil(() => IsCaughtUp, cancellationToken: ct);
 
         private void OnDestroy() => _sub?.Dispose();
     }

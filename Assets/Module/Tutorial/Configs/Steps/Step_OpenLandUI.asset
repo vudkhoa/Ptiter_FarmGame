@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3c6746206239aa41a62dd990fdf0ad0, type: 3}
+  m_Name: Step_OpenLandUI
+  m_EditorClassIdentifier: Tutorial::Core.Module.Tutorial.TutorialStepSO
+  stepId: farm_open_land_ui
+  hand:
+    anchorMode: 0
+    anchorId: tutorial.soil_button
+    screenPercent: {x: 0.5, y: 0.5}
+    worldPosition: {x: 0, y: 0, z: 0}
+    offset: {x: 0, y: 0}
+    rotation: 0
+    scale: 1
+    flipX: 0
+    animation: 1
+    animationDuration: 0.6
+    animationLoopDelay: 0.15
+    animationStrength: 0.82
+    pressRatio: 0.4
+    pressEase: 5
+    releaseEase: 27
+    swipeOffset: {x: 0, y: 180}
+  hintText: "Ch\u1EA1m v\xE0o n\xFAt \xF4 \u0111\u1EA5t \u0111\u1EC3 b\u1EAFt \u0111\u1EA7u
+    n\xF4ng tr\u1EA1i nh\xE9!"
+  hintOffset: {x: 0, y: -90}
+  showFocusRing: 0
+  focusSprite: {fileID: 0}
+  highlightPulse: 1
+  highlightPulseScale: 1.07
+  focusOffset: {x: 0, y: 0}
+  focusPadding: {x: 24, y: 24}
+  focusFallbackSize: {x: 180, y: 180}
+  dimBackground: 1
+  blockInputOutsideFocus: 1
+  hiddenAnchorIds: []
+  startDelay: 0.35
+  completionSignal: 10

@@ -21,15 +21,15 @@ MonoBehaviour:
     positionOffset: {x: 5, y: 1.5}
     scaleAmount: 0
     cycleSeconds: 22
-    phase: 0.0
+    phase: 0
     ease: 4
     spinDegreesPerSecond: 0
   - imageId: shot1_rice
     pivot: {x: 0.5, y: 0}
-    rotationDegrees: 0.55
+    rotationDegrees: 0.7
     positionOffset: {x: 0, y: 0}
     scaleAmount: 0
-    cycleSeconds: 3.4
+    cycleSeconds: 2.5
     phase: 0.2
     ease: 4
     spinDegreesPerSecond: 0

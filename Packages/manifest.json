@@ -2,12 +2,13 @@
   "dependencies": {
     "com.brunomikoski.scriptableobjectcollection": "https://github.com/brunomikoski/ScriptableObjectCollection.git",
     "com.brunomikoski.uimanager": "https://github.com/brunomikoski/UIManager.git",
+    "com.coffee.ui-particle": "4.13.0",
     "com.cysharp.messagepipe": "https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe",
     "com.cysharp.messagepipe.vcontainer": "https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.VContainer",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.2d.tilemap": "1.0.0",
-    "com.unity.2d.tilemap.extras": "6.0.2",
+    "com.unity.2d.tilemap.extras": "6.0.3",
     "com.unity.addressables": "2.9.1",
     "com.unity.ai.inference": "2.5.0",
     "com.unity.ai.navigation": "2.0.11",
@@ -61,7 +62,8 @@
       "name": "package.openupm.com",
       "url": "https://package.openupm.com",
       "scopes": [
-        "com.brunomikoski"
+        "com.brunomikoski",
+        "com.coffee"
       ]
     }
   ]

@@ -8,6 +8,7 @@ using Core.Module.Storage;
 using Core.Module.Quest;
 using Core.Module.Quest.Cooking;
 using Core.Module.Currency;
+using Core.Module.Tutorial;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
 using UnityEngine;
@@ -30,6 +31,7 @@ namespace MyOwn.ServiceHarness
         IProgressQuestRepository,
         ICookingJobRepository,
         ICurrencyRepository,
+        ITutorialRepository,
         IDisposable
     {
         private readonly IPublisher<PlayerDataLoadedPayload> _loadedPublisher;
@@ -464,6 +466,34 @@ namespace MyOwn.ServiceHarness
                 previousBalance,
                 previousBalance,
                 "Failed to persist the new coin balance.");
+        }
+        #endregion
+
+        #region ITutorialRepository
+        /// <summary>ITutorialRepository: distinguishes a fresh install from a save that predates the tutorial.</summary>
+        public bool IsNewPlayer => IsNewlyCreated;
+
+        public TutorialSaveData LoadTutorial()
+        {
+            if (_data == null) return null;
+
+            _data.Tutorial ??= new TutorialSaveData();
+            return Clone(_data.Tutorial);
+        }
+
+        public bool SaveTutorial(TutorialSaveData data)
+        {
+            if (_data == null || data == null) return false;
+
+            TutorialSaveData previous = _data.Tutorial;
+            _data.Tutorial = Clone(data);
+
+            // Immediate, not throttled: a step credited in memory but lost to a crash would
+            // replay the whole beat on the next launch.
+            if (SaveImmediate()) return true;
+
+            _data.Tutorial = previous;
+            return false;
         }
         #endregion
 

@@ -4,13 +4,12 @@ using Core.Module.Farm;
 using Core.Module.Map;
 using Core.Module.Quest;
 using Core.Module.Quest.Cooking;
+using Core.Module.Tutorial;
 
 namespace MyOwn.ServiceHarness
 {
-    /// <summary>
-    /// POCO save model. [Serializable] để JsonUtility serialize. Sub-data nested cũng phải [Serializable].
+    /// POCO save model. [Serializable] để JsonUtility serialize, sub-data nested cũng vậy.
     /// Bump SaveVersion khi đổi schema → handle migration ở PlayerDataSaveLoad.Load().
-    /// </summary>
     [Serializable]
     public class PlayerData
     {
@@ -18,7 +17,7 @@ namespace MyOwn.ServiceHarness
         public int SaveVersion = 6;
         public long LastSaveUtcTicks;
 
-        public int Coins = 1000;
+        public int Coins = 150;
         public List<InventoryEntry> Inventory = new List<InventoryEntry>
         {
             // Starter item used by the Storage UI mock-up.
@@ -34,6 +33,7 @@ namespace MyOwn.ServiceHarness
         public CookingJobSaveData ActiveCookingJob;
         public List<string> GrantedCookingCompletionTransactions =
             new List<string>();
+        public TutorialSaveData Tutorial = new TutorialSaveData();
 
         // Flag raised if clock manipulation is detected to freeze production
         public bool IsCheatDetected = false;
