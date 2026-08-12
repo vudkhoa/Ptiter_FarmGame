@@ -1,12 +1,14 @@
 using Core.Module.Input;
+using Core.Module.Toast;
+using Core.Module.Tutorial;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Shared.Utils
 {
     /// <summary>
-    /// Promotes the Canvas that owns the active modal above every other Canvas
-    /// and enables one shared raycast shield below the modal window content.
+    /// Promotes the Canvas that owns the active modal above every other Canvas except the
+    /// tutorial overlay, and enables one shared raycast shield below the modal window content.
     /// </summary>
     [DefaultExecutionOrder(-1000)]
     [DisallowMultipleComponent]
@@ -190,11 +192,21 @@ namespace Shared.Utils
             {
                 Canvas canvas = canvases[i];
                 if (canvas == null || !canvas.isRootCanvas) continue;
+                // Tutorial overlays are lifted to sit ABOVE this modal a few lines down.
+                // Counting them here would make each side chase the other upwards forever.
+                if (TutorialOverlayCanvasRegistry.IsOverlay(canvas)) continue;
+                // The toast layer parks at a fixed order far above everything and never moves.
+                // Counting it would push each modal past it and hide the message it just raised.
+                if (ToastCanvasRegistry.IsOverlay(canvas)) continue;
                 highestOrder = Mathf.Max(highestOrder, canvas.sortingOrder);
             }
 
             targetCanvas.overrideSorting = true;
             targetCanvas.sortingOrder = highestOrder + SortingOrderPadding;
+
+            // A tutorial step can point at a widget inside this very window, so its dim, its
+            // clone of the widget and its hand all have to clear the window they explain.
+            TutorialOverlayCanvasRegistry.RaiseAbove(targetCanvas.sortingOrder);
         }
 
         private void ReleaseModalLayer()
@@ -207,6 +219,10 @@ namespace Shared.Utils
 
         private void RestoreCanvasSorting()
         {
+            // Unconditional: the overlays must come back down even if the modal canvas went away
+            // with its scene, otherwise the tutorial keeps a raise nothing is holding up any more.
+            TutorialOverlayCanvasRegistry.ResetToBase();
+
             if (_raisedCanvas == null) return;
 
             _raisedCanvas.overrideSorting = _originalOverrideSorting;

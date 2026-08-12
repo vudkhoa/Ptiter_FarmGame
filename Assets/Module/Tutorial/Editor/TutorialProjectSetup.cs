@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Core.Module.Map;
 using Core.Module.Tutorial.Integration.Farm;
 using MyOwn.ServiceHarness;
 using TMPro;
@@ -38,9 +37,8 @@ namespace Core.Module.Tutorial.Editor
     }
 
     /// <summary>
-    /// Generates every tutorial asset the module needs: placeholder sprites, step/flow/catalog
-    /// assets, the persistent UI container inside the Preloading scene, and the anchor on the
-    /// soil placement button. Re-runnable: it overwrites its own output and leaves nothing else alone.
+    /// Generates the tutorial assets: sprites, step/flow/catalog, the persistent UI container in
+    /// the Preloading scene, and the build-button anchor. Re-runnable; overwrites only its output.
     /// </summary>
     public static class TutorialProjectSetup
     {
@@ -54,8 +52,8 @@ namespace Core.Module.Tutorial.Editor
         private const string FirstHarvestFlowPath = ConfigRoot + "/Flow_FirstHarvest.asset";
 
         private const string PreloadingScenePath = "Assets/myOwn/Scenes/Preloading.unity";
-        private const string ObjectSelectPrefabPath =
-            "Assets/Module/UI System/Prefabs/Screen/ObjectSelectScreen.prefab";
+        private const string BuildHudButtonPrefabPath =
+            "Assets/Module/UI System/Prefabs/HUD/BuildingHudButton.prefab";
         private const string FontAssetPath =
             "Assets/TextMesh Pro/Resources/Fonts & Materials/Itim SDF.asset";
         private const string FallbackFontAssetPath =
@@ -63,15 +61,6 @@ namespace Core.Module.Tutorial.Editor
 
         private const string ContainerName = "[Tutorial UI Container]";
         private const string HandViewName = "Hand View";
-
-        /// <summary>Anchor id placed on the Soil button inside ObjectSelectScreen.</summary>
-        private const string SoilButtonAnchorId = "tutorial.soil_button";
-
-        /// <summary>Anchor id on the ObjectSelectScreen root, so a step can fade the panel away.</summary>
-        private const string ObjectsPanelAnchorId = "tutorial.objects_panel";
-
-        /// <summary>Soil entry in Assets/Module/Map/Configs/Objects.asset.</summary>
-        private const int SoilObjectId = 101;
 
         /// <summary>
         /// Hand artwork size in canvas units, matching the 400x326 source aspect so the sprite
@@ -94,11 +83,8 @@ namespace Core.Module.Tutorial.Editor
         /// </summary>
         private static readonly Vector2 CellAnchorCorrection = new Vector2(0f, 75f);
 
-        // Above the UIManager canvas (0) and the Settings HUD (100). Inside the container, depth
-        // is sibling order: Dimmer, then Highlight (the cloned widget), then Foreground - which
-        // overrides sorting so the hand and ring always draw over the widget they point at.
-        // Modal popups still win, by design: GlobalModalInputBlocker raises the focused modal to
-        // (highest root canvas + 10), and only this container counts as a root canvas.
+        // Above the UIManager canvas (0) and the Settings HUD (100). A focused modal outranks even
+        // this, so TutorialOverlayCanvasRegistry lifts both canvases over it while one is open.
         private const int TutorialCanvasSortingOrder = 199;
         private const int ForegroundSortingOrder = 201;
 
@@ -111,7 +97,7 @@ namespace Core.Module.Tutorial.Editor
 
             TutorialCatalogSO catalog = BuildCatalog(sprites);
             TutorialUIContainer container = BuildContainerInPreloadingScene(sprites, font, catalog);
-            AddSoilButtonAnchor();
+            AddBuildButtonAnchor();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -289,13 +275,35 @@ namespace Core.Module.Tutorial.Editor
         #region Configs
         private static TutorialCatalogSO BuildCatalog(TutorialSprites sprites)
         {
+            // The build menu starts closed, so the very first beat is the HUD button that opens it.
+            // Without this the flow used to point straight at a row inside a panel nobody had opened.
+            TutorialStepSO openBuildMenu = BuildStep(
+                "Step_OpenBuildMenu", "farm_open_build_menu",
+                "Chạm vào nút Xây dựng để mở danh sách ô đất.",
+                hand =>
+                {
+                    hand.anchorMode = TutorialAnchorMode.Anchor;
+                    hand.anchorId = TutorialAnchorIds.BuildButton;
+                    hand.offset = Vector2.zero;
+                    hand.rotation = 0f;
+                    hand.animation = TutorialHandAnimation.Tap;
+                },
+                step =>
+                {
+                    step.hintOffset = new Vector2(0f, -90f);
+                    step.showFocusRing = false;
+                    step.dimBackground = true;
+                    step.blockInputOutsideFocus = true;
+                    step.completionSignal = TutorialSignal.BuildMenuOpened;
+                });
+
             TutorialStepSO openLandUi = BuildStep(
                 "Step_OpenLandUI", "farm_open_land_ui",
                 "Chạm vào nút ô đất để bắt đầu nông trại nhé!",
                 hand =>
                 {
                     hand.anchorMode = TutorialAnchorMode.Anchor;
-                    hand.anchorId = SoilButtonAnchorId;
+                    hand.anchorId = TutorialAnchorIds.SoilButton;
                     hand.offset = Vector2.zero;
                     hand.rotation = 0f;
                     hand.animation = TutorialHandAnimation.Tap;
@@ -317,7 +325,7 @@ namespace Core.Module.Tutorial.Editor
                     // A real buildable cell found by the bridge, not a fixed screen position:
                     // the middle of the screen is usually the shop roof, where placement refuses.
                     hand.anchorMode = TutorialAnchorMode.Anchor;
-                    hand.anchorId = TutorialGameplaySignalBridge.FreePlotAnchorId;
+                    hand.anchorId = TutorialAnchorIds.FreePlot;
                     // Matches focusOffset below: the cell anchor resolves a little under the tile
                     // artwork, so ring and fingertip are both lifted by the same amount.
                     hand.offset = CellAnchorCorrection;
@@ -336,13 +344,13 @@ namespace Core.Module.Tutorial.Editor
                     step.dimBackground = true;
                     // Free placement: the map raycast must stay reachable, so the dim only darkens.
                     step.blockInputOutsideFocus = false;
-                    step.hiddenAnchorIds = new List<string> { ObjectsPanelAnchorId };
+                    step.hiddenAnchorIds = new List<string> { TutorialAnchorIds.ObjectsPanel };
                     step.completionSignal = TutorialSignal.LandPlaced;
                 });
 
             TutorialStepSO plantSeed = BuildStep(
                 "Step_PlantSeed", "farm_plant_seed",
-                "Chạm vào ô đất rồi chọn hạt giống để trồng cây.",
+                "Chạm vào ô đất để bắt đầu trồng cây.",
                 hand =>
                 {
                     // The plot the player just put down, not a fixed world point: a hard coded
@@ -350,7 +358,7 @@ namespace Core.Module.Tutorial.Editor
                     // re-pins this anchor from the save on scene load, so quitting after placing
                     // and coming back still has a target.
                     hand.anchorMode = TutorialAnchorMode.Anchor;
-                    hand.anchorId = TutorialGameplaySignalBridge.NewPlotAnchorId;
+                    hand.anchorId = TutorialAnchorIds.NewPlot;
                     hand.offset = Vector2.zero;
                     hand.rotation = 0f;
                     hand.animation = TutorialHandAnimation.Tap;
@@ -363,6 +371,29 @@ namespace Core.Module.Tutorial.Editor
                     // The seed picker opens on top of this step; masking it would trap the player.
                     step.dimBackground = false;
                     step.blockInputOutsideFocus = false;
+                    // Hands over to Step_ChooseSeed the moment the picker is up. Waiting for
+                    // SeedPlanted here left the hand pointing at a plot hidden behind that picker.
+                    step.completionSignal = TutorialSignal.SeedSelectorOpened;
+                });
+
+            TutorialStepSO chooseSeed = BuildStep(
+                "Step_ChooseSeed", "farm_choose_seed",
+                "Chọn một hạt giống để gieo xuống ô đất.",
+                hand =>
+                {
+                    hand.anchorMode = TutorialAnchorMode.Anchor;
+                    hand.anchorId = TutorialAnchorIds.SeedItem;
+                    hand.offset = Vector2.zero;
+                    hand.rotation = 0f;
+                    hand.animation = TutorialHandAnimation.Tap;
+                },
+                step =>
+                {
+                    step.hintOffset = new Vector2(0f, -90f);
+                    step.showFocusRing = false;
+                    step.focusFallbackSize = new Vector2(200f, 200f);
+                    step.dimBackground = true;
+                    step.blockInputOutsideFocus = true;
                     step.completionSignal = TutorialSignal.SeedPlanted;
                 });
 
@@ -372,7 +403,7 @@ namespace Core.Module.Tutorial.Editor
                 hand =>
                 {
                     hand.anchorMode = TutorialAnchorMode.Anchor;
-                    hand.anchorId = TutorialGameplaySignalBridge.RipeCropAnchorId;
+                    hand.anchorId = TutorialAnchorIds.RipeCrop;
                     hand.offset = Vector2.zero;
                     hand.rotation = 0f;
                     hand.animation = TutorialHandAnimation.Tap;
@@ -389,7 +420,7 @@ namespace Core.Module.Tutorial.Editor
 
             TutorialFlowSO firstFarm = BuildFlow(
                 FirstFarmFlowPath, "first_farm", TutorialSignal.None,
-                new[] { openLandUi, placeLand, plantSeed });
+                new[] { openBuildMenu, openLandUi, placeLand, plantSeed, chooseSeed });
 
             TutorialFlowSO firstHarvest = BuildFlow(
                 FirstHarvestFlowPath, "first_harvest", TutorialSignal.CropRipe,
@@ -515,11 +546,16 @@ namespace Core.Module.Tutorial.Editor
 
             // Sibling order is the depth order: dim at the back, the cloned widget over it, the
             // hand and ring in the foreground canvas on top of both.
-            Image dimmer = ImageObject("Dimmer", handViewRect, null, Vector2.zero, Vector2.one);
-            Stretch(dimmer.gameObject, handViewRect);
+            // TutorialDimMask, not a plain Image: a step that gates a map cell needs the dim to
+            // report a miss over that one rect, which only the subclass can do.
+            GameObject dimmerObject = new GameObject(
+                "Dimmer", typeof(RectTransform), typeof(CanvasRenderer), typeof(TutorialDimMask));
+            Stretch(dimmerObject, handViewRect);
+
+            TutorialDimMask dimmer = dimmerObject.GetComponent<TutorialDimMask>();
             dimmer.color = new Color(0f, 0f, 0f, 0.62f);
             dimmer.raycastTarget = true;
-            dimmer.gameObject.SetActive(false);
+            dimmerObject.SetActive(false);
 
             // Starts inactive and stays that way until a step clones into it. That is deliberate:
             // cloning into an inactive parent keeps the copy's own scripts from ever waking up.
@@ -593,47 +629,27 @@ namespace Core.Module.Tutorial.Editor
         }
         #endregion
 
-        #region Soil button anchor
+        #region Build button anchor
         /// <summary>
-        /// The land button is authored inside ObjectSelectScreen, which UIManager instantiates at
-        /// runtime, so the anchor has to live on the prefab rather than in a scene.
+        /// Only the HUD button is a fixed widget. The soil row and the panel root are runtime
+        /// instances, so they register from code (ObjectSelectSlotView / SelectObjectsScreen).
         /// </summary>
-        private static void AddSoilButtonAnchor()
+        private static void AddBuildButtonAnchor()
         {
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ObjectSelectPrefabPath);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(BuildHudButtonPrefabPath);
             if (prefab == null)
             {
                 Debug.LogWarning(
-                    $"[TutorialSetup] {ObjectSelectPrefabPath} is missing - " +
+                    $"[TutorialSetup] {BuildHudButtonPrefabPath} is missing - " +
                     "the first tutorial step has no button to point at.");
                 return;
             }
 
-            GameObject root = PrefabUtility.LoadPrefabContents(ObjectSelectPrefabPath);
+            GameObject root = PrefabUtility.LoadPrefabContents(BuildHudButtonPrefabPath);
             try
             {
-                MapPlacer target = null;
-                MapPlacer[] placers = root.GetComponentsInChildren<MapPlacer>(true);
-                for (int i = 0; i < placers.Length; i++)
-                {
-                    SerializedObject placerSo = new SerializedObject(placers[i]);
-                    if (placerSo.FindProperty("_objectId").intValue != SoilObjectId) continue;
-
-                    target = placers[i];
-                    break;
-                }
-
-                if (target == null)
-                {
-                    Debug.LogWarning(
-                        $"[TutorialSetup] No MapPlacer with objectId {SoilObjectId} in ObjectSelectScreen.");
-                    return;
-                }
-
-                EnsureAnchor(target.gameObject, SoilButtonAnchorId);
-                EnsureAnchor(root, ObjectsPanelAnchorId);
-
-                PrefabUtility.SaveAsPrefabAsset(root, ObjectSelectPrefabPath);
+                EnsureAnchor(root, TutorialAnchorIds.BuildButton);
+                PrefabUtility.SaveAsPrefabAsset(root, BuildHudButtonPrefabPath);
             }
             finally
             {

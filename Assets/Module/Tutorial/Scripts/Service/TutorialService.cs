@@ -74,6 +74,7 @@ namespace Core.Module.Tutorial
         public void Dispose()
         {
             _disposed = true;
+            TutorialSignalHub.Unbind(this);
             _view?.Hide();
         }
         #endregion
@@ -82,6 +83,10 @@ namespace Core.Module.Tutorial
         private void Initialize()
         {
             if (_initialized || _disposed) return;
+
+            // UIManager windows report through the hub: the package opens a window before
+            // VContainer injects it, so an injected service field is still null at that point.
+            TutorialSignalHub.Bind(this);
 
             if (_catalog == null)
             {

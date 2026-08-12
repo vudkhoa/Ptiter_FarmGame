@@ -9,6 +9,9 @@ namespace Core.Module.Tutorial
     {
         None = 0,
 
+        /// <summary>The build menu (object picker) opened, so its rows can be pointed at.</summary>
+        BuildMenuOpened = 5,
+
         /// <summary>Player tapped the build button and entered land placement mode.</summary>
         LandPlacementStarted = 10,
 

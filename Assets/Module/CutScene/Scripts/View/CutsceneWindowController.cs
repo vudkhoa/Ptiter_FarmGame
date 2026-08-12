@@ -25,6 +25,10 @@ namespace Core.Module.Cutscene
         private readonly Dictionary<Image, int> _imageToSlotIndex = new Dictionary<Image, int>();
         private readonly Dictionary<string, Button> _buttonById = new Dictionary<string, Button>();
 
+        // VFX không pool như Image: prefab particle tái dùng phải lo restart emitter, mà một
+        // cutscene chỉ spawn nó đúng một lần nên pool chỉ tổ thêm chỗ sai. Huỷ luôn cho gọn.
+        private readonly List<RectTransform> _activeVfx = new List<RectTransform>(2);
+
         #region Properties
         // WindowController đã RequireComponent(CanvasGroup) nên không giữ field riêng.
         public CanvasGroup RootCanvasGroup => CanvasGroup;
@@ -88,8 +92,54 @@ namespace Core.Module.Cutscene
             _imageToSlotIndex.Remove(image);
         }
 
+        public RectTransform AcquireVfx(CutsceneImageSlot slot, GameObject prefab)
+        {
+            int idx = (int)slot;
+            if (prefab == null || _slots == null || idx < 0 || idx >= _slots.Length) return null;
+
+            var cfg = _slots[idx];
+            if (cfg == null || cfg.parent == null)
+            {
+                Debug.LogError($"[CutsceneWindow] Slot {slot} thiếu parent.", this);
+                return null;
+            }
+
+            // worldPositionStays = false: để true thì Unity bẻ lại localScale/localPosition cho khớp
+            // world cũ, prefab UI vào Canvas là lệch chỗ và sai cỡ ngay.
+            var spawned = Instantiate(prefab, cfg.parent, false);
+            var instance = spawned.transform as RectTransform;
+            if (instance == null)
+            {
+                // Prefab UI bắt buộc có RectTransform, không thì Canvas layout nó lung tung.
+                // Huỷ luôn bản vừa tạo, bỏ đó là để lại rác treo dưới slot.
+                Debug.LogError($"[CutsceneWindow] Prefab VFX '{prefab.name}' thiếu RectTransform.", this);
+                Destroy(spawned);
+                return null;
+            }
+
+            // Cùng luật với AcquireImage: spawn sau thì nằm trên.
+            instance.SetAsLastSibling();
+            _activeVfx.Add(instance);
+            return instance;
+        }
+
+        public void ReleaseVfx(RectTransform instance)
+        {
+            if (instance == null) return;
+            if (!_activeVfx.Remove(instance)) return;
+
+            Destroy(instance.gameObject);
+        }
+
         public void ResetSlots()
         {
+            for (int i = _activeVfx.Count - 1; i >= 0; i--)
+            {
+                var vfx = _activeVfx[i];
+                if (vfx != null) Destroy(vfx.gameObject);
+            }
+            _activeVfx.Clear();
+
             if (_runtime == null) return;
 
             for (int i = 0; i < _runtime.Length; i++)

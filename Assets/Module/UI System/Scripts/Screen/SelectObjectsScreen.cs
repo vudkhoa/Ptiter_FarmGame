@@ -2,6 +2,8 @@ using BrunoMikoski.UIManager;
 using Core.Module.Input;
 using Core.Module.Map;
 using Core.Module.Time;
+using Core.Module.Toast;
+using Core.Module.Tutorial;
 using MessagePipe;
 using System;
 using System.Collections.Generic;
@@ -26,6 +28,9 @@ public class SelectObjectsScreen :
     [SerializeField] private Image _decorationTabImage;
     [SerializeField] private Sprite _tabActiveSprite;
     [SerializeField] private Sprite _tabInactiveSprite;
+
+    [Tooltip("Shown as a toast when a tab that is not implemented yet is tapped.")]
+    [SerializeField] private string _lockedTabMessage = "Tính năng chưa mở!";
 
     [Header("Resource horizontal recycler")]
     [SerializeField] private ScrollRect _resourceRecycler;
@@ -72,10 +77,18 @@ public class SelectObjectsScreen :
     {
         _btnClose?.onClick.AddListener(Close);
         _resourceTabButton?.onClick.AddListener(ShowResources);
+        _decorationTabButton?.onClick.AddListener(ShowLockedTabToast);
         GameplayInputBlockRegistry.Add(this);
 
+        // Reported here rather than through an injected service: UIManager opens the window
+        // before VContainer injects it, so the field would still be null.
+        TutorialAnchorRegistry.Register(TutorialAnchorIds.ObjectsPanel, transform);
+        TutorialSignalHub.Report(TutorialSignal.BuildMenuOpened);
+
+        // Left interactable on purpose: the tab is locked, but the tap has to reach us so the
+        // player is told why instead of pressing a dead button.
         if (_decorationTabButton != null)
-            _decorationTabButton.interactable = false;
+            _decorationTabButton.interactable = true;
 
         ShowResources();
     }
@@ -84,12 +97,15 @@ public class SelectObjectsScreen :
     {
         _btnClose?.onClick.RemoveListener(Close);
         _resourceTabButton?.onClick.RemoveListener(ShowResources);
+        _decorationTabButton?.onClick.RemoveListener(ShowLockedTabToast);
         GameplayInputBlockRegistry.Remove(this);
+        TutorialAnchorRegistry.Unregister(TutorialAnchorIds.ObjectsPanel, transform);
     }
 
     protected override void OnDestroy()
     {
         GameplayInputBlockRegistry.Remove(this);
+        TutorialAnchorRegistry.Unregister(TutorialAnchorIds.ObjectsPanel, transform);
         _placementStoppedSubscription?.Dispose();
         base.OnDestroy();
     }
@@ -106,6 +122,16 @@ public class SelectObjectsScreen :
         if (_resourceRecycler != null) _resourceRecycler.gameObject.SetActive(true);
 
         ReloadResourceItems();
+    }
+
+    /// <summary>
+    /// Raised through the hub rather than an injected service: UIManager opens this window before
+    /// VContainer injects it, so a service field cannot be relied on from a click handler.
+    /// The resource tab stays selected - a locked tab must not swap the panel out.
+    /// </summary>
+    private void ShowLockedTabToast()
+    {
+        ToastHub.Show(_lockedTabMessage, ToastStyle.Warning);
     }
 
     private void ReloadResourceItems()
@@ -151,11 +177,15 @@ public class SelectObjectsScreen :
         Close();
     }
 
-    private void OnPlacementStopped(MapPlacementStoppedPayload _)
+    private void OnPlacementStopped(MapPlacementStoppedPayload payload)
     {
         if (!_reopenAfterPlacement) return;
 
+        // Cleared either way: the trip back to the map is over, so a later stop must not drag
+        // this window up again out of nowhere.
         _reopenAfterPlacement = false;
+        if (!payload.ReopenPicker) return;
+
         Open();
     }
 

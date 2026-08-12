@@ -15,6 +15,12 @@ namespace Core.Module.Map
         // State machine
         void StartPlacement(int objectId);
         void StopPlacement();
+
+        /// <summary>
+        /// <paramref name="reopenPicker"/> false ends the placement without inviting the build
+        /// menu back, for a stop the game performed rather than the player.
+        /// </summary>
+        void StopPlacement(bool reopenPicker);
         void SetPlayerRemovalMode(bool active);
 
         // World-only API

@@ -15,15 +15,6 @@ namespace Core.Module.Tutorial.Integration.Farm
     /// </summary>
     public sealed class TutorialGameplaySignalBridge : IStartable, IDisposable
     {
-        /// <summary>Anchor id for the plot the player has just placed. Referenced by TutorialStepSO assets.</summary>
-        public const string NewPlotAnchorId = "tutorial.new_plot";
-
-        /// <summary>Anchor id for the crop that has just ripened.</summary>
-        public const string RipeCropAnchorId = "tutorial.ripe_crop";
-
-        /// <summary>Anchor id for an empty cell the player is actually allowed to build on.</summary>
-        public const string FreePlotAnchorId = "tutorial.free_plot";
-
         /// <summary>Cells searched outward from the middle of the view before giving up.</summary>
         private const int FreePlotSearchRadius = 12;
 
@@ -91,7 +82,9 @@ namespace Core.Module.Tutorial.Integration.Farm
             if (!TryFindRipeCrop(out Vector3Int cell)) return;
 
             TutorialAnchorRegistry.SetWorldPoint(
-                RipeCropAnchorId, _mapService.CellToWorld(cell) + CropVisualOffset);
+                TutorialAnchorIds.RipeCrop,
+                _mapService.CellToWorld(cell) + CropVisualOffset,
+                CellHalfExtent(cell));
             _tutorial.ReportSignal(TutorialSignal.CropRipe);
         }
 
@@ -123,9 +116,9 @@ namespace Core.Module.Tutorial.Integration.Farm
 
             // The anchors point into a scene that is going away; a stale world point would
             // park the hand over whatever happens to be at those coordinates next.
-            TutorialAnchorRegistry.ClearWorldPoint(NewPlotAnchorId);
-            TutorialAnchorRegistry.ClearWorldPoint(RipeCropAnchorId);
-            TutorialAnchorRegistry.ClearWorldPoint(FreePlotAnchorId);
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.NewPlot);
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.RipeCrop);
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.FreePlot);
         }
         #endregion
 
@@ -149,7 +142,7 @@ namespace Core.Module.Tutorial.Integration.Farm
         {
             if (!TryFindPlaceableCell(objectId, out Vector3Int cell))
             {
-                TutorialAnchorRegistry.ClearWorldPoint(FreePlotAnchorId);
+                TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.FreePlot);
                 Debug.LogWarning(
                     "[TutorialGameplaySignalBridge] No buildable cell found near the view centre; " +
                     "the place-land step will wait until one is on screen.");
@@ -158,13 +151,20 @@ namespace Core.Module.Tutorial.Integration.Farm
 
             // CellToWorld is exactly where MapPreviewView parks its own grid cursor and where the
             // soil prefab lands, so the marker sits on the same spot the game considers "this cell".
-            // The half-extent is one real cell, letting the view size the marker by projection
-            // instead of a guessed pixel size that breaks as soon as the camera zooms.
+            TutorialAnchorRegistry.SetWorldPoint(
+                TutorialAnchorIds.FreePlot, _mapService.CellToWorld(cell), CellHalfExtent(cell));
+        }
+
+        /// <summary>
+        /// Half the world footprint of one grid cell. Every world anchor ships it so the view sizes
+        /// the ring - and the hole a force step opens in the dim - by projection, instead of a
+        /// guessed pixel size that stops matching the moment the camera zooms.
+        /// </summary>
+        private Vector3 CellHalfExtent(Vector3Int cell)
+        {
             Vector3 origin = _mapService.CellToWorld(cell);
             Vector3 diagonal = _mapService.CellToWorld(cell + new Vector3Int(1, 0, 1)) - origin;
-            Vector3 halfExtent = new Vector3(Mathf.Abs(diagonal.x), 0f, Mathf.Abs(diagonal.z)) * 0.5f;
-
-            TutorialAnchorRegistry.SetWorldPoint(FreePlotAnchorId, origin, halfExtent);
+            return new Vector3(Mathf.Abs(diagonal.x), 0f, Mathf.Abs(diagonal.z)) * 0.5f;
         }
 
         /// <summary>
@@ -246,8 +246,19 @@ namespace Core.Module.Tutorial.Integration.Farm
                 return;
             }
 
-            TutorialAnchorRegistry.ClearWorldPoint(FreePlotAnchorId);
-            TutorialAnchorRegistry.SetWorldPoint(NewPlotAnchorId, payload.SnappedWorld + CropVisualOffset);
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.FreePlot);
+            TutorialAnchorRegistry.SetWorldPoint(
+                TutorialAnchorIds.NewPlot,
+                payload.SnappedWorld + CropVisualOffset,
+                CellHalfExtent(payload.Cell));
+
+            // Soil paints continuously, so the brush is still in the player's hand: the next tap
+            // would drop a second plot instead of opening the seed picker on the one they just
+            // made. Take it back before the plant step points at that plot. Free play keeps the
+            // brush - only a running tutorial hands it in - and the build menu stays closed so it
+            // cannot reopen over the target.
+            if (_tutorial.IsRunning) _mapService.StopPlacement(false);
+
             _tutorial.ReportSignal(TutorialSignal.LandPlaced);
         }
 
@@ -267,7 +278,10 @@ namespace Core.Module.Tutorial.Integration.Farm
             if (distance >= _restoredPlotDistance) return;
 
             _restoredPlotDistance = distance;
-            TutorialAnchorRegistry.SetWorldPoint(NewPlotAnchorId, payload.SnappedWorld + CropVisualOffset);
+            TutorialAnchorRegistry.SetWorldPoint(
+                TutorialAnchorIds.NewPlot,
+                payload.SnappedWorld + CropVisualOffset,
+                CellHalfExtent(payload.Cell));
         }
 
         private bool HasCrop(Vector3Int cell)
@@ -307,7 +321,7 @@ namespace Core.Module.Tutorial.Integration.Farm
             if (payload.EntityType != FarmEntityType.Crop) return;
 
             // The plot is no longer bare, so nothing should be pointing at it as one.
-            TutorialAnchorRegistry.ClearWorldPoint(NewPlotAnchorId);
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.NewPlot);
             _tutorial.ReportSignal(TutorialSignal.SeedPlanted);
         }
 
@@ -316,7 +330,9 @@ namespace Core.Module.Tutorial.Integration.Farm
             if (payload.EntityType != FarmEntityType.Crop) return;
 
             TutorialAnchorRegistry.SetWorldPoint(
-                RipeCropAnchorId, _mapService.CellToWorld(payload.Cell) + CropVisualOffset);
+                TutorialAnchorIds.RipeCrop,
+                _mapService.CellToWorld(payload.Cell) + CropVisualOffset,
+                CellHalfExtent(payload.Cell));
             _tutorial.ReportSignal(TutorialSignal.CropRipe);
         }
 
@@ -324,7 +340,7 @@ namespace Core.Module.Tutorial.Integration.Farm
         {
             if (payload.EntityType != FarmEntityType.Crop) return;
 
-            TutorialAnchorRegistry.ClearWorldPoint(RipeCropAnchorId);
+            TutorialAnchorRegistry.ClearWorldPoint(TutorialAnchorIds.RipeCrop);
             _tutorial.ReportSignal(TutorialSignal.CropHarvested);
         }
         #endregion

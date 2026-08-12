@@ -19,7 +19,7 @@ MonoBehaviour:
     description: "B\xE1nh m\xEC n\xF3ng gi\xF2n v\u1EDBi th\u1ECBt heo quay \u0111\u1EADm
       v\u1ECB."
     dishSprite: {fileID: 21300000, guid: b0bf04e6b94a4454aa7c8b539690e7bb, type: 3}
-    secondsPerItem: 20
+    secondsPerItem: 60
     outputItemId: banh_mi_heo_quay
     outputAmountPerItem: 1
     ingredients:

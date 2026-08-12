@@ -63,6 +63,7 @@ namespace Core.Module.Tutorial
         private RectTransform _highlightClone;
         private RectTransform _clickCatcher;
         private Vector2 _highlightSourceSize;
+        private TutorialDimMask _dimMask;
 
         public bool IsShowing => _step != null;
 
@@ -129,6 +130,10 @@ namespace Core.Module.Tutorial
             if (_canvas == null) _canvas = GetComponentInParent<Canvas>();
             if (_canvasRect == null && _canvas != null)
                 _canvasRect = _canvas.transform as RectTransform;
+
+            // Only the mask subclass can leave a hole for a world cell. A container authored
+            // before it existed still holds a plain Image, which ApplyMask reports on.
+            _dimMask = _dimmer as TutorialDimMask;
 
             // A container authored before the dim + clone rework still works, it just cannot mask.
             // Say so rather than leaving someone wondering where the dim went.
@@ -376,10 +381,11 @@ namespace Core.Module.Tutorial
 
         #region Mask
         /// <summary>
-        /// Dims everything, then draws a dead copy of the highlighted widget on top of the dim at
-        /// the original's screen position and size, with an invisible catcher relaying taps back
-        /// to the real widget. A copy matches the widget's silhouette exactly, which a rectangular
-        /// hole in the dim never does.
+        /// Dims everything, then opens exactly one way through it. A UI widget gets a dead copy
+        /// drawn on top of the dim with an invisible catcher relaying taps back to the real one -
+        /// a copy matches the silhouette exactly, which a rectangular hole never does. A world
+        /// cell has no widget to copy, so the dim keeps swallowing every tap EXCEPT the cell's own
+        /// rect, which it reports as a miss so the map raycast underneath still sees it.
         /// </summary>
         private void ApplyMask(RectTransform uiTarget, Vector2 canvasPoint, Vector2 anchorSize)
         {
@@ -390,29 +396,28 @@ namespace Core.Module.Tutorial
                 return;
             }
 
-            // A world cell is tapped through the map raycast, which never reaches the EventSystem.
-            // A dim that swallows taps would make the step impossible, so it only darkens there;
-            // the ring drawn over it is what marks the spot.
-            bool canGate = uiTarget != null && _step.blockInputOutsideFocus;
+            bool wantsGate = _step.blockInputOutsideFocus;
 
             if (uiTarget == null)
             {
-                if (_step.blockInputOutsideFocus && !_warnedUnmaskableAnchor)
-                {
-                    _warnedUnmaskableAnchor = true;
-                    Debug.LogWarning(
-                        $"[TutorialHandView] Step '{_step.stepId}' asks to block input but its anchor " +
-                        "is not UI. Dimming without blocking so the map stays tappable.", this);
-                }
+                // Sized off the anchor, not the ring: focusOffset can park the ring away from the
+                // cell for artwork reasons, but the tappable patch has to stay on the real cell.
+                bool canGate = wantsGate && _dimMask != null;
+                if (canGate)
+                    _dimMask.SetHole(_canvasRect, canvasPoint, anchorSize + _step.focusPadding);
+                else
+                    WarnUnmaskableAnchor(wantsGate);
 
-                SetDimmer(true, false);
+                SetDimmer(true, canGate);
                 ClearHighlight(true);
                 return;
             }
 
-            SetDimmer(true, canGate);
+            // The widget is reachable through its clone, so the dim must stay solid here.
+            if (_dimMask != null) _dimMask.ClearHole();
+            SetDimmer(true, wantsGate);
 
-            if (!canGate)
+            if (!wantsGate)
             {
                 ClearHighlight(true);
                 return;
@@ -540,12 +545,27 @@ namespace Core.Module.Tutorial
             if (resyncMotion && hadClone && _step != null) BuildMotion();
         }
 
+        private void WarnUnmaskableAnchor(bool wantsGate)
+        {
+            if (!wantsGate || _warnedUnmaskableAnchor) return;
+
+            _warnedUnmaskableAnchor = true;
+            Debug.LogWarning(
+                $"[TutorialHandView] Step '{_step.stepId}' gates a world anchor but the dim is a " +
+                "plain Image, which cannot punch the cell out. Run Tools/Tutorial/Rebuild " +
+                "Tutorial Content to swap it for TutorialDimMask.", this);
+        }
+
         private void SetDimmer(bool visible, bool blocksInput)
         {
             if (_dimmer == null) return;
 
+            bool gating = visible && blocksInput;
             if (_dimmer.gameObject.activeSelf != visible) _dimmer.gameObject.SetActive(visible);
-            _dimmer.raycastTarget = visible && blocksInput;
+            _dimmer.raycastTarget = gating;
+
+            // A hole left over from the previous step would keep a dead patch of screen tappable.
+            if (!gating && _dimMask != null) _dimMask.ClearHole();
         }
         #endregion
 

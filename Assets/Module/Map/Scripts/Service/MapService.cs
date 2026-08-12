@@ -173,13 +173,15 @@ namespace Core.Module.Map
                 data.RotationMode));
         }
 
-        public void StopPlacement()
+        public void StopPlacement() => StopPlacement(true);
+
+        public void StopPlacement(bool reopenPicker)
         {
             if (HasActivePlacement)
             {
                 _currentObjectId = -1;
                 _currentDbIndex = -1;
-                _pubStop.Publish(default);
+                _pubStop.Publish(new MapPlacementStoppedPayload(reopenPicker));
             }
 
             SetPlayerRemovalMode(false);

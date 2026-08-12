@@ -23,6 +23,9 @@ namespace Core.Module.Cutscene
         // Lookup ngang giữa các task: task A đăng ký id -> task B tra id để tween/cross-fade.
         private readonly Dictionary<string, Image> _imagesById = new Dictionary<string, Image>();
 
+        // VFX prefab do task spawn. Tách khỏi _imagesByTask vì View huỷ hẳn chứ không pool.
+        private readonly Dictionary<CutsceneTaskSO, RectTransform> _vfxByTask = new Dictionary<CutsceneTaskSO, RectTransform>();
+
         public void Reset(int totalSteps)
         {
             CurrentStepIndex = 0;
@@ -32,6 +35,7 @@ namespace Core.Module.Cutscene
             _preparedAssets.Clear();
             _imagesByTask.Clear();
             _imagesById.Clear();
+            _vfxByTask.Clear();
         }
 
         public void SetPreparedAsset(CutsceneTaskSO task, Object asset)
@@ -58,6 +62,18 @@ namespace Core.Module.Cutscene
         {
             if (owner == null) return null;
             return _imagesByTask.TryGetValue(owner, out var img) ? img : null;
+        }
+
+        public void RegisterVfx(CutsceneTaskSO owner, RectTransform instance)
+        {
+            if (owner == null || instance == null) return;
+            _vfxByTask[owner] = instance;
+        }
+
+        public RectTransform GetVfxByTask(CutsceneTaskSO owner)
+        {
+            if (owner == null) return null;
+            return _vfxByTask.TryGetValue(owner, out var vfx) ? vfx : null;
         }
 
         public Image GetImageById(string id)

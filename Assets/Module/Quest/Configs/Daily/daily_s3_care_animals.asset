@@ -15,7 +15,7 @@ MonoBehaviour:
   questId: daily_s3_care_animals
   category: 0
   questName: "Cho v\u1EADt nu\xF4i \u0103n"
-  description: "Ch\u0103m s\xF3c v\u1EADt nu\xF4i 4 l\u1EA7n."
+  description: "Ch\u0103m s\xF3c v\u1EADt nu\xF4i 2 l\u1EA7n."
   icon: {fileID: 21300000, guid: 651bac6719967a249bb872b740b361f4, type: 3}
   objectives:
   - objectiveId: daily_s3_care_animals_objective
@@ -25,4 +25,4 @@ MonoBehaviour:
     targetId: 
     targetCategory: Animal
     targetState: 
-    requiredAmount: 4
+    requiredAmount: 2

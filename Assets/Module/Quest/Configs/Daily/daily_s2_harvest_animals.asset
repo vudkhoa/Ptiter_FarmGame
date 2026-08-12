@@ -15,7 +15,7 @@ MonoBehaviour:
   questId: daily_s2_harvest_animals
   category: 0
   questName: "Thu ho\u1EA1ch chu\u1ED3ng nu\xF4i"
-  description: "Thu ho\u1EA1ch v\u1EADt nu\xF4i 2 l\u1EA7n."
+  description: "Thu ho\u1EA1ch v\u1EADt nu\xF4i 3 l\u1EA7n."
   icon: {fileID: 21300000, guid: d81d9b8522c051c408605cffe83920ce, type: 3}
   objectives:
   - objectiveId: daily_s2_harvest_animals_objective
@@ -25,4 +25,4 @@ MonoBehaviour:
     targetId: 
     targetCategory: Animal
     targetState: 
-    requiredAmount: 2
+    requiredAmount: 3

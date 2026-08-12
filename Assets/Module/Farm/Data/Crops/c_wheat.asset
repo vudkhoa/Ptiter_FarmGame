@@ -20,11 +20,11 @@ MonoBehaviour:
   outputs:
   - item: {fileID: 11400000, guid: 22200000000000000000000000000001, type: 2}
     amount: 2
-  processTime: 60
+  processTime: 90
   stage2Threshold: 0.3
   growthSprites:
   - {fileID: 21300000, guid: 0802d9118645fcf4393f887a1fa2c865, type: 3}
   - {fileID: 21300000, guid: ef2be5cefa26f3141a1bf8646d492603, type: 3}
   - {fileID: 21300000, guid: 8815ec141978bbc4f98e227788affc91, type: 3}
-  autoRestart: 1
+  autoRestart: 0
   maxCycles: 1

@@ -41,7 +41,7 @@ MonoBehaviour:
   focusPadding: {x: 0, y: 0}
   focusFallbackSize: {x: 230, y: 130}
   dimBackground: 1
-  blockInputOutsideFocus: 0
+  blockInputOutsideFocus: 1
   hiddenAnchorIds:
   - tutorial.objects_panel
   startDelay: 0.35

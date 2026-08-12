@@ -17,7 +17,7 @@ MonoBehaviour:
     ID: 1
     MenuCategory: 2
     SelectionIcon: {fileID: 0}
-    CoinPrice: 100
+    CoinPrice: 180
     Size: {x: 1, y: 1}
     FarmRole: 0
     PlacementInputMode: 0
@@ -38,7 +38,7 @@ MonoBehaviour:
     ID: 2
     MenuCategory: 2
     SelectionIcon: {fileID: 21300000, guid: e22f586c46ba5c3438bdd9097379772c, type: 3}
-    CoinPrice: 100
+    CoinPrice: 250
     Size: {x: 1, y: 1}
     FarmRole: 0
     PlacementInputMode: 0
@@ -59,7 +59,7 @@ MonoBehaviour:
     ID: 3
     MenuCategory: 2
     SelectionIcon: {fileID: 0}
-    CoinPrice: 50
+    CoinPrice: 80
     Size: {x: 1, y: 1}
     FarmRole: 0
     PlacementInputMode: 0
@@ -80,7 +80,7 @@ MonoBehaviour:
     ID: 4
     MenuCategory: 2
     SelectionIcon: {fileID: 0}
-    CoinPrice: 50
+    CoinPrice: 80
     Size: {x: 1, y: 1}
     FarmRole: 0
     PlacementInputMode: 0
@@ -101,7 +101,7 @@ MonoBehaviour:
     ID: 5
     MenuCategory: 2
     SelectionIcon: {fileID: 0}
-    CoinPrice: 75
+    CoinPrice: 120
     Size: {x: 1, y: 1}
     FarmRole: 0
     PlacementInputMode: 0
@@ -122,7 +122,7 @@ MonoBehaviour:
     ID: 101
     MenuCategory: 1
     SelectionIcon: {fileID: 21300000, guid: e22f586c46ba5c3438bdd9097379772c, type: 3}
-    CoinPrice: 0
+    CoinPrice: 200
     Size: {x: 1, y: 1}
     FarmRole: 1
     PlacementInputMode: 1
@@ -143,7 +143,7 @@ MonoBehaviour:
     ID: 102
     MenuCategory: 1
     SelectionIcon: {fileID: 21300000, guid: 5ae3a24aa7c5e344fa3afcf4e19ee3e4, type: 3}
-    CoinPrice: 0
+    CoinPrice: 400
     Size: {x: 3, y: 3}
     FarmRole: 2
     PlacementInputMode: 0

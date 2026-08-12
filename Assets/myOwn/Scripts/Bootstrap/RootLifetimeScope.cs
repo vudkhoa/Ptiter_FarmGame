@@ -15,6 +15,7 @@ using Core.Module.Currency;
 using Core.Module.Currency.Integration.Quest;
 using Core.Module.Settings;
 using Core.Module.Audio;
+using Core.Module.Toast;
 using Core.Module.Tutorial;
 using myOwn.Firebase;
 
@@ -36,6 +37,9 @@ namespace MyOwn.ServiceHarness
         [Header("Tutorial (UI sống sẵn trong scene Preloading, theo root qua DontDestroyOnLoad)")]
         [SerializeField] private TutorialCatalogSO _tutorialCatalog;
         [SerializeField] private TutorialUIContainer _tutorialUIContainer;
+
+        [Header("Toast (UI sống sẵn trong scene Preloading, theo root qua DontDestroyOnLoad)")]
+        [SerializeField] private ToastUIContainer _toastUIContainer;
 
         protected override void Awake()
         {
@@ -65,6 +69,7 @@ namespace MyOwn.ServiceHarness
                    .RegisterCutsceneModule(options)
                    .RegisterCurrencyQuestIntegration()
                    .RegisterTutorialModule(options, _tutorialCatalog, _tutorialUIContainer)
+                   .RegisterToastModule(_toastUIContainer)
                    .RegisterLoadingModule(options);
 
             // Boot data + Addressable refs cấp cho preloader (nạp trong RunBootSequenceAsync).

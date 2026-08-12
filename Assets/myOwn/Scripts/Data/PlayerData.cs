@@ -19,7 +19,7 @@ namespace MyOwn.ServiceHarness
         public int SaveVersion = 6;
         public long LastSaveUtcTicks;
 
-        public int Coins = 1000;
+        public int Coins = 150;
         public List<InventoryEntry> Inventory = new List<InventoryEntry>
         {
             // Starter item used by the Storage UI mock-up.

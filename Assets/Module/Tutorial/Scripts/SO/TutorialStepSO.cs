@@ -59,9 +59,10 @@ namespace Core.Module.Tutorial
         public bool dimBackground = true;
 
         [Tooltip(
-            "Also make the dim swallow taps, so only the highlighted widget is reachable. " +
-            "UI anchors only - a world anchor is tapped through the map raycast, which a " +
-            "screen-filling dim would eat, so it stays click-through there no matter what.")]
+            "Force the step: the dim swallows every tap except the anchor, so no other button " +
+            "and no other map cell can be pressed. Works for UI anchors (through a live copy of " +
+            "the widget) and for world anchors (the dim opens over that cell only). " +
+            "Requires dimBackground.")]
         public bool blockInputOutsideFocus = true;
 
         [Tooltip("Anchor ids to hide while this step runs, e.g. a panel that covers the target.")]

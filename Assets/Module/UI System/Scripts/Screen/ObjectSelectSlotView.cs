@@ -1,5 +1,6 @@
 using System;
 using Core.Module.Map;
+using Core.Module.Tutorial;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +12,8 @@ public sealed class ObjectSelectSlotView : MonoBehaviour
     [SerializeField] private Image _icon;
     [SerializeField] private TMP_Text _placedCountLabel;
     [SerializeField] private TMP_Text _priceLabel;
+
+    private bool _isSoilAnchor;
 
     public int ObjectId { get; private set; } = -1;
 
@@ -27,6 +30,8 @@ public sealed class ObjectSelectSlotView : MonoBehaviour
         }
         if (_priceLabel != null) _priceLabel.text = data.CoinPrice.ToString();
         if (_placer != null) _placer.Bind(map, data.ID, onPlacementStarted);
+
+        SetSoilAnchor(data.FarmRole == FarmObjectRole.Soil);
     }
 
     public void SetPlacedCount(int count)
@@ -38,6 +43,24 @@ public sealed class ObjectSelectSlotView : MonoBehaviour
     public void Clear()
     {
         ObjectId = -1;
+        SetSoilAnchor(false);
         gameObject.SetActive(false);
+    }
+
+    private void OnDestroy() => SetSoilAnchor(false);
+
+    /// <summary>
+    /// Claimed from code, not authored on the prefab: rows are pooled and only learn which object
+    /// they represent at Bind time, so a prefab id would tag whichever row happened to be first.
+    /// </summary>
+    private void SetSoilAnchor(bool isSoil)
+    {
+        if (isSoil == _isSoilAnchor) return;
+
+        _isSoilAnchor = isSoil;
+        if (isSoil)
+            TutorialAnchorRegistry.Register(TutorialAnchorIds.SoilButton, transform);
+        else
+            TutorialAnchorRegistry.Unregister(TutorialAnchorIds.SoilButton, transform);
     }
 }

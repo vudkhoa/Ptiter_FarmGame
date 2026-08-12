@@ -30,8 +30,7 @@ MonoBehaviour:
     pressEase: 5
     releaseEase: 27
     swipeOffset: {x: 0, y: 180}
-  hintText: "Ch\u1EA1m v\xE0o \xF4 \u0111\u1EA5t r\u1ED3i ch\u1ECDn h\u1EA1t gi\u1ED1ng
-    \u0111\u1EC3 tr\u1ED3ng c\xE2y."
+  hintText: "Ch\u1EA1m v\xE0o \xF4 \u0111\u1EA5t \u0111\u1EC3 b\u1EAFt \u0111\u1EA7u tr\u1ED3ng c\xE2y."
   hintOffset: {x: 0, y: -90}
   showFocusRing: 0
   focusSprite: {fileID: 0}
@@ -40,8 +39,8 @@ MonoBehaviour:
   focusOffset: {x: 0, y: 0}
   focusPadding: {x: 24, y: 24}
   focusFallbackSize: {x: 210, y: 210}
-  dimBackground: 0
+  dimBackground: 1
   blockInputOutsideFocus: 0
   hiddenAnchorIds: []
   startDelay: 0.35
-  completionSignal: 21
+  completionSignal: 20

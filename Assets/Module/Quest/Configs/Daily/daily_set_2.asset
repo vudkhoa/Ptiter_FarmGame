@@ -16,23 +16,23 @@ MonoBehaviour:
   quests:
   - quest: {fileID: 11400000, guid: a342d7a2719c8384589a1c5a0f6dde41, type: 2}
     points: 25
-    coinReward: 100
+    coinReward: 40
   - quest: {fileID: 11400000, guid: 0ae8dcfecbef85b42aa83dad0bb94a14, type: 2}
     points: 25
-    coinReward: 100
+    coinReward: 40
   - quest: {fileID: 11400000, guid: e2f2eb4e1a9f62a44a08859ac68d6fef, type: 2}
     points: 25
-    coinReward: 100
+    coinReward: 40
   - quest: {fileID: 11400000, guid: 70687effe612ae24faebfb913e759ff4, type: 2}
     points: 25
-    coinReward: 100
+    coinReward: 40
   milestones:
   - milestoneId: points_25
     requiredPoints: 25
-    coinReward: 100
+    coinReward: 50
   - milestoneId: points_50
     requiredPoints: 50
-    coinReward: 300
+    coinReward: 120
   - milestoneId: points_100
     requiredPoints: 100
-    coinReward: 500
+    coinReward: 250

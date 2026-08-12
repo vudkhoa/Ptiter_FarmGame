@@ -40,8 +40,8 @@ MonoBehaviour:
   focusOffset: {x: 0, y: 0}
   focusPadding: {x: 24, y: 24}
   focusFallbackSize: {x: 210, y: 210}
-  dimBackground: 0
-  blockInputOutsideFocus: 0
+  dimBackground: 1
+  blockInputOutsideFocus: 1
   hiddenAnchorIds: []
   startDelay: 0.35
   completionSignal: 31

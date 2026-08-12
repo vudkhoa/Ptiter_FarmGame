@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1896f10acafde014b89424e0d3af3298, type: 3}
+  m_Name: c_sugarcane
+  m_EditorClassIdentifier: Farm::Core.Module.Farm.FarmEntityData
+  entityName: "Mía"
+  entityType: 0
+  selectorIcon: {fileID: 21300000, guid: ef2be5cefa26f3141a1bf8646d492603, type: 3}
+  coinCost: 25
+  inputs: []
+  outputs:
+  - item: {fileID: 11400000, guid: 22200000000000000000000000000002, type: 2}
+    amount: 3
+  processTime: 300
+  stage2Threshold: 0.3
+  growthSprites:
+  - {fileID: 21300000, guid: 0802d9118645fcf4393f887a1fa2c865, type: 3}
+  - {fileID: 21300000, guid: ef2be5cefa26f3141a1bf8646d492603, type: 3}
+  - {fileID: 21300000, guid: 8815ec141978bbc4f98e227788affc91, type: 3}
+  autoRestart: 1
+  maxCycles: 3

@@ -13,6 +13,15 @@ namespace Core.Module.Cutscene
         /// <summary>Trả Image về pool. Task chỉ được release Image do CHÍNH nó Acquire.</summary>
         void ReleaseImage(Image image);
 
+        /// <summary>
+        /// Spawn prefab VFX vào slot, dùng cho hiệu ứng mà Image tĩnh không làm được.
+        /// Nằm cùng slot với Image nên thứ tự spawn quyết định lớp trên/dưới.
+        /// </summary>
+        RectTransform AcquireVfx(CutsceneImageSlot slot, GameObject prefab);
+
+        /// <summary>Huỷ instance VFX. Task chỉ được release cái do CHÍNH nó Acquire.</summary>
+        void ReleaseVfx(RectTransform instance);
+
         /// <summary>Trả tất cả Image đang active về pool trước khi cutscene mới bắt đầu.</summary>
         void ResetSlots();
 

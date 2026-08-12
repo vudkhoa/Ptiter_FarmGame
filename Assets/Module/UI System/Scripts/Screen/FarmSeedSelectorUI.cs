@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Core.Module.Storage;
 using Core.Module.Farm;
+using Core.Module.Tutorial;
 using VContainer;
 using BrunoMikoski.UIManager;
 
@@ -25,6 +26,7 @@ namespace MyOwn.ServiceHarness
         private IStorageService _storageService;
         private FarmDatabaseSO _database;
         private OpenFarmSelectorUIPayload _currentContext;
+        private Transform _tutorialSeedAnchor;
 
         [Inject]
         public void Construct(
@@ -48,6 +50,8 @@ namespace MyOwn.ServiceHarness
         {
             if (_closeButton != null)
                 _closeButton.onClick.RemoveListener(Close);
+
+            ClearTutorialAnchor();
         }
 
         /// <summary>
@@ -75,6 +79,8 @@ namespace MyOwn.ServiceHarness
                 }
             }
 
+            ClearTutorialAnchor();
+
             // Duyệt danh sách AllEntities duy nhất từ FarmDatabaseSO và lọc theo loại Crop / Animal
             if (_database.AllEntities != null)
             {
@@ -95,9 +101,11 @@ namespace MyOwn.ServiceHarness
         {
             FarmSeedSelectorItemView itemView = Instantiate(_itemTemplate, _itemContainer);
             itemView.gameObject.SetActive(true);
+
+            bool canAfford = _storageService.Coins >= entity.coinCost;
             itemView.Bind(
                 entity,
-                _storageService.Coins >= entity.coinCost,
+                canAfford,
                 selectedEntity =>
             {
                 if (_farmService.TryPlant(payload.Cell, selectedEntity.EntityId))
@@ -105,6 +113,28 @@ namespace MyOwn.ServiceHarness
                     Close();
                 }
             });
+
+            TryMarkTutorialSeed(itemView, canAfford);
+        }
+
+        /// <summary>
+        /// Points the "choose a seed" step at the first row the player can actually buy - the
+        /// hand must never sit on a greyed-out button.
+        /// </summary>
+        private void TryMarkTutorialSeed(FarmSeedSelectorItemView itemView, bool canAfford)
+        {
+            if (_tutorialSeedAnchor != null || !canAfford || _currentContext.IsAnimal) return;
+
+            _tutorialSeedAnchor = itemView.transform;
+            TutorialAnchorRegistry.Register(TutorialAnchorIds.SeedItem, _tutorialSeedAnchor);
+        }
+
+        private void ClearTutorialAnchor()
+        {
+            if (_tutorialSeedAnchor == null) return;
+
+            TutorialAnchorRegistry.Unregister(TutorialAnchorIds.SeedItem, _tutorialSeedAnchor);
+            _tutorialSeedAnchor = null;
         }
     }
 }
