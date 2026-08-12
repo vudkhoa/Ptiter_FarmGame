@@ -15,8 +15,11 @@ MonoBehaviour:
   Objects:
   - name: Banana Tree
     ID: 1
+    MenuCategory: 2
+    SelectionIcon: {fileID: 0}
+    CoinPrice: 100
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
@@ -27,14 +30,17 @@ MonoBehaviour:
     RotationMode: 1
     Prefab:
       m_AssetGUID: 94e74c8473c46084b95c06e08fedd847
-      m_SubObjectName:
-      m_SubObjectType:
-      m_SubObjectGUID:
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0
   - name: Bonsai
     ID: 2
+    MenuCategory: 2
+    SelectionIcon: {fileID: 21300000, guid: e22f586c46ba5c3438bdd9097379772c, type: 3}
+    CoinPrice: 100
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0.1
@@ -51,8 +57,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Bush
     ID: 3
+    MenuCategory: 2
+    SelectionIcon: {fileID: 0}
+    CoinPrice: 50
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
@@ -69,8 +78,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Rock_1
     ID: 4
+    MenuCategory: 2
+    SelectionIcon: {fileID: 0}
+    CoinPrice: 50
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
@@ -87,8 +99,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Rock_2
     ID: 5
+    MenuCategory: 2
+    SelectionIcon: {fileID: 0}
+    CoinPrice: 75
     Size: {x: 1, y: 1}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 1
     FreeSnapStep: 0
@@ -105,8 +120,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Soil
     ID: 101
+    MenuCategory: 1
+    SelectionIcon: {fileID: 21300000, guid: e22f586c46ba5c3438bdd9097379772c, type: 3}
+    CoinPrice: 0
     Size: {x: 1, y: 1}
-    Kind: 1
+    FarmRole: 1
     PlacementInputMode: 1
     PositionMode: 0
     FreeSnapStep: 0
@@ -123,8 +141,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Pig Barn
     ID: 102
+    MenuCategory: 1
+    SelectionIcon: {fileID: 21300000, guid: 5ae3a24aa7c5e344fa3afcf4e19ee3e4, type: 3}
+    CoinPrice: 0
     Size: {x: 3, y: 3}
-    Kind: 2
+    FarmRole: 2
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0
@@ -141,8 +162,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Main House
     ID: 103
+    MenuCategory: 0
+    SelectionIcon: {fileID: 0}
+    CoinPrice: 0
     Size: {x: 5, y: 5}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0
@@ -159,8 +183,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Storage
     ID: 104
+    MenuCategory: 0
+    SelectionIcon: {fileID: 0}
+    CoinPrice: 0
     Size: {x: 3, y: 3}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0
@@ -177,8 +204,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
   - name: Lake
     ID: 6
+    MenuCategory: 0
+    SelectionIcon: {fileID: 0}
+    CoinPrice: 0
     Size: {x: 9, y: 7}
-    Kind: 0
+    FarmRole: 0
     PlacementInputMode: 0
     PositionMode: 0
     FreeSnapStep: 0
@@ -189,7 +219,7 @@ MonoBehaviour:
     RotationMode: 0
     Prefab:
       m_AssetGUID: 2d6f832f400f5344fa9a1d6a2236b1dc
-      m_SubObjectName:
-      m_SubObjectType:
-      m_SubObjectGUID:
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
       m_EditorAssetChanged: 0

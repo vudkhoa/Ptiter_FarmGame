@@ -102,6 +102,7 @@ namespace Core.Module.Map
             }
 
             _grid = new GridData();
+            _database.ResetPlacedCounts();
             ReloadDecorBlockersFromAuthoring();
             _placementValidator = new MapPlacementValidator(
                 _database, _grid, _freePlacements, WorldToCell, _decorBlockedCells.Contains);
@@ -138,6 +139,7 @@ namespace Core.Module.Map
         {
             return _grid.TryGetPlacementAt(gridPosition, out data);
         }
+
         #endregion
 
         #region IMapService - State Machine
@@ -283,24 +285,24 @@ namespace Core.Module.Map
             return true;
         }
 
-        public bool EnsureFarmPlacement(Vector3Int originCell, MapObjectKind kind)
+        public bool EnsureFarmPlacement(Vector3Int originCell, FarmObjectRole role)
         {
-            if (kind != MapObjectKind.Soil && kind != MapObjectKind.Barn) return false;
+            if (role != FarmObjectRole.Soil && role != FarmObjectRole.Barn) return false;
 
             if (_grid.TryGetPlacementAt(originCell, out var existing))
-                return existing.Kind == kind;
+                return existing.FarmRole == role;
 
-            if (!_database.TryGetFirstByKind(kind, out ObjectData data) ||
+            if (!_database.TryGetFirstByFarmRole(role, out ObjectData data) ||
                 !_catalog.TryGet(data.ID, out var prefab))
             {
-                Debug.LogWarning($"[MapService] Could not rebuild missing {kind} at {originCell}.");
+                Debug.LogWarning($"[MapService] Could not rebuild missing {role} at {originCell}.");
                 return false;
             }
 
             string instanceId = CreateInstanceId();
             if (!PlaceGridObjectAt(data, prefab, originCell, instanceId, 1f))
             {
-                Debug.LogWarning($"[MapService] Could not rebuild missing {kind} at {originCell}.");
+                Debug.LogWarning($"[MapService] Could not rebuild missing {role} at {originCell}.");
                 return false;
             }
 
@@ -340,13 +342,14 @@ namespace Core.Module.Map
                 var context = new MapPlacementRemovalContext(
                     freeInstanceId,
                     free.ObjectId,
-                    data.Kind,
+                    data.FarmRole,
                     PlacementPositionMode.Free,
                     default,
                     free.WorldPosition);
                 if (!CanRemovePlayerPlacement(context)) return false;
 
                 _freePlacements.Remove(freeInstanceId);
+                _database.AddPlacedCount(free.ObjectId, -1);
                 _instanceRegistry.RemoveAndDestroy(freeInstanceId);
                 CompletePlayerRemoval(saveIndex, context);
                 SetPlayerRemovalMode(false);
@@ -364,12 +367,14 @@ namespace Core.Module.Map
             var gridContext = new MapPlacementRemovalContext(
                 placement.InstanceId,
                 placement.ID,
-                placement.Kind,
+                placement.FarmRole,
                 PlacementPositionMode.Grid,
                 originCell,
                 CellToWorld(originCell));
             if (!CanRemovePlayerPlacement(gridContext) ||
                 !_grid.RemoveObjectAt(cell, out _)) return false;
+
+            _database.AddPlacedCount(placement.ID, -1);
 
             _instanceRegistry.RemoveAndDestroy(originCell);
             CompletePlayerRemoval(persistedIndex, gridContext);
@@ -391,7 +396,7 @@ namespace Core.Module.Map
                 var context = new MapPlacementRemovalContext(
                     freeInstanceId,
                     free.ObjectId,
-                    data.Kind,
+                    data.FarmRole,
                     PlacementPositionMode.Free,
                     default,
                     free.WorldPosition);
@@ -408,7 +413,7 @@ namespace Core.Module.Map
             var gridContext = new MapPlacementRemovalContext(
                 placement.InstanceId,
                 placement.ID,
-                placement.Kind,
+                placement.FarmRole,
                 PlacementPositionMode.Grid,
                 originCell,
                 CellToWorld(originCell));
@@ -421,7 +426,9 @@ namespace Core.Module.Map
 
             if (TryFindFreePlacement(worldHit, out string freeInstanceId))
             {
+                FreePlacementRecord freeRemoved = _freePlacements[freeInstanceId];
                 _freePlacements.Remove(freeInstanceId);
+                _database.AddPlacedCount(freeRemoved.ObjectId, -1);
                 _instanceRegistry.RemoveAndDestroy(freeInstanceId);
                 _authoring.RecordRemoval(freeInstanceId);
                 _changeCount++;
@@ -430,6 +437,7 @@ namespace Core.Module.Map
 
             Vector3Int cell = WorldToCell(worldHit);
             if (!_grid.RemoveObjectAt(cell, out PlacementData removed)) return false;
+            _database.AddPlacedCount(removed.ID, -1);
             Vector3Int originCell = removed.OcupiedPositions[0];
             _instanceRegistry.RemoveAndDestroy(originCell);
             _authoring.RecordRemoval(removed.InstanceId);
@@ -492,7 +500,7 @@ namespace Core.Module.Map
             }
 
             _grid.AddObjectAt(
-                nextOrigin, gridData.Size, removed.ID, removed.Kind,
+                nextOrigin, gridData.Size, removed.ID, removed.FarmRole,
                 removed.PlacedObjectIndex, removed.InstanceId, _selectedUniformScale);
             if (_instanceRegistry.TryGetAtOrigin(_selectedGridOrigin, out GameObject gridInstance))
                 gridInstance.transform.position = CellToWorld(nextOrigin);
@@ -523,7 +531,7 @@ namespace Core.Module.Map
             {
                 if (_database.TryGetById(grid.ID, out ObjectData data, out _))
                     _grid.AddObjectAt(
-                        _selectedGridOrigin, data.Size, grid.ID, grid.Kind,
+                        _selectedGridOrigin, data.Size, grid.ID, grid.FarmRole,
                         grid.PlacedObjectIndex, grid.InstanceId, uniformScale);
                 if (_instanceRegistry.TryGetAtOrigin(_selectedGridOrigin, out GameObject gridInstance))
                     gridInstance.transform.localScale *= scaleRatio;
@@ -557,6 +565,7 @@ namespace Core.Module.Map
             StopPlacement();
             _grid.Clear();
             _freePlacements.Clear();
+            _database.ResetPlacedCounts();
             ClearSelection();
             _instanceRegistry.ClearAndDestroy();
             _changeCount = 0;
@@ -655,7 +664,8 @@ namespace Core.Module.Map
         {
             if (!_placementValidator.CanPlaceGrid(data, cell)) return false;
 
-            _grid.AddObjectAt(cell, data.Size, data.ID, data.Kind, _changeCount, instanceId, uniformScale);
+            _grid.AddObjectAt(cell, data.Size, data.ID, data.FarmRole, _changeCount, instanceId, uniformScale);
+            _database.AddPlacedCount(data.ID, 1);
             _changeCount++;
             _pubAdded.Publish(new MapFurnitureAddedPayload(
                 data.ID,
@@ -684,6 +694,7 @@ namespace Core.Module.Map
                 !_placementValidator.CanPlaceFree(data, worldPosition)) return false;
 
             _freePlacements.Add(instanceId, new FreePlacementRecord(data.ID, worldPosition, uniformScale));
+            _database.AddPlacedCount(data.ID, 1);
             _changeCount++;
             _pubAdded.Publish(new MapFurnitureAddedPayload(
                 data.ID,
@@ -798,7 +809,7 @@ namespace Core.Module.Map
         {
             if (!_database.TryGetById(removed.ID, out ObjectData data, out _)) return;
             _grid.AddObjectAt(
-                origin, data.Size, removed.ID, removed.Kind,
+                origin, data.Size, removed.ID, removed.FarmRole,
                 removed.PlacedObjectIndex, removed.InstanceId, removed.UniformScale);
         }
 

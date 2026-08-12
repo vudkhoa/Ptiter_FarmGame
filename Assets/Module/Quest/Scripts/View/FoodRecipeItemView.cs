@@ -61,30 +61,56 @@ namespace Core.Module.Quest
 
             gameObject.SetActive(true);
             bool locked = data.AccessState != FoodRecipeAccessState.Unlocked;
+            bool inDevelopment =
+                data.AccessState == FoodRecipeAccessState.InDevelopment;
             _dishImage.sprite = data.MockSprite;
             _dishImage.enabled = data.MockSprite != null;
             _title.text = data.DisplayName ?? string.Empty;
             _ingredients.text = data.MockIngredients ?? string.Empty;
             _lockImage.sprite = lockIcon;
             _lockImage.enabled = lockIcon != null;
-            _unlockCostText.text = $"CẦN {data.StarCost}";
-            _unlockStarImage.sprite = starIcon;
-            _unlockStarImage.enabled = starIcon != null;
-            _unlockSuffixText.text = starIcon != null
-                ? "ĐỂ MỞ KHÓA"
-                : "SAO ĐỂ MỞ KHÓA";
+            RenderUnlockMessage(data.StarCost, starIcon, inDevelopment);
 
             _lockButton.onClick.RemoveAllListeners();
             _cookButton.onClick.RemoveAllListeners();
-            if (locked)
+            _lockButton.interactable = locked && !inDevelopment;
+            if (locked && !inDevelopment)
                 _lockButton.onClick.AddListener(() => unlock?.Invoke(data.RecipeId));
-            else
+            else if (!locked)
                 _cookButton.onClick.AddListener(() => cook?.Invoke(data.RecipeId));
 
             bool animateUnlock = _hasState && _wasLocked && !locked;
             ApplyLockState(locked, animateUnlock);
             _wasLocked = locked;
             _hasState = true;
+        }
+
+        private void RenderUnlockMessage(
+            int starCost,
+            Sprite starIcon,
+            bool inDevelopment)
+        {
+            RectTransform costRect = _unlockCostText.rectTransform;
+            if (inDevelopment)
+            {
+                _unlockCostText.text = "ĐANG PHÁT TRIỂN";
+                _unlockCostText.alignment = TextAlignmentOptions.Center;
+                costRect.anchoredPosition = new Vector2(0f, -72f);
+                costRect.sizeDelta = new Vector2(440f, 52f);
+                _unlockStarImage.enabled = false;
+                _unlockSuffixText.text = string.Empty;
+                return;
+            }
+
+            _unlockCostText.text = $"CẦN {starCost}";
+            _unlockCostText.alignment = TextAlignmentOptions.Right;
+            costRect.anchoredPosition = new Vector2(-125f, -72f);
+            costRect.sizeDelta = new Vector2(130f, 48f);
+            _unlockStarImage.sprite = starIcon;
+            _unlockStarImage.enabled = starIcon != null;
+            _unlockSuffixText.text = starIcon != null
+                ? "ĐỂ MỞ KHÓA"
+                : "SAO ĐỂ MỞ KHÓA";
         }
 
         private void Build(TMP_FontAsset font)

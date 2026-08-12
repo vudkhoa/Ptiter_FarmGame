@@ -5,8 +5,7 @@ using UnityEngine;
 namespace Core.Module.Input
 {
     /// <summary>
-    /// Tracks full-screen modal windows that temporarily own all pointer input.
-    /// Gameplay UI such as the farm selector deliberately does not register here.
+    /// Tracks full-screen windows that temporarily own all pointer input.
     /// </summary>
     public static class GameplayInputBlockRegistry
     {

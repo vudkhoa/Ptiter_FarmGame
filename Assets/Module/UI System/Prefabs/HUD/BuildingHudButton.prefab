@@ -15,7 +15,7 @@ PrefabInstance:
     - target: {fileID: 1373761215503320462, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 4e611c78a373d0b479d6056fafa8612c, type: 3}
+      objectReference: {fileID: 21300000, guid: 0a9a071a6a35aad4bb264e2928345164, type: 3}
     - target: {fileID: 1373761215503320462, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_Color.a
       value: 1
@@ -134,11 +134,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3019977445769891695, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_text
-      value: "NHI\u1EC6M V\u1EE4"
+      value: "X\xC2Y D\u1EF0NG"
       objectReference: {fileID: 0}
     - target: {fileID: 3019977445769891695, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_fontSize
-      value: 20
+      value: 24.3
       objectReference: {fileID: 0}
     - target: {fileID: 3019977445769891695, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_fontStyle
@@ -161,6 +161,10 @@ PrefabInstance:
       value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 3019977445769891695, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
+      propertyPath: m_enableAutoSizing
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3019977445769891695, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4280627561
       objectReference: {fileID: 0}
@@ -170,7 +174,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5856680736632208003, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_Name
-      value: QuestHudButton
+      value: BuildingHudButton
       objectReference: {fileID: 0}
     - target: {fileID: 8460446663039866211, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_AnchorMax.x
@@ -189,8 +193,16 @@ PrefabInstance:
       value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 8460446663039866211, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: -13.8986
+      objectReference: {fileID: 0}
+    - target: {fileID: 8460446663039866211, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8460446663039866211, guid: e70d5c5eb60fcc14fa2e529923687cc2, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 6.4
+      value: 6.9493
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -219,5 +231,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Shared.Utils.WindowOpenTrigger
   _button: {fileID: 0}
   _windowsManager: {fileID: 0}
-  _window: {fileID: 11400000, guid: 498d78b07f5fc8c45823d865ee16455a, type: 2}
+  _window: {fileID: 11400000, guid: 8facc328dbe240947acff453f2a10f38, type: 2}
   _isOpen: 0

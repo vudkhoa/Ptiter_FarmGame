@@ -2,14 +2,22 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Serialization;
 
 namespace Core.Module.Map
 {
-    public enum MapObjectKind
+    public enum FarmObjectRole
     {
-        Decoration = 0,
+        None = 0,
         Soil = 1,
         Barn = 2
+    }
+
+    public enum BuildMenuCategory
+    {
+        Hidden = 0,
+        Resource = 1,
+        Decoration = 2
     }
 
     public enum MapObjectRotationMode
@@ -54,6 +62,8 @@ namespace Core.Module.Map
     {
         public List<ObjectData> Objects;
 
+        public int PlacedCountRevision { get; private set; }
+
         public bool TryGetById(int id, out ObjectData result, out int index)
         {
             if (Objects != null)
@@ -73,13 +83,13 @@ namespace Core.Module.Map
             return false;
         }
 
-        public bool TryGetFirstByKind(MapObjectKind kind, out ObjectData result)
+        public bool TryGetFirstByFarmRole(FarmObjectRole role, out ObjectData result)
         {
             if (Objects != null)
             {
                 foreach (ObjectData data in Objects)
                 {
-                    if (data.Kind != kind) continue;
+                    if (data.FarmRole != role) continue;
 
                     result = data;
                     return true;
@@ -89,6 +99,49 @@ namespace Core.Module.Map
             result = default;
             return false;
         }
+
+        public int GetPlacedCount(int objectId)
+        {
+            return TryGetById(objectId, out ObjectData data, out _)
+                ? data.PlacedCount
+                : 0;
+        }
+
+        public void GetObjectsByMenuCategory(
+            BuildMenuCategory category,
+            List<ObjectData> results)
+        {
+            if (results == null) throw new ArgumentNullException(nameof(results));
+            results.Clear();
+            if (Objects == null) return;
+
+            foreach (ObjectData data in Objects)
+                if (data.MenuCategory == category)
+                    results.Add(data);
+        }
+
+        internal void ResetPlacedCounts()
+        {
+            if (Objects == null) return;
+
+            for (int i = 0; i < Objects.Count; i++)
+            {
+                ObjectData data = Objects[i];
+                data.PlacedCount = 0;
+                Objects[i] = data;
+            }
+
+            PlacedCountRevision++;
+        }
+
+        internal void AddPlacedCount(int objectId, int amount)
+        {
+            if (amount == 0 || !TryGetById(objectId, out ObjectData data, out int index)) return;
+
+            data.PlacedCount = Mathf.Max(0, data.PlacedCount + amount);
+            Objects[index] = data;
+            PlacedCountRevision++;
+        }
     }
 
     [Serializable]
@@ -96,8 +149,14 @@ namespace Core.Module.Map
     {
         public string name;
         public int ID;
+        [Header("Selection UI")]
+        [FormerlySerializedAs("SelectionCategory")]
+        public BuildMenuCategory MenuCategory;
+        public Sprite SelectionIcon;
+        [Min(0)] public int CoinPrice;
         public Vector2Int Size;
-        public MapObjectKind Kind;
+        [FormerlySerializedAs("Kind")]
+        public FarmObjectRole FarmRole;
         public PlacementInputMode PlacementInputMode;
         public PlacementPositionMode PositionMode;
         [Min(0f)] public float FreeSnapStep;
@@ -111,5 +170,8 @@ namespace Core.Module.Map
         public MapSurfaceType AllowedSurfaces;
         public MapObjectRotationMode RotationMode;
         public AssetReferenceGameObject Prefab;
+
+        // Runtime state rebuilt by MapService whenever a map is loaded.
+        [NonSerialized] public int PlacedCount;
     }
 }

@@ -198,10 +198,10 @@ namespace Core.Module.Farm
             if (entity == null) return;
 
             var cell = new Vector3Int(slot.cellX, slot.cellY, slot.cellZ);
-            MapObjectKind kind = entity.entityType == FarmEntityType.Animal
-                ? MapObjectKind.Barn
-                : MapObjectKind.Soil;
-            _mapService.EnsureFarmPlacement(cell, kind);
+            FarmObjectRole role = entity.entityType == FarmEntityType.Animal
+                ? FarmObjectRole.Barn
+                : FarmObjectRole.Soil;
+            _mapService.EnsureFarmPlacement(cell, role);
         }
 
         private Vector3 ResolveVisualPosition(Vector3Int cell)
@@ -213,7 +213,7 @@ namespace Core.Module.Farm
             }
 
             if (_mapService.TryGetPlacementAt(cell, out var placement) &&
-                placement.Kind == MapObjectKind.Barn &&
+                placement.FarmRole == FarmObjectRole.Barn &&
                 _mapObjectRegistry.TryGetAtOrigin(cell, out var barnInstance))
             {
                 var anchor = barnInstance.GetComponentInChildren<FarmAnimalAnchor>(true);

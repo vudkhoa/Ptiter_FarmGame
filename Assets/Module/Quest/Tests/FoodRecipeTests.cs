@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Core.Module.Cutscene;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
 using NUnit.Framework;
@@ -150,6 +151,30 @@ namespace Core.Module.Quest.Tests
         }
 
         [Test]
+        public void RecipeWithoutCutscene_IsInDevelopmentAndCannotUnlock()
+        {
+            FakeStarWallet wallet = new FakeStarWallet { Stars = 80 };
+            FoodRecipeService service = CreateFoodService(
+                wallet,
+                includeSecondCutscene: false);
+
+            FoodRecipeViewState state = service.GetViewState();
+            FoodRecipeUnlockResult result = service
+                .TryUnlockAsync("nem_ran")
+                .GetAwaiter()
+                .GetResult();
+
+            Assert.AreEqual(
+                FoodRecipeAccessState.InDevelopment,
+                state.Recipes[1].AccessState);
+            Assert.AreEqual(
+                FoodRecipeUnlockResultCode.InDevelopment,
+                result.Code);
+            Assert.AreEqual(0, wallet.PurchaseCalls);
+            Assert.AreEqual(80, wallet.Stars);
+        }
+
+        [Test]
         public void SequentialUnlock_SpendsThirtyThenFiftyStars()
         {
             FakeStarWallet wallet = new FakeStarWallet { Stars = 80 };
@@ -209,7 +234,8 @@ namespace Core.Module.Quest.Tests
         }
 
         private static FoodRecipeService CreateFoodService(
-            FakeStarWallet wallet)
+            FakeStarWallet wallet,
+            bool includeSecondCutscene = true)
         {
             FoodRecipeConfigSO config =
                 ScriptableObject.CreateInstance<FoodRecipeConfigSO>();
@@ -220,7 +246,8 @@ namespace Core.Module.Quest.Tests
                     recipeId = "banh_mi_heo_quay",
                     displayName = "BÁNH MÌ HEO QUAY",
                     mockIngredients = "mock",
-                    starCost = 30
+                    starCost = 30,
+                    cutscene = CreateCutscene("Bread")
                 },
                 new FoodRecipeDefinition
                 {
@@ -228,7 +255,10 @@ namespace Core.Module.Quest.Tests
                     displayName = "NEM RÁN",
                     mockIngredients = "mock",
                     starCost = 50,
-                    prerequisiteRecipeId = "banh_mi_heo_quay"
+                    prerequisiteRecipeId = "banh_mi_heo_quay",
+                    cutscene = includeSecondCutscene
+                        ? CreateCutscene("NemRan")
+                        : null
                 }
             };
             QuestCatalogSO catalog = ScriptableObject.CreateInstance<QuestCatalogSO>();
@@ -238,6 +268,14 @@ namespace Core.Module.Quest.Tests
                 wallet,
                 new RecordingPublisher<FoodRecipeStateChangedPayload>(),
                 new RecordingPublisher<FoodRecipeUnlockedPayload>());
+        }
+
+        private static CutsceneSO CreateCutscene(string cutsceneId)
+        {
+            CutsceneSO cutscene =
+                ScriptableObject.CreateInstance<CutsceneSO>();
+            cutscene.cutsceneId = cutsceneId;
+            return cutscene;
         }
     }
 }

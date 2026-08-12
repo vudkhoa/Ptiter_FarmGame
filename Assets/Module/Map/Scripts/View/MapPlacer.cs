@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -11,11 +12,27 @@ namespace Core.Module.Map
         [SerializeField] private Button _btn;
 
         private IMapService _map;
+        private Action _onPlacementStarted;
+
+        public int ObjectId => _objectId;
 
         #region Bind - Manual Injection
         public void Bind(IMapService map)
         {
             _map = map;
+        }
+
+        public void Bind(IMapService map, int objectId)
+        {
+            _map = map;
+            _objectId = objectId;
+        }
+
+        public void Bind(IMapService map, int objectId, Action onPlacementStarted)
+        {
+            _map = map;
+            _objectId = objectId;
+            _onPlacementStarted = onPlacementStarted;
         }
 
         private void OnEnable()
@@ -39,6 +56,9 @@ namespace Core.Module.Map
             }
 
             _map.StartPlacement(_objectId);
+
+            if (_map.HasActivePlacement && _map.CurrentObjectId == _objectId)
+                _onPlacementStarted?.Invoke();
         }
         #endregion
     }

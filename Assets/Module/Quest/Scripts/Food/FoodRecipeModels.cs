@@ -7,7 +7,8 @@ namespace Core.Module.Quest
     {
         Locked = 0,
         PrerequisiteLocked = 1,
-        Unlocked = 2
+        Unlocked = 2,
+        InDevelopment = 3
     }
 
     public sealed class FoodRecipeViewData
@@ -17,6 +18,7 @@ namespace Core.Module.Quest
         public string MockIngredients { get; internal set; }
         public int StarCost { get; internal set; }
         public Sprite MockSprite { get; internal set; }
+        public string CutsceneId { get; internal set; }
         public FoodRecipeAccessState AccessState { get; internal set; }
     }
 
@@ -36,7 +38,8 @@ namespace Core.Module.Quest
         PrerequisiteLocked = 3,
         InvalidRecipe = 4,
         SaveFailed = 5,
-        Busy = 6
+        Busy = 6,
+        InDevelopment = 7
     }
 
     public readonly struct FoodRecipeUnlockResult
@@ -44,6 +47,7 @@ namespace Core.Module.Quest
         public readonly FoodRecipeUnlockResultCode Code;
         public readonly string RecipeId;
         public readonly int RequiredStars;
+        public readonly string CutsceneId;
 
         public bool Succeeded =>
             Code == FoodRecipeUnlockResultCode.Success ||
@@ -52,11 +56,13 @@ namespace Core.Module.Quest
         public FoodRecipeUnlockResult(
             FoodRecipeUnlockResultCode code,
             string recipeId,
-            int requiredStars)
+            int requiredStars,
+            string cutsceneId)
         {
             Code = code;
             RecipeId = recipeId;
             RequiredStars = requiredStars;
+            CutsceneId = cutsceneId;
         }
     }
 
