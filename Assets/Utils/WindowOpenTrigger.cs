@@ -3,6 +3,7 @@ using BrunoMikoski.UIManager;
 using Core.Module.Input;
 using Shared.Utils.HUD;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using VContainer;
 
@@ -14,7 +15,10 @@ namespace Shared.Utils
     /// serialized in the prefab; the scene-owned WindowsManager is injected.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class WindowOpenTrigger : MonoBehaviour, IHudButtonAction
+    public sealed class WindowOpenTrigger :
+        MonoBehaviour,
+        IHudButtonAction,
+        IPointerClickHandler
     {
         [SerializeField] private Button _button;
         [SerializeField] private WindowsManager _windowsManager;
@@ -95,6 +99,26 @@ namespace Shared.Utils
                 IsAnotherWindowOpen())
                 return;
 
+            Open();
+        }
+
+        /// <summary>
+        /// Handles mouse and touch through the scene EventSystem. World objects
+        /// participate in that pipeline through the PhysicsRaycaster on the map
+        /// camera, so mobile input no longer depends on touch-to-mouse emulation.
+        /// </summary>
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (_button != null || eventData == null ||
+                eventData.pointerPressRaycast.module is not PhysicsRaycaster ||
+                eventData.button != PointerEventData.InputButton.Left ||
+                PointerReleaseSuppression.IsPrimaryReleaseSuppressed ||
+                IsAnotherWindowOpen())
+                return;
+
+            // Do not call IsPointerOverUI here. This callback is delivered only
+            // after EventSystem has already selected this collider as the click
+            // target; querying it now would report this world object itself.
             Open();
         }
 

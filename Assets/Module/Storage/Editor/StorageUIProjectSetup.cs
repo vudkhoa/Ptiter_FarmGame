@@ -168,35 +168,35 @@ namespace Core.Module.Storage.Editor
             ConfigureCatalogItem(
                 FindOrAppendCatalogItem(items, "bonsai"),
                 "bonsai", "CÂY BONSAI", "Mua ở tiệm cây cảnh",
-                InventoryCategory.Decoration,
+                InventoryCategory.Decoration, 35,
                 Sprite("UI/inventory_item_bonsai_icon.png"),
                 Sprite("UI/inventory_item_bonsai_preview.png"));
             ConfigureCatalogItem(
                 FindOrAppendCatalogItem(items, "wheat_grain"),
                 "wheat_grain", "Hạt Lúa", "Nông sản thu hoạch từ ruộng lúa.",
-                InventoryCategory.FarmProduce,
+                InventoryCategory.FarmProduce, 35,
                 QuestSprite("ingredient_wheat_icon.png"), null);
             ConfigureCatalogItem(
                 FindOrAppendCatalogItem(items, "sugarcane_raw"),
                 "sugarcane_raw", "Mía Thô", "Nông sản thu hoạch từ ruộng mía.",
-                InventoryCategory.FarmProduce,
+                InventoryCategory.FarmProduce, 35,
                 null, null);
             ConfigureCatalogItem(
                 FindOrAppendCatalogItem(items, "egg"),
                 "egg", "Trứng Gà", "Nông sản thu hoạch từ vật nuôi.",
-                InventoryCategory.FarmProduce,
+                InventoryCategory.FarmProduce, 35,
                 null, null);
             ConfigureCatalogItem(
                 FindOrAppendCatalogItem(items, "pork_belly"),
                 "pork_belly", "Ba Chỉ Heo",
                 "Nguyên liệu dùng để chế biến món ăn.",
-                InventoryCategory.FarmProduce,
+                InventoryCategory.FarmProduce, 35,
                 QuestSprite("ingredient_pork_belly_icon.png"), null);
             ConfigureCatalogItem(
                 FindOrAppendCatalogItem(items, "banh_mi_heo_quay"),
                 "banh_mi_heo_quay", "Bánh Mì Heo Quay",
                 "Món ăn nóng giòn làm từ thịt heo và lúa mì.",
-                InventoryCategory.Food,
+                InventoryCategory.Food, 35,
                 QuestSprite("food_banh_mi_icon.png"),
                 QuestSprite("food_banh_mi_icon.png"));
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -239,6 +239,7 @@ namespace Core.Module.Storage.Editor
             string displayName,
             string description,
             InventoryCategory category,
+            int sellPrice,
             Sprite icon,
             Sprite preview)
         {
@@ -246,6 +247,7 @@ namespace Core.Module.Storage.Editor
             item.FindPropertyRelative("displayName").stringValue = displayName;
             item.FindPropertyRelative("description").stringValue = description;
             item.FindPropertyRelative("category").enumValueIndex = (int)category;
+            item.FindPropertyRelative("sellPrice").intValue = Mathf.Max(0, sellPrice);
             item.FindPropertyRelative("icon").objectReferenceValue = icon;
             item.FindPropertyRelative("preview").objectReferenceValue = preview;
         }

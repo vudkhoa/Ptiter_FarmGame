@@ -359,7 +359,7 @@ namespace MyOwn.ServiceHarness
                     state.Tasks != null && i < state.Tasks.Count
                         ? state.Tasks[i]
                         : null;
-                _taskViews[i]?.Bind(task);
+                _taskViews[i]?.Bind(task, ClaimTask);
             }
 
             for (int i = 0; i < (_milestones?.Length ?? 0); i++)
@@ -401,6 +401,13 @@ namespace MyOwn.ServiceHarness
         {
             _dailyQuestService.ClaimMilestoneAsync(
                 milestoneId,
+                this.GetCancellationTokenOnDestroy()).Forget();
+        }
+
+        private void ClaimTask(string runtimeId)
+        {
+            _dailyQuestService.ClaimTaskAsync(
+                runtimeId,
                 this.GetCancellationTokenOnDestroy()).Forget();
         }
 

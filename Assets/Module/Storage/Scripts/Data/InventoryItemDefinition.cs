@@ -10,6 +10,7 @@ namespace Core.Module.Storage
         public string displayName;
         [TextArea] public string description;
         public InventoryCategory category;
+        [Min(0)] public int sellPrice;
         public Sprite icon;
         public Sprite preview;
     }

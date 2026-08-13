@@ -554,6 +554,16 @@ namespace Core.Module.Quest.Editor
                 "Reward Frame", root.transform,
                 Sprite("quest hàng ngày_nút nhận thưởng 3.png"),
                 new Vector2(545, 0), new Vector2(250, 102)).GetComponent<Image>();
+            rewardBackground.raycastTarget = true;
+            Button rewardButton = rewardBackground.gameObject.AddComponent<Button>();
+            rewardButton.targetGraphic = rewardBackground;
+            rewardButton.transition = Selectable.Transition.None;
+            DailyQuestClaimButton claimButton =
+                rewardBackground.gameObject.AddComponent<DailyQuestClaimButton>();
+            SerializedObject claimSerialized = new SerializedObject(claimButton);
+            Set(claimSerialized, "_button", rewardButton);
+            Set(claimSerialized, "_visual", rewardBackground);
+            claimSerialized.ApplyModifiedPropertiesWithoutUndo();
             ImageObject(
                 "Coin", rewardBackground.transform,
                 Sprite("quest hàng ngày_tiền 1.png"),
@@ -569,6 +579,7 @@ namespace Core.Module.Quest.Editor
             Set(serialized, "_progressFill", progressFill);
             Set(serialized, "_reward", reward);
             Set(serialized, "_rewardBackground", rewardBackground);
+            Set(serialized, "_claimButton", claimButton);
             Set(serialized, "_defaultRewardSprite",
                 Sprite("quest hàng ngày_nút nhận thưởng 3.png"));
             Set(serialized, "_completedRewardSprite",

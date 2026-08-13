@@ -1,3 +1,4 @@
+using System;
 using Core.Module.Quest;
 using DG.Tweening;
 using TMPro;
@@ -15,12 +16,25 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private Image _progressFill;
         [SerializeField] private TMP_Text _reward;
         [SerializeField] private Image _rewardBackground;
+        [SerializeField] private DailyQuestClaimButton _claimButton;
         [SerializeField] private Sprite _defaultRewardSprite;
         [SerializeField] private Sprite _completedRewardSprite;
 
         private Tween _progressTween;
+        private string _runtimeId;
+        private Action<string> _claimRequested;
 
-        public void Bind(DailyQuestTaskViewData data)
+        private void Awake()
+        {
+            if (_claimButton == null && _rewardBackground != null)
+                _claimButton = _rewardBackground.GetComponent<DailyQuestClaimButton>();
+            if (_claimButton?.Button != null)
+                _claimButton.Button.onClick.AddListener(Claim);
+        }
+
+        public void Bind(
+            DailyQuestTaskViewData data,
+            Action<string> claimRequested)
         {
             if (data == null)
             {
@@ -30,6 +44,8 @@ namespace MyOwn.ServiceHarness
                 return;
             }
 
+            _runtimeId = data.RuntimeId;
+            _claimRequested = claimRequested;
             gameObject.SetActive(true);
             if (_icon != null)
             {
@@ -74,10 +90,26 @@ namespace MyOwn.ServiceHarness
                     data.IsCompleted && _completedRewardSprite != null
                         ? _completedRewardSprite
                         : _defaultRewardSprite;
+            if (_claimButton != null)
+                _claimButton.SetInteractable(
+                    data.IsCompleted && !data.IsRewardPending);
+        }
+
+        private void Claim()
+        {
+            if (_claimButton == null ||
+                string.IsNullOrWhiteSpace(_runtimeId) ||
+                _claimRequested == null)
+                return;
+
+            _claimButton.SetInteractable(false);
+            _claimRequested.Invoke(_runtimeId);
         }
 
         private void OnDestroy()
         {
+            if (_claimButton?.Button != null)
+                _claimButton.Button.onClick.RemoveListener(Claim);
             _progressTween?.Kill(false);
             _progressTween = null;
         }

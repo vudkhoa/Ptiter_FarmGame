@@ -20,7 +20,7 @@ MonoBehaviour:
       nh\u1EADt"
     starCost: 30
     prerequisiteRecipeId: 
-    mockSprite: {fileID: 21300000, guid: a565b6cd52addd84eaf57bd7e6eb57ea, type: 3}
+    mockSprite: {fileID: 21300000, guid: 76efdfbffbb14f03915e22136ff51a5b, type: 3}
     cutscene: {fileID: 11400000, guid: 5bd7c29dcf22c5b4186c46bae92c194d, type: 2}
   - recipeId: nem_ran
     displayName: "NEM R\xC1N"
