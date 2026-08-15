@@ -1,7 +1,8 @@
-using System;
 using Core.Module.Input;
 using Core.Module.Map;
 using MessagePipe;
+using System;
+using UnityEditor.Graphs;
 using UnityEngine;
 using VContainer;
 
@@ -176,13 +177,19 @@ namespace Core.Module.Farm
                         ProcessInteraction(originCell, isAnimal.Value);
                     }
                 }
+                else
+                {
+                    if (_mapService.TryGetBlockerAt(clickedCell))
+                    {
+                        Debug.Log($"Blocked");
+                    }
+                }
             }
         }
 
         private void ProcessInteraction(Vector3Int originCell, bool isAnimal)
         {
             var slot = _farmService.GetSlotAt(originCell);
-
             // 1. If slot is completely empty (no crops planted / no animal bought yet)
             if (slot == null)
             {

@@ -20,11 +20,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5a47464c4919db4478f4400bacf375cb
-    m_Address: Bed Single
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5ffff12187c8c9c4089a03de8f4fc2c4
     m_Address: Soil
     m_ReadOnly: 0
@@ -62,11 +57,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ae52bbda48f03314fbe0c9838ac8a276
     m_Address: Bonsai
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: dd00099fd1c1f2c4aa3ca0d60fcbddb0
-    m_Address: bench
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

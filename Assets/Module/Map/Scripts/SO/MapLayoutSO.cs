@@ -41,6 +41,20 @@ namespace Core.Module.Map
         }
     }
 
+    [Serializable]
+    public struct MapBlocker
+    {
+        public Vector3Int OriginCell;
+        public BlockerType Type;
+    }
+
+    [Serializable]
+    public enum BlockerType
+    {
+        None = 0,
+        RockCluster = 1
+    }
+
     [CreateAssetMenu(fileName = "MapLayout", menuName = "Data/Map/Layout")]
     public sealed class MapLayoutSO : ScriptableObject
     {

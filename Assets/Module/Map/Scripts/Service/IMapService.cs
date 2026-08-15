@@ -46,6 +46,9 @@ namespace Core.Module.Map
         // Grid queries & coordinate conversion
         bool TryGetPlacementAt(Vector3Int gridPosition, out PlacementData data);
 
+        // Grid Block Check
+        bool TryGetBlockerAt(Vector3Int gridPosition);
+
         /// Would placing <paramref name="objectId"/> at this cell succeed right now? Same checks
         /// AddFurniture runs, without committing anything.
         bool CanPlaceObjectAt(int objectId, Vector3Int gridPosition);

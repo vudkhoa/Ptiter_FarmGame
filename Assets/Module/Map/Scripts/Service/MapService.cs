@@ -143,6 +143,11 @@ namespace Core.Module.Map
             return _grid.TryGetPlacementAt(gridPosition, out data);
         }
 
+        public bool TryGetBlockerAt(Vector3Int gridPosition)
+        {
+            return GetBlocker(gridPosition);
+        }
+
         #endregion
 
         #region IMapService - State Machine
@@ -198,6 +203,11 @@ namespace Core.Module.Map
             if (active && HasActivePlacement) StopPlacement();
             _isPlayerRemovalMode = active;
             _pubRemovalMode.Publish(new MapPlayerRemovalModeChangedPayload(active));
+        }
+        
+        public bool GetBlocker(Vector3Int gridPosition)
+        {
+            return _decorBlockedCells.Contains(gridPosition);
         }
         #endregion
 
