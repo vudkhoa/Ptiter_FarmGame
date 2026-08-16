@@ -50,4 +50,21 @@ Pass an optional `0..1` volume only when a particular call needs adjustment:
 _audio.PlaySfx(_catalog.ButtonClick, 0.7f);
 ```
 
-`AudioUiButton` is optional; UI controllers can call `PlaySfx` directly.
+Attach `AudioUiButton` to clickable `Button` objects. It handles click/error
+feedback directly and does not require the prefab to be instantiated through
+VContainer. UI controllers can still call `PlaySfx` for non-button cues.
+
+## Feature integration
+
+`Audio` is independent from gameplay feature modules. `Audio.Integration` owns
+the adapters from game events to audio cues:
+
+- `AudioUiButton`: component-driven click and disabled-button error feedback;
+- `FarmAudioBridge`: plant, care, and harvest;
+- `MapAudioBridge`: successful player placement only;
+- `EconomyAudioBridge`: coin, reward, and transaction errors;
+- `FarmBgmController`: starts the farm music cue.
+
+Register them once with `RegisterAudioIntegration()` after all event-owning
+modules have registered their MessagePipe brokers. Feature modules should keep
+publishing domain events and must not depend directly on the audio module.
