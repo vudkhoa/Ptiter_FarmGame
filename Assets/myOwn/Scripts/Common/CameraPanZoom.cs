@@ -26,6 +26,13 @@ namespace Core.Common
         [SerializeField] private bool _useDamping = true;
         [SerializeField] private float _dampingFactor = 10f;
 
+        [Header("Touch Gesture")]
+        [Tooltip("Khoang cach ngon tay phai di chuyen truoc khi touch duoc xem la pan.")]
+        [SerializeField, Min(1f)] private float _touchPanActivationThresholdPixels = 20f;
+        [Tooltip("DPI tham chieu de giu dead-zone co kich thuoc vat ly gan nhu nhau tren cac thiet bi.")]
+        [SerializeField, Min(1f)] private float _touchReferenceDpi = 160f;
+        [SerializeField, Min(1f)] private float _maxTouchDpiScale = 3f;
+
         [Header("Zoom Settings")]
         [SerializeField] private float _zoomSpeedMouse = 10f;
         [SerializeField] private float _zoomSpeedTouch = 0.1f;
@@ -50,6 +57,7 @@ namespace Core.Common
 
         // Lưu thông số touch cho mobile
         private Vector2 _touchStartPos;
+        private bool _isTouchPanCandidate;
 
         [Inject]
         public void Construct(IMapService mapService, IInputService inputService)
@@ -78,6 +86,7 @@ namespace Core.Common
             if (_inputService != null && _inputService.IsGameplayInputBlocked)
             {
                 _isDragging = false;
+                _isTouchPanCandidate = false;
                 return;
             }
 
@@ -155,6 +164,7 @@ namespace Core.Common
             if (_mapService != null && _mapService.HasActivePlacement)
             {
                 _isDragging = false;
+                _isTouchPanCandidate = false;
                 return;
             }
 
@@ -165,11 +175,33 @@ namespace Core.Common
 
                 if (touch.phase == TouchPhase.Began)
                 {
-                    _isDragging = true;
-                    _dragStartWorldPos = GetPlaneIntersectionPoint(touch.position);
+                    // Real touch hardware usually reports a few pixels of motion
+                    // even when the player intends to tap. Do not move the camera
+                    // until that motion crosses a DPI-aware dead zone.
+                    _touchStartPos = touch.position;
+                    _isTouchPanCandidate = true;
+                    _isDragging = false;
                 }
-                else if (touch.phase == TouchPhase.Moved && _isDragging)
+                else if (touch.phase == TouchPhase.Moved)
                 {
+                    if (!_isDragging)
+                    {
+                        if (!_isTouchPanCandidate) return;
+
+                        float threshold = GetTouchPanActivationThresholdPixels();
+                        if ((touch.position - _touchStartPos).sqrMagnitude < threshold * threshold)
+                            return;
+
+                        _isTouchPanCandidate = false;
+                        _isDragging = true;
+                        _dragStartWorldPos = GetPlaneIntersectionPoint(touch.position);
+
+                        // This gesture is now a pan. Its release must not also
+                        // activate the world object that was pressed initially.
+                        PointerReleaseSuppression.SuppressPrimaryRelease();
+                        return;
+                    }
+
                     Vector3 currentWorldPos = GetPlaneIntersectionPoint(touch.position);
                     // Vector dịch chuyển = Điểm bắt đầu click - Điểm hiện tại dưới ngón tay
                     Vector3 direction = _dragStartWorldPos - currentWorldPos;
@@ -184,6 +216,7 @@ namespace Core.Common
                 else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
                 {
                     _isDragging = false;
+                    _isTouchPanCandidate = false;
                 }
             }
             // --- ĐIỀU KHIỂN BẰNG CHUỘT (PC) ---
@@ -213,7 +246,21 @@ namespace Core.Common
             {
                 // Nếu có hơn 2 ngón tay chạm màn hình (đang thực hiện zoom chẳng hạn)
                 _isDragging = false;
+                _isTouchPanCandidate = false;
             }
+        }
+
+        private float GetTouchPanActivationThresholdPixels()
+        {
+            float dpi = Screen.dpi;
+            if (dpi <= 0f)
+                return _touchPanActivationThresholdPixels;
+
+            float dpiScale = Mathf.Clamp(
+                dpi / _touchReferenceDpi,
+                1f,
+                _maxTouchDpiScale);
+            return _touchPanActivationThresholdPixels * dpiScale;
         }
 
         /// <summary>

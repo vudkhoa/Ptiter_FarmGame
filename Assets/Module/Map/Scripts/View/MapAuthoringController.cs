@@ -8,7 +8,9 @@ namespace Core.Module.Map
     public sealed class MapAuthoringController : MonoBehaviour
     {
         [Header("Authoring")]
+#if UNITY_EDITOR
         [SerializeField] private bool _enableInEditor = true;
+#endif
         [SerializeField] private MapLayoutSO _layout;
 
         private readonly List<MapLayoutEntry> _workingEntries = new();
@@ -270,6 +272,8 @@ namespace Core.Module.Map
             renderer.sortingOrder = -7;
         }
 
+        private static float NormalizeScale(float scale) => scale > 0f ? scale : 1f;
+
 #if UNITY_EDITOR
         private void OnGUI()
         {
@@ -403,8 +407,6 @@ namespace Core.Module.Map
             GUILayout.EndScrollView();
             GUILayout.EndArea();
         }
-
-        private static float NormalizeScale(float scale) => scale > 0f ? scale : 1f;
 
         private void SaveLayout()
         {

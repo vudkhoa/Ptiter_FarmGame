@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BrunoMikoski.ScriptableObjectCollections;
 using BrunoMikoski.UIManager;
 using Core.Module.Input;
 using Shared.Utils.HUD;
@@ -18,6 +19,7 @@ namespace Shared.Utils
     public sealed class WindowOpenTrigger :
         MonoBehaviour,
         IHudButtonAction,
+        IPointerDownHandler,
         IPointerClickHandler
     {
         [SerializeField] private Button _button;
@@ -43,6 +45,7 @@ namespace Shared.Utils
             _resolver = resolver;
             _windowsManager = windowsManager;
             _inputService = inputService;
+            ResolveCanonicalWindowReference();
         }
 
         public void Configure(
@@ -57,6 +60,7 @@ namespace Shared.Utils
             _window = window;
             _button = button;
             _resolver = resolver ?? _resolver;
+            ResolveCanonicalWindowReference();
             RegisterButton();
             SubscribeWindowEvents();
         }
@@ -103,15 +107,24 @@ namespace Shared.Utils
         }
 
         /// <summary>
+        /// Reset suppression from the same EventSystem pointer stream that will
+        /// later deliver the world click. Mobile no longer relies on legacy mouse
+        /// emulation to begin a new primary-pointer gesture.
+        /// </summary>
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (!IsWorldPrimaryPointer(eventData)) return;
+            PointerReleaseSuppression.BeginPrimaryPress();
+        }
+
+        /// <summary>
         /// Handles mouse and touch through the scene EventSystem. World objects
         /// participate in that pipeline through the PhysicsRaycaster on the map
         /// camera, so mobile input no longer depends on touch-to-mouse emulation.
         /// </summary>
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (_button != null || eventData == null ||
-                eventData.pointerPressRaycast.module is not PhysicsRaycaster ||
-                eventData.button != PointerEventData.InputButton.Left ||
+            if (!IsWorldPrimaryPointer(eventData) ||
                 PointerReleaseSuppression.IsPrimaryReleaseSuppressed ||
                 IsAnotherWindowOpen())
                 return;
@@ -120,6 +133,14 @@ namespace Shared.Utils
             // after EventSystem has already selected this collider as the click
             // target; querying it now would report this world object itself.
             Open();
+        }
+
+        private bool IsWorldPrimaryPointer(PointerEventData eventData)
+        {
+            return _button == null &&
+                   eventData != null &&
+                   eventData.pointerPressRaycast.module is PhysicsRaycaster &&
+                   eventData.button == PointerEventData.InputButton.Left;
         }
 
         public bool CanExecute()
@@ -144,6 +165,15 @@ namespace Shared.Utils
                 Debug.LogError(
                     $"[WindowOpenTrigger] '{name}' was not injected with a WindowsManager. " +
                     "Instantiate this prefab through VContainer.",
+                    this);
+                return false;
+            }
+
+            if (!ResolveCanonicalWindowReference())
+            {
+                Debug.LogError(
+                    $"[WindowOpenTrigger] '{name}' could not resolve '{_window.name}' " +
+                    "from the UI window collection.",
                     this);
                 return false;
             }
@@ -201,18 +231,48 @@ namespace Shared.Utils
                 _windowsManager == null)
                 return;
 
-            _window.OnOpenedEvent += OnWindowOpened;
-            _window.OnClosedEvent += OnWindowClosed;
+            if (!ResolveCanonicalWindowReference()) return;
+
+            // Addressable world prefabs can deserialize their own copy of a
+            // ScriptableObjectCollection item in a player build. Subscribe through
+            // the scene manager rather than UIWindow's non-serialized manager field.
+            _windowsManager.SubscribeToWindowEvent(
+                WindowEvent.WindowOpened, _window, OnWindowOpened);
+            _windowsManager.SubscribeToWindowEvent(
+                WindowEvent.WindowClosed, _window, OnWindowClosed);
             _windowEventsSubscribed = true;
         }
 
         private void UnsubscribeWindowEvents()
         {
-            if (!_windowEventsSubscribed || _window == null) return;
+            if (!_windowEventsSubscribed || _window == null ||
+                _windowsManager == null)
+                return;
 
-            _window.OnOpenedEvent -= OnWindowOpened;
-            _window.OnClosedEvent -= OnWindowClosed;
+            _windowsManager.UnsubscribeToWindowEvent(
+                WindowEvent.WindowOpened, _window, OnWindowOpened);
+            _windowsManager.UnsubscribeToWindowEvent(
+                WindowEvent.WindowClosed, _window, OnWindowClosed);
             _windowEventsSubscribed = false;
+        }
+
+        private bool ResolveCanonicalWindowReference()
+        {
+            if (_window == null) return false;
+
+            List<UIWindow> knownWindows = CollectionsRegistry.Instance
+                .GetAllCollectionItemsOfType<UIWindow>();
+            for (int i = 0; i < knownWindows.Count; i++)
+            {
+                UIWindow knownWindow = knownWindows[i];
+                if (knownWindow == null || knownWindow.GUID != _window.GUID)
+                    continue;
+
+                _window = knownWindow;
+                return true;
+            }
+
+            return false;
         }
 
         private void OnWindowOpened() => SetOpenState(true);
