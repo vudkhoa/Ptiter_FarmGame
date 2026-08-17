@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -9,6 +10,8 @@ namespace Core.Module.Audio
     public sealed class AudioCatalogSO : ScriptableObject
     {
         [Header("Music")]
+        [SerializeField] private List<AudioClip> _bgm = new List<AudioClip>();
+        [HideInInspector]
         [SerializeField] private AudioClip _farmMusic;
 
         [Header("UI")]
@@ -33,7 +36,8 @@ namespace Core.Module.Audio
         [Header("Economy")]
         [SerializeField] private AudioClip _coin;
 
-        public AudioClip FarmMusic => _farmMusic;
+        public IReadOnlyList<AudioClip> Bgm => _bgm;
+        public AudioClip FarmMusic => GetFirstBgm();
         public AudioClip ButtonClick => _buttonClick;
         public AudioClip Success => _success;
         public AudioClip Error => _error;
@@ -46,5 +50,38 @@ namespace Core.Module.Audio
         public AudioClip QuestComplete => _questComplete;
         public AudioClip ClaimReward => _claimReward;
         public AudioClip Coin => _coin;
+
+        public AudioClip GetRandomBgm(AudioClip excludedClip = null)
+        {
+            AudioClip selected = null;
+            int candidateCount = 0;
+
+            for (int i = 0; i < _bgm.Count; i++)
+            {
+                AudioClip clip = _bgm[i];
+                if (clip == null || clip == excludedClip) continue;
+
+                candidateCount++;
+                if (Random.Range(0, candidateCount) == 0)
+                    selected = clip;
+            }
+
+            if (selected != null) return selected;
+
+            // When the catalog contains only one valid clip, replay it.
+            return GetFirstBgm();
+        }
+
+        private AudioClip GetFirstBgm()
+        {
+            for (int i = 0; i < _bgm.Count; i++)
+            {
+                if (_bgm[i] != null)
+                    return _bgm[i];
+            }
+
+            // Keeps catalogs created before the BGM list was introduced working.
+            return _farmMusic;
+        }
     }
 }

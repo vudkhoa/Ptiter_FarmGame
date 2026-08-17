@@ -2,7 +2,7 @@
 
 The module is intentionally small and fully 2D:
 
-- one looping Music source;
+- one Music source that can play a random BGM playlist;
 - a configurable SFX pool shared by gameplay and UI;
 - Master, Music, and SFX volume/mute settings saved in `PlayerPrefs`;
 - one `AudioCatalogSO` containing the game's clips.
@@ -11,7 +11,7 @@ The module is intentionally small and fully 2D:
 
 1. Create **Farm Game > Audio > Settings** and **Farm Game > Audio > Catalog**.
 2. Assign both assets to `RootLifetimeScope`.
-3. Fill the catalog's Music, UI, Farm, Map, and Quest clip fields.
+3. Fill the catalog's Bgm list, UI, Farm, Map, and Quest clip fields.
 4. Register the Settings module after Audio. Its Music and Sound toggles map to
    the Music and SFX buses automatically; toggle ON means enabled.
 
@@ -63,7 +63,8 @@ the adapters from game events to audio cues:
 - `FarmAudioBridge`: plant, care, and harvest;
 - `MapAudioBridge`: successful player placement only;
 - `EconomyAudioBridge`: coin, reward, and transaction errors;
-- `FarmBgmController`: starts the farm music cue.
+- `FarmBgmController`: plays the BGM list in random order and avoids an
+  immediate repeat when another clip is available.
 
 Register them once with `RegisterAudioIntegration()` after all event-owning
 modules have registered their MessagePipe brokers. Feature modules should keep

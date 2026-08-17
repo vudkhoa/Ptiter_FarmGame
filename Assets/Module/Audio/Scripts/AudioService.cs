@@ -17,6 +17,9 @@ namespace Core.Module.Audio
         private float _musicCueVolume = 1f;
         private int _nextSfxIndex;
 
+        public bool IsMusicPlaying =>
+            _musicSource != null && _musicSource.isPlaying;
+
         public AudioService(
             IAudioSettingsProvider settings,
             AudioSettingsSO config)
@@ -55,7 +58,8 @@ namespace Core.Module.Audio
         public void PlayMusic(
             AudioClip clip,
             float volume = 1f,
-            bool restartIfSame = false)
+            bool restartIfSame = false,
+            bool loop = true)
         {
             EnsureInitialized();
             if (clip == null) return;
@@ -64,7 +68,7 @@ namespace Core.Module.Audio
 
             _musicCueVolume = Mathf.Clamp01(volume);
             _musicSource.clip = clip;
-            _musicSource.loop = true;
+            _musicSource.loop = loop;
             RefreshVolumes();
             _musicSource.Play();
         }
