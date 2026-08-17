@@ -252,5 +252,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b11b7c285bf1e734e9f4b3ad33f4c5f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Tutorial::Core.Module.Tutorial.TutorialAnchor
-  _anchorId: tutorial.build_button
+  _anchorId: tutorial.inventory_button
   _target: {fileID: 0}
