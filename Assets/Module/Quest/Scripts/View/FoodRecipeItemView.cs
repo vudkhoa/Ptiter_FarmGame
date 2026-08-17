@@ -40,7 +40,7 @@ namespace Core.Module.Quest
             rootRect.anchoredPosition = new Vector2(0f, 90f - index * 375f);
 
             Image background = root.AddComponent<Image>();
-            background.color = new Color(1f, 0.80f, 0.38f, 0.10f);
+            background.color = Color.clear;
             background.raycastTarget = false;
 
             FoodRecipeItemView view = root.AddComponent<FoodRecipeItemView>();
@@ -101,8 +101,8 @@ namespace Core.Module.Quest
             {
                 _unlockCostText.text = "ĐANG PHÁT TRIỂN";
                 _unlockCostText.alignment = TextAlignmentOptions.Center;
-                costRect.anchoredPosition = new Vector2(0f, -72f);
-                costRect.sizeDelta = new Vector2(440f, 52f);
+                costRect.anchoredPosition = new Vector2(0f, -55f);
+                costRect.sizeDelta = new Vector2(340f, 52f);
                 _unlockStarImage.enabled = false;
                 _unlockSuffixText.text = string.Empty;
                 return;
@@ -110,8 +110,8 @@ namespace Core.Module.Quest
 
             _unlockCostText.text = $"CẦN {starCost}";
             _unlockCostText.alignment = TextAlignmentOptions.Right;
-            costRect.anchoredPosition = new Vector2(-125f, -72f);
-            costRect.sizeDelta = new Vector2(130f, 48f);
+            costRect.anchoredPosition = new Vector2(-105f, -55f);
+            costRect.sizeDelta = new Vector2(100f, 48f);
             _unlockStarImage.sprite = starIcon;
             _unlockStarImage.enabled = starIcon != null;
             _unlockSuffixText.text = starIcon != null
@@ -140,14 +140,15 @@ namespace Core.Module.Quest
 
             _ingredients = CreateText(
                 "Mock Ingredients", content.transform, font,
-                new Vector2(-165f, 8f), new Vector2(520f, 100f), 28f,
+                new Vector2(-165f, 8f), new Vector2(520f, 100f), 30f,
                 FontStyles.Normal, TextAlignmentOptions.TopLeft);
             _ingredients.color = new Color(0.38f, 0.20f, 0.14f, 1f);
 
             _story = CreateText(
                 "Story", content.transform, font,
-                new Vector2(0f, -112f), new Vector2(1320f, 105f), 24f,
+                new Vector2(0f, -88f), new Vector2(1320f, 134f), 32f,
                 FontStyles.Normal, TextAlignmentOptions.TopLeft);
+            _story.lineSpacing = 3f;
             _story.color = new Color(0.38f, 0.20f, 0.14f, 1f);
 
             _cookButton = CreateButton(
@@ -158,40 +159,46 @@ namespace Core.Module.Quest
             _lockRoot = CreateUiObject(
                 "Locked Veil", transform as RectTransform);
             RectTransform veilRect = _lockRoot.GetComponent<RectTransform>();
-            Stretch(veilRect);
+            veilRect.anchorMin = veilRect.anchorMax = new Vector2(0.5f, 0.5f);
+            veilRect.pivot = new Vector2(0.5f, 0.5f);
+            veilRect.sizeDelta = new Vector2(360f, 210f);
+            veilRect.anchoredPosition = new Vector2(565f, 30f);
             Image veil = _lockRoot.AddComponent<Image>();
-            veil.color = new Color(0.12f, 0.07f, 0.04f, 0.68f);
-            veil.raycastTarget = false;
+            veil.color = Color.clear;
+            veil.raycastTarget = true;
+            _lockButton = _lockRoot.AddComponent<Button>();
+            _lockButton.targetGraphic = veil;
+            _lockButton.navigation =
+                new Navigation { mode = Navigation.Mode.None };
             _lockGroup = _lockRoot.AddComponent<CanvasGroup>();
 
             GameObject lockObject = CreateUiObject(
                 "Unlock", veilRect);
             RectTransform lockRect = lockObject.GetComponent<RectTransform>();
             lockRect.anchorMin = lockRect.anchorMax = new Vector2(0.5f, 0.5f);
-            lockRect.sizeDelta = new Vector2(110f, 110f);
-            lockRect.anchoredPosition = new Vector2(0f, 34f);
+            lockRect.sizeDelta = new Vector2(100f, 100f);
+            lockRect.anchoredPosition = new Vector2(0f, 35f);
             _lockImage = lockObject.AddComponent<Image>();
             _lockImage.preserveAspect = true;
-            _lockButton = lockObject.AddComponent<Button>();
-            _lockButton.targetGraphic = _lockImage;
+            _lockImage.raycastTarget = false;
 
             _unlockCostText = CreateText(
                 "Unlock Cost", _lockRoot.transform, font,
-                new Vector2(-125f, -72f), new Vector2(130f, 48f), 27f,
+                new Vector2(-105f, -55f), new Vector2(100f, 48f), 30f,
                 FontStyles.Bold, TextAlignmentOptions.Right);
-            _unlockCostText.color = Color.white;
+            _unlockCostText.color = new Color(0.34f, 0.15f, 0.12f, 1f);
 
             _unlockStarImage = CreateImage(
                 "Unlock Star", _lockRoot.transform,
-                new Vector2(-38f, -72f), new Vector2(36f, 36f));
+                new Vector2(-38f, -55f), new Vector2(36f, 36f));
             _unlockStarImage.preserveAspect = true;
             _unlockStarImage.raycastTarget = false;
 
             _unlockSuffixText = CreateText(
                 "Unlock Suffix", _lockRoot.transform, font,
-                new Vector2(84f, -72f), new Vector2(200f, 48f), 27f,
+                new Vector2(84f, -55f), new Vector2(200f, 48f), 30f,
                 FontStyles.Bold, TextAlignmentOptions.Left);
-            _unlockSuffixText.color = Color.white;
+            _unlockSuffixText.color = new Color(0.34f, 0.15f, 0.12f, 1f);
         }
 
         private void ApplyLockState(bool locked, bool animateUnlock)
@@ -200,7 +207,7 @@ namespace Core.Module.Quest
             _lockGroup.DOKill(false);
             _lockRoot.transform.DOKill(false);
 
-            _contentGroup.gameObject.SetActive(!locked || animateUnlock);
+            _contentGroup.gameObject.SetActive(true);
             _title.gameObject.SetActive(!locked);
             _ingredients.gameObject.SetActive(!locked);
             _story.gameObject.SetActive(!locked);
@@ -208,14 +215,14 @@ namespace Core.Module.Quest
 
             if (!animateUnlock)
             {
-                _contentGroup.alpha = locked ? 0.16f : 1f;
+                _contentGroup.alpha = locked ? 0.38f : 1f;
                 _lockGroup.alpha = 1f;
                 _lockRoot.transform.localScale = Vector3.one;
                 _lockRoot.SetActive(locked);
                 return;
             }
 
-            _contentGroup.alpha = 0.16f;
+            _contentGroup.alpha = 0.38f;
             _lockGroup.alpha = 1f;
             _lockRoot.SetActive(true);
             _lockRoot.transform.localScale = Vector3.one;
