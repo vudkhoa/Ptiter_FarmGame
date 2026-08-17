@@ -13,7 +13,9 @@ namespace Core.Module.Quest
         private Image _dishImage;
         private TMP_Text _title;
         private TMP_Text _ingredients;
+        private TMP_Text _story;
         private Button _cookButton;
+        private Image _cookButtonImage;
         private Button _lockButton;
         private Image _lockImage;
         private TMP_Text _unlockCostText;
@@ -34,8 +36,8 @@ namespace Core.Module.Quest
             RectTransform rootRect = root.GetComponent<RectTransform>();
             rootRect.anchorMin = rootRect.anchorMax = new Vector2(0.5f, 0.5f);
             rootRect.pivot = new Vector2(0.5f, 0.5f);
-            rootRect.sizeDelta = new Vector2(1450f, 250f);
-            rootRect.anchoredPosition = new Vector2(0f, 55f - index * 315f);
+            rootRect.sizeDelta = new Vector2(1450f, 330f);
+            rootRect.anchoredPosition = new Vector2(0f, 90f - index * 375f);
 
             Image background = root.AddComponent<Image>();
             background.color = new Color(1f, 0.80f, 0.38f, 0.10f);
@@ -49,6 +51,7 @@ namespace Core.Module.Quest
         public void Bind(
             FoodRecipeViewData data,
             Sprite lockIcon,
+            Sprite cookButtonSprite,
             Sprite starIcon,
             Action<string> unlock,
             Action<string> cook)
@@ -67,6 +70,9 @@ namespace Core.Module.Quest
             _dishImage.enabled = data.MockSprite != null;
             _title.text = data.DisplayName ?? string.Empty;
             _ingredients.text = data.MockIngredients ?? string.Empty;
+            _story.text = data.Story ?? string.Empty;
+            _cookButtonImage.sprite = cookButtonSprite;
+            _cookButtonImage.enabled = cookButtonSprite != null;
             _lockImage.sprite = lockIcon;
             _lockImage.enabled = lockIcon != null;
             RenderUnlockMessage(data.StarCost, starIcon, inDevelopment);
@@ -121,26 +127,33 @@ namespace Core.Module.Quest
             _contentGroup = content.AddComponent<CanvasGroup>();
 
             _dishImage = CreateImage(
-                "Dish Silhouette", content.transform, new Vector2(-560f, 0f),
+                "Dish Silhouette", content.transform, new Vector2(-560f, 40f),
                 new Vector2(240f, 210f));
             _dishImage.preserveAspect = true;
             _dishImage.raycastTarget = false;
 
             _title = CreateText(
                 "Recipe Name", content.transform, font,
-                new Vector2(-165f, 48f), new Vector2(520f, 72f), 46f,
+                new Vector2(-165f, 92f), new Vector2(520f, 72f), 46f,
                 FontStyles.Bold, TextAlignmentOptions.Left);
             _title.color = new Color(0.34f, 0.15f, 0.12f, 1f);
 
             _ingredients = CreateText(
                 "Mock Ingredients", content.transform, font,
-                new Vector2(-165f, -45f), new Vector2(520f, 90f), 28f,
+                new Vector2(-165f, 8f), new Vector2(520f, 100f), 28f,
                 FontStyles.Normal, TextAlignmentOptions.TopLeft);
             _ingredients.color = new Color(0.38f, 0.20f, 0.14f, 1f);
 
+            _story = CreateText(
+                "Story", content.transform, font,
+                new Vector2(0f, -112f), new Vector2(1320f, 105f), 24f,
+                FontStyles.Normal, TextAlignmentOptions.TopLeft);
+            _story.color = new Color(0.38f, 0.20f, 0.14f, 1f);
+
             _cookButton = CreateButton(
                 "Cook Button", content.transform, font,
-                new Vector2(565f, 0f), new Vector2(250f, 105f), "NẤU");
+                new Vector2(565f, 40f), new Vector2(307f, 138f), "NẤU",
+                out _cookButtonImage);
 
             _lockRoot = CreateUiObject(
                 "Locked Veil", transform as RectTransform);
@@ -190,6 +203,7 @@ namespace Core.Module.Quest
             _contentGroup.gameObject.SetActive(!locked || animateUnlock);
             _title.gameObject.SetActive(!locked);
             _ingredients.gameObject.SetActive(!locked);
+            _story.gameObject.SetActive(!locked);
             _cookButton.gameObject.SetActive(!locked);
 
             if (!animateUnlock)
@@ -220,17 +234,20 @@ namespace Core.Module.Quest
             TMP_FontAsset font,
             Vector2 position,
             Vector2 size,
-            string label)
+            string label,
+            out Image image)
         {
             GameObject buttonObject = CreateUiObject(name, parent as RectTransform);
             RectTransform rect = buttonObject.GetComponent<RectTransform>();
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
-            Image image = buttonObject.AddComponent<Image>();
-            image.color = new Color(0.10f, 0.53f, 0.17f, 1f);
+            image = buttonObject.AddComponent<Image>();
+            image.color = Color.white;
+            image.preserveAspect = true;
             Button button = buttonObject.AddComponent<Button>();
             button.targetGraphic = image;
+            button.navigation = new Navigation { mode = Navigation.Mode.None };
 
             TMP_Text text = CreateText(
                 "Label", buttonObject.transform, font, Vector2.zero, size,

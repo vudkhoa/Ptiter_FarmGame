@@ -132,6 +132,7 @@ namespace Core.Module.Quest.Tests
                 state.Recipes[1].AccessState);
             Assert.IsEmpty(state.Recipes[0].DisplayName);
             Assert.IsEmpty(state.Recipes[0].MockIngredients);
+            Assert.IsEmpty(state.Recipes[0].Story);
             Assert.IsEmpty(state.Recipes[1].DisplayName);
         }
 
@@ -191,6 +192,7 @@ namespace Core.Module.Quest.Tests
             Assert.AreEqual(FoodRecipeUnlockResultCode.Success, second.Code);
             Assert.AreEqual(0, wallet.Stars);
             Assert.AreEqual("BÁNH MÌ HEO QUAY", state.Recipes[0].DisplayName);
+            Assert.AreEqual("story", state.Recipes[0].Story);
             Assert.AreEqual("NEM RÁN", state.Recipes[1].DisplayName);
         }
 
@@ -246,6 +248,7 @@ namespace Core.Module.Quest.Tests
                     recipeId = "banh_mi_heo_quay",
                     displayName = "BÁNH MÌ HEO QUAY",
                     mockIngredients = "mock",
+                    story = "story",
                     starCost = 30,
                     cutscene = CreateCutscene("Bread")
                 },

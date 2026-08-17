@@ -24,10 +24,10 @@ MonoBehaviour:
     outputAmountPerItem: 1
     ingredients:
     - itemId: pork_belly
-      displayName: "Ba ch\u1EC9 heo"
+      displayName: "Th\u1ECBt Heo"
       amountPerItem: 2
       icon: {fileID: 21300000, guid: bdec628daae12794090c488b23c84347, type: 3}
     - itemId: wheat_grain
       displayName: "L\xFAa m\xEC"
-      amountPerItem: 1
+      amountPerItem: 2
       icon: {fileID: 21300000, guid: f1d7549bc8ebb25408d5b69c5fac8b07, type: 3}

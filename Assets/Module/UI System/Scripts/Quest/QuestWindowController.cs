@@ -635,6 +635,7 @@ namespace MyOwn.ServiceHarness
                 _foodRecipeViews[i]?.Bind(
                     recipe,
                     state.LockIcon,
+                    state.CookButtonSprite,
                     _progressStarIcon != null
                         ? _progressStarIcon.sprite
                         : null,
