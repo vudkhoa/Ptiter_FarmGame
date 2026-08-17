@@ -20,7 +20,7 @@ MonoBehaviour:
   _care: {fileID: 8300000, guid: 5a28a14099c8504498e1f6361fb0caa2, type: 3}
   _harvest: {fileID: 8300000, guid: 0a3fb2d483265784189ebcc1b8dc5523, type: 3}
   _placeObject: {fileID: 8300000, guid: 8747f5594afbcfc4fa98bef22b164d6c, type: 3}
-  _removeObject: {fileID: 0}
+  _removeObject: {fileID: 8300000, guid: 8747f5594afbcfc4fa98bef22b164d6c, type: 3}
   _questComplete: {fileID: 0}
   _claimReward: {fileID: 8300000, guid: 99e04e72783f37b44bd6b2afe59ae7c7, type: 3}
   _coin: {fileID: 8300000, guid: b4224ef180c287243b81d48b7ac2c90e, type: 3}
