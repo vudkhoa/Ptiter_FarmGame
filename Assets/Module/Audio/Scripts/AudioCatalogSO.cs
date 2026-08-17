@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Core.Module.Audio
 {
@@ -17,7 +18,8 @@ namespace Core.Module.Audio
 
         [Header("Farm")]
         [SerializeField] private AudioClip _plant;
-        [SerializeField] private AudioClip _water;
+        [FormerlySerializedAs("_water")]
+        [SerializeField] private AudioClip _care;
         [SerializeField] private AudioClip _harvest;
 
         [Header("Map")]
@@ -28,16 +30,21 @@ namespace Core.Module.Audio
         [SerializeField] private AudioClip _questComplete;
         [SerializeField] private AudioClip _claimReward;
 
+        [Header("Economy")]
+        [SerializeField] private AudioClip _coin;
+
         public AudioClip FarmMusic => _farmMusic;
         public AudioClip ButtonClick => _buttonClick;
         public AudioClip Success => _success;
         public AudioClip Error => _error;
         public AudioClip Plant => _plant;
-        public AudioClip Water => _water;
+        public AudioClip Care => _care;
+        public AudioClip Water => _care;
         public AudioClip Harvest => _harvest;
         public AudioClip PlaceObject => _placeObject;
         public AudioClip RemoveObject => _removeObject;
         public AudioClip QuestComplete => _questComplete;
         public AudioClip ClaimReward => _claimReward;
+        public AudioClip Coin => _coin;
     }
 }

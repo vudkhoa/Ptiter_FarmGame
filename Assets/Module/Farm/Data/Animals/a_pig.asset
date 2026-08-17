@@ -29,4 +29,4 @@ MonoBehaviour:
   - {fileID: 21300000, guid: fd3669fdd90b7614bb34221d19c042ee, type: 3}
   - {fileID: 21300000, guid: fd3669fdd90b7614bb34221d19c042ee, type: 3}
   autoRestart: 0
-  maxCycles: -1
+  maxCycles: 1
