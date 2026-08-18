@@ -1,0 +1,23 @@
+{
+    "name": "Audio.Integration",
+    "rootNamespace": "Core.Module.Audio.Integration",
+    "references": [
+        "Audio",
+        "Farm",
+        "Map",
+        "Currency",
+        "Quest",
+        "MessagePipe",
+        "VContainer",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

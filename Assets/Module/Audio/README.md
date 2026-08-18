@@ -2,7 +2,7 @@
 
 The module is intentionally small and fully 2D:
 
-- one looping Music source;
+- one Music source that can play a random BGM playlist;
 - a configurable SFX pool shared by gameplay and UI;
 - Master, Music, and SFX volume/mute settings saved in `PlayerPrefs`;
 - one `AudioCatalogSO` containing the game's clips.
@@ -11,7 +11,7 @@ The module is intentionally small and fully 2D:
 
 1. Create **Farm Game > Audio > Settings** and **Farm Game > Audio > Catalog**.
 2. Assign both assets to `RootLifetimeScope`.
-3. Fill the catalog's Music, UI, Farm, Map, and Quest clip fields.
+3. Fill the catalog's Bgm list, UI, Farm, Map, and Quest clip fields.
 4. Register the Settings module after Audio. Its Music and Sound toggles map to
    the Music and SFX buses automatically; toggle ON means enabled.
 
@@ -50,4 +50,22 @@ Pass an optional `0..1` volume only when a particular call needs adjustment:
 _audio.PlaySfx(_catalog.ButtonClick, 0.7f);
 ```
 
-`AudioUiButton` is optional; UI controllers can call `PlaySfx` directly.
+Attach `AudioUiButton` to clickable `Button` objects. It handles click/error
+feedback directly and does not require the prefab to be instantiated through
+VContainer. UI controllers can still call `PlaySfx` for non-button cues.
+
+## Feature integration
+
+`Audio` is independent from gameplay feature modules. `Audio.Integration` owns
+the adapters from game events to audio cues:
+
+- `AudioUiButton`: component-driven click and disabled-button error feedback;
+- `FarmAudioBridge`: plant, care, and harvest;
+- `MapAudioBridge`: successful player placement only;
+- `EconomyAudioBridge`: coin, reward, and transaction errors;
+- `FarmBgmController`: plays the BGM list in random order and avoids an
+  immediate repeat when another clip is available.
+
+Register them once with `RegisterAudioIntegration()` after all event-owning
+modules have registered their MessagePipe brokers. Feature modules should keep
+publishing domain events and must not depend directly on the audio module.

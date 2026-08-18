@@ -721,6 +721,7 @@ GameObject:
   - component: {fileID: 2038405032694835988}
   - component: {fileID: 2669375488054051539}
   - component: {fileID: 6590798383032960004}
+  - component: {fileID: 9100000000000000000}
   m_Layer: 0
   m_Name: Claim Gift
   m_TagString: Untagged
@@ -991,6 +992,7 @@ GameObject:
   - component: {fileID: 4361898365872020851}
   - component: {fileID: 4554018194672291567}
   - component: {fileID: 211847216705533891}
+  - component: {fileID: 9100000000000000003}
   m_Layer: 0
   m_Name: Temporary Close
   m_TagString: Untagged
@@ -1151,6 +1153,7 @@ GameObject:
   - component: {fileID: 3254684559717201700}
   - component: {fileID: 9100000000000000001}
   - component: {fileID: 9100000000000000002}
+  - component: {fileID: 9100000000000000004}
   m_Layer: 0
   m_Name: Reward Frame
   m_TagString: Untagged
@@ -2548,6 +2551,7 @@ GameObject:
   - component: {fileID: 3618573033580717726}
   - component: {fileID: 8935080865903702992}
   - component: {fileID: 1668458742898940943}
+  - component: {fileID: 9100000000000000005}
   m_Layer: 0
   m_Name: Claim Gift
   m_TagString: Untagged
@@ -3759,6 +3763,7 @@ GameObject:
   - component: {fileID: 4228972528230268380}
   - component: {fileID: 2844302152810173433}
   - component: {fileID: 4902609004556089258}
+  - component: {fileID: 9100000000000000006}
   m_Layer: 0
   m_Name: Progress Tab
   m_TagString: Untagged
@@ -4872,6 +4877,7 @@ GameObject:
   - component: {fileID: 7174584500742689057}
   - component: {fileID: 1470947630961354256}
   - component: {fileID: 5510818617679469313}
+  - component: {fileID: 9100000000000000007}
   m_Layer: 0
   m_Name: Board Template
   m_TagString: Untagged
@@ -6703,6 +6709,7 @@ GameObject:
   - component: {fileID: 2926807774010739294}
   - component: {fileID: 8574480760165441887}
   - component: {fileID: 4265478673255393922}
+  - component: {fileID: 9100000000000000008}
   m_Layer: 0
   m_Name: Claim Gift
   m_TagString: Untagged
@@ -6823,6 +6830,7 @@ GameObject:
   - component: {fileID: 3036002673818844192}
   - component: {fileID: 1799535212036562996}
   - component: {fileID: 596088031221181811}
+  - component: {fileID: 9100000000000000009}
   m_Layer: 0
   m_Name: Daily Tab
   m_TagString: Untagged
@@ -9681,6 +9689,7 @@ GameObject:
   - component: {fileID: 5614517967404649980}
   - component: {fileID: 8624010105202199291}
   - component: {fileID: 3510276476922328604}
+  - component: {fileID: 9100000000000000010}
   m_Layer: 0
   m_Name: Food Tab
   m_TagString: Untagged
@@ -10343,3 +10352,120 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &9100000000000000000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 136056443934053763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &9100000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 354246100263381383}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &9100000000000000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 550088338995815612}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &9100000000000000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1819431263572005402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &9100000000000000006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3042468951952768663}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &9100000000000000007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4411174990975150622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &9100000000000000008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6362355904748208461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &9100000000000000009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6363722988222457908}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1
+--- !u!114 &9100000000000000010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9063490597373711927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cfb2318eb34b52ab591d737d50dfbc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Audio::Core.Module.Audio.AudioUiButton
+  _volume: 1

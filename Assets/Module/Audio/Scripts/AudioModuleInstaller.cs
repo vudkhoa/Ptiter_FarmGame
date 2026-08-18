@@ -19,6 +19,8 @@ namespace Core.Module.Audio
                    .AsImplementedInterfaces();
             builder.RegisterEntryPoint<AudioService>()
                    .AsSelf();
+            builder.RegisterEntryPoint<AudioFeedbackService>()
+                   .AsSelf();
             return builder;
         }
     }

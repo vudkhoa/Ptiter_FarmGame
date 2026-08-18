@@ -7,6 +7,9 @@ namespace Core.Module.Tutorial
         /// HUD button that opens the build menu. Lives on BuildingHudButton.prefab.
         public const string BuildButton = "tutorial.build_button";
 
+        /// HUD button that opens the storage window.
+        public const string InventoryButton = "tutorial.inventory_button";
+
         /// Root of the build menu, so a step can fade the whole panel out of the way.
         public const string ObjectsPanel = "tutorial.objects_panel";
 
