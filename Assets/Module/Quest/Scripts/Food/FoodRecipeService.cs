@@ -76,6 +76,7 @@ namespace Core.Module.Quest
                     MockIngredients = unlocked
                         ? definition.mockIngredients
                         : string.Empty,
+                    Story = unlocked ? definition.story : string.Empty,
                     StarCost = Math.Max(1, definition.starCost),
                     MockSprite = definition.mockSprite,
                     CutsceneId = hasCutscene
@@ -90,6 +91,7 @@ namespace Core.Module.Quest
                 IsReady = true,
                 Stars = _starWallet.Stars,
                 LockIcon = _config.lockIcon,
+                CookButtonSprite = _config.cookButtonSprite,
                 Recipes = recipes
             };
         }

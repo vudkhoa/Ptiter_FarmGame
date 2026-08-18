@@ -13,19 +13,29 @@ MonoBehaviour:
   m_Name: FoodRecipeConfig
   m_EditorClassIdentifier: Quest::Core.Module.Quest.FoodRecipeConfigSO
   lockIcon: {fileID: 21300000, guid: 6372b7ecaade1b04b9544cb1a72abc2a, type: 3}
+  cookButtonSprite: {fileID: 21300000, guid: 60ac483cc34e93346aec6b886fe5ee38, type: 3}
   recipes:
   - recipeId: banh_mi_heo_quay
     displayName: "B\xC1NH M\xCC HEO QUAY"
-    mockIngredients: "Nguy\xEAn li\u1EC7u \u0111ang \u0111\u01B0\u1EE3c c\u1EADp
-      nh\u1EADt"
-    starCost: 30
+    mockIngredients: "2x Th\u1ECBt Heo\n2x L\xFAa m\xEC"
+    story: "B\xE1nh m\xEC v\u1ED1n c\xF3 ngu\u1ED3n g\u1ED1c t\u1EEB Ph\xE1p, sau
+      th\u1EDDi kh\xE1ng chi\u1EBFn ch\u1ED1ng Ph\xE1p, v\u1EDBi s\u1EF1 s\xE1ng
+      t\u1EA1o ng\u01B0\u1EDDi Vi\u1EC7t \u0111\xE3 bi\u1EBFn \u0111\u1ED5i v\xE0
+      ph\xE1t tri\u1EC3n b\xE1nh m\xEC th\xE0nh m\xF3n \u0103n \u0111\u1EB7c tr\u01B0ng
+      ri\xEAng c\u1EE7a Vi\u1EC7t Nam. B\xE1nh m\xEC gi\xF2n k\u1EBFt h\u1EE3p v\u1EDBi
+      th\u1ECBt heo quay, rau d\u01B0a v\xE0 n\u01B0\u1EDBc s\u1ED1t \u0111\u1EADm
+      \u0111\xE0 \u0111\xE3 tr\u1EDF th\xE0nh bi\u1EC3u t\u01B0\u1EE3ng cho n\u1EC1n
+      \u1EA9m th\u1EF1c c\u0169ng nh\u01B0 s\u1EF1 s\xE1ng t\u1EA1o c\u1EE7a con
+      ng\u01B0\u1EDDi Vi\u1EC7t Nam."
+    starCost: 15
     prerequisiteRecipeId: 
-    mockSprite: {fileID: 21300000, guid: 76efdfbffbb14f03915e22136ff51a5b, type: 3}
+    mockSprite: {fileID: 21300000, guid: b0bf04e6b94a4454aa7c8b539690e7bb, type: 3}
     cutscene: {fileID: 11400000, guid: 5bd7c29dcf22c5b4186c46bae92c194d, type: 2}
   - recipeId: nem_ran
     displayName: "NEM R\xC1N"
     mockIngredients: "Nguy\xEAn li\u1EC7u \u0111ang \u0111\u01B0\u1EE3c c\u1EADp
       nh\u1EADt"
+    story: 
     starCost: 50
     prerequisiteRecipeId: banh_mi_heo_quay
     mockSprite: {fileID: 21300000, guid: f3ca079f7b032094bba94ef5ef3d06a6, type: 3}

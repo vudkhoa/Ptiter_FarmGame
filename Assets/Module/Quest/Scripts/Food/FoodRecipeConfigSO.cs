@@ -11,6 +11,7 @@ namespace Core.Module.Quest
         public string recipeId;
         public string displayName;
         [TextArea] public string mockIngredients;
+        [TextArea(3, 6)] public string story;
         [Min(1)] public int starCost = 1;
         public string prerequisiteRecipeId;
         public Sprite mockSprite;
@@ -28,6 +29,8 @@ namespace Core.Module.Quest
     public sealed class FoodRecipeConfigSO : ScriptableObject
     {
         public Sprite lockIcon;
+        [Tooltip("Shared visual used by the cook button in the Food tab.")]
+        public Sprite cookButtonSprite;
         public List<FoodRecipeDefinition> recipes =
             new List<FoodRecipeDefinition>();
 

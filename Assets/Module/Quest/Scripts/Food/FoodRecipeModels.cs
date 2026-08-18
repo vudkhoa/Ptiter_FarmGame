@@ -16,6 +16,7 @@ namespace Core.Module.Quest
         public string RecipeId { get; internal set; }
         public string DisplayName { get; internal set; }
         public string MockIngredients { get; internal set; }
+        public string Story { get; internal set; }
         public int StarCost { get; internal set; }
         public Sprite MockSprite { get; internal set; }
         public string CutsceneId { get; internal set; }
@@ -27,6 +28,7 @@ namespace Core.Module.Quest
         public bool IsReady { get; internal set; }
         public int Stars { get; internal set; }
         public Sprite LockIcon { get; internal set; }
+        public Sprite CookButtonSprite { get; internal set; }
         public IReadOnlyList<FoodRecipeViewData> Recipes { get; internal set; }
     }
 

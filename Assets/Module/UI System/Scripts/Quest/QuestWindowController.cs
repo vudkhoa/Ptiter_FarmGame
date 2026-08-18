@@ -67,6 +67,10 @@ namespace MyOwn.ServiceHarness
         [SerializeField] private Vector3 _progressBoardCycleOffsets =
             new Vector3(0f, 24f, 45f);
 
+        [Header("Food")]
+        [SerializeField] private FoodRecipeItemView _foodRecipeTemplate;
+        [SerializeField] private float _foodRecipeVerticalSpacing = 375f;
+
         [Header("Reward feedback")]
         [SerializeField] private GameObject _rewardToast;
         [SerializeField] private TMP_Text _rewardToastText;
@@ -244,10 +248,6 @@ namespace MyOwn.ServiceHarness
         {
             if (panel == null) return;
             panel.SetActive(active);
-
-            RectTransform rect = panel.transform as RectTransform;
-            if (rect != null)
-                rect.anchoredPosition = Vector2.zero;
 
             CanvasGroup group = panel.GetComponent<CanvasGroup>();
             if (group != null) group.alpha = 1f;
@@ -635,6 +635,7 @@ namespace MyOwn.ServiceHarness
                 _foodRecipeViews[i]?.Bind(
                     recipe,
                     state.LockIcon,
+                    state.CookButtonSprite,
                     _progressStarIcon != null
                         ? _progressStarIcon.sprite
                         : null,
@@ -645,34 +646,47 @@ namespace MyOwn.ServiceHarness
 
         private void EnsureFoodRecipeViews(int count)
         {
-            RectTransform parent = _foodPlaceholder.transform as RectTransform;
-            if (parent == null) return;
+            if (_foodRecipeTemplate == null)
+            {
+                Debug.LogWarning(
+                    "[Quest] Food recipe template is not assigned.",
+                    this);
+                return;
+            }
 
-            Graphic legacyFullMock = _foodPlaceholder.GetComponent<Graphic>();
-            if (legacyFullMock != null) legacyFullMock.enabled = false;
+            if (_foodRecipeViews.Count == 0)
+                _foodRecipeViews.Add(_foodRecipeTemplate);
 
-            DisableLegacyFoodMock("Top Recipe");
-            DisableLegacyFoodMock("Top Explore");
-            DisableLegacyFoodMock("Bottom Recipe");
-            DisableLegacyFoodMock("Bottom Explore");
+            RectTransform templateRect =
+                _foodRecipeTemplate.transform as RectTransform;
+            Transform parent = _foodRecipeTemplate.transform.parent;
 
             while (_foodRecipeViews.Count < count)
             {
-                FoodRecipeItemView view = FoodRecipeItemView.Create(
-                    parent,
-                    _foodTabLabel != null ? _foodTabLabel.font : null,
-                    _foodRecipeViews.Count);
+                int index = _foodRecipeViews.Count;
+                FoodRecipeItemView view = Instantiate(
+                    _foodRecipeTemplate,
+                    parent);
+                view.name = $"Food Recipe {index + 1}";
+
+                RectTransform cloneRect =
+                    view.transform as RectTransform;
+                if (cloneRect != null && templateRect != null)
+                {
+                    cloneRect.anchoredPosition =
+                        templateRect.anchoredPosition +
+                        Vector2.down *
+                        (_foodRecipeVerticalSpacing * index);
+                }
+
                 _foodRecipeViews.Add(view);
             }
 
             for (int i = 0; i < _foodRecipeViews.Count; i++)
-                _foodRecipeViews[i].gameObject.SetActive(i < count);
-        }
-
-        private void DisableLegacyFoodMock(string childName)
-        {
-            Transform child = _foodPlaceholder.transform.Find(childName);
-            if (child != null) child.gameObject.SetActive(false);
+            {
+                FoodRecipeItemView view = _foodRecipeViews[i];
+                if (view != null) view.gameObject.SetActive(i < count);
+            }
         }
 
         private void RequestUnlockRecipe(string recipeId)
